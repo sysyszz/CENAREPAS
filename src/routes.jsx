@@ -32,29 +32,27 @@ export function AppRoutes({ isAuthenticated, setIsAuthenticated }) {
         path="/admin/*"
         element={
           isAuthenticated ? (
-            <AdminLayout onLogout={() => setIsAuthenticated(false)}>
-              <Routes>
-                <Route index element={<DashboardPage />} />
-                <Route path="profile" element={<ProfilePage />} />
-                <Route path="usuarios" element={<UsuariosPage />} />
-                <Route path="roles" element={<RolesPage />} />
-                <Route path="proveedores" element={<ProveedoresPage />} />
-                <Route path="compras" element={<ComprasPage />} />
-                <Route path="categorias" element={<CategoriasPage />} />
-                <Route path="fichas-tecnicas" element={<FichasTecnicasPage />} />
-                <Route path="insumos" element={<InsumosPage />} />
-                <Route path="produccion" element={<ProduccionPage />} />
-                <Route path="productos" element={<ProductosPage />} />
-                <Route path="clientes" element={<ClientesPage />} />
-                <Route path="pedidos" element={<PedidosPage />} />
-                <Route path="ventas" element={<VentasPage />} />
-              </Routes>
-            </AdminLayout>
+            <AdminLayout onLogout={() => setIsAuthenticated(false)} />
           ) : (
             <Navigate to="/admin/login" replace />
           )
         }
-      />
+      >
+        <Route index element={<DashboardPage />} />
+        <Route path="profile" element={<ProfilePage />} />
+        <Route path="usuarios" element={<UsuariosPage />} />
+        <Route path="roles" element={<RolesPage />} />
+        <Route path="proveedores" element={<ProveedoresPage />} />
+        <Route path="compras" element={<ComprasPage />} />
+        <Route path="categorias" element={<CategoriasPage />} />
+        <Route path="fichas-tecnicas" element={<FichasTecnicasPage />} />
+        <Route path="insumos" element={<InsumosPage />} />
+        <Route path="produccion" element={<ProduccionPage />} />
+        <Route path="productos" element={<ProductosPage />} />
+        <Route path="clientes" element={<ClientesPage />} />
+        <Route path="pedidos" element={<PedidosPage />} />
+        <Route path="ventas" element={<VentasPage />} />
+      </Route>
     </Routes>
   );
 }

@@ -44,7 +44,7 @@ export default function Sidebar({ sidebarOpen, setSidebarOpen, onLogout }) {
       } bg-sidebar text-sidebar-foreground transition-all duration-300 flex flex-col`}
     >
       <div className="p-4 flex items-center justify-between border-b border-sidebar-border">
-        {sidebarOpen && <h2 className="text-lg">Admin System</h2>}
+        {sidebarOpen && <h2 className="text-lg">CenArepas</h2>}
         <button
           onClick={() => setSidebarOpen(!sidebarOpen)}
           className="p-2 hover:bg-sidebar-accent rounded-lg"
