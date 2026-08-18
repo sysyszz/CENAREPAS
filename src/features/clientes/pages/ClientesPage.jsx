@@ -127,12 +127,12 @@ export default function ClientesPage() {
         <table className="w-full text-sm text-left">
           <thead className="bg-muted text-muted-foreground font-semibold">
             <tr>
-              <th className="px-6 py-3">Código</th>
+              <th className="px-6 py-3">ID</th>
               <th className="px-6 py-3">Cliente / Razón Social</th>
-              <th className="px-6 py-3">NIT / Doc</th>
-              <th className="px-6 py-3">Ciudad</th>
-              <th className="px-6 py-3">Pedidos</th>
-              <th className="px-6 py-3">Total Comprado</th>
+              <th className="px-6 py-3">Documento</th>
+              <th className="px-6 py-3">Teléfono</th>
+              <th className="px-6 py-3">Correo</th>
+              <th className="px-6 py-3">Dirección</th>
               <th className="px-6 py-3">Estado</th>
               <th className="px-6 py-3">Acciones</th>
             </tr>
@@ -140,13 +140,13 @@ export default function ClientesPage() {
           <tbody className="divide-y divide-border">
             {clientes.length > 0 ? (
               pagination.paginatedData.map((cliente) => (
-                <tr key={cliente.id} className="hover:bg-muted/50 transition-colors">
-                  <td className="px-6 py-4 font-mono font-medium">{cliente.codigo}</td>
+                <tr key={cliente.id_cliente} className="hover:bg-muted/50 transition-colors">
+                  <td className="px-6 py-4 font-mono font-medium">{cliente.id_cliente}</td>
                   <td className="px-6 py-4 font-semibold">{cliente.nombre}</td>
-                  <td className="px-6 py-4 text-muted-foreground">{cliente.nit}</td>
-                  <td className="px-6 py-4 text-muted-foreground">{cliente.ciudad}</td>
-                  <td className="px-6 py-4">{cliente.pedidosRealizados} ordenes</td>
-                  <td className="px-6 py-4 font-semibold">{cliente.totalComprado}</td>
+                  <td className="px-6 py-4 text-muted-foreground">{cliente.documento}</td>
+                  <td className="px-6 py-4 text-muted-foreground">{cliente.telefono}</td>
+                  <td className="px-6 py-4 text-muted-foreground">{cliente.correo}</td>
+                  <td className="px-6 py-4 text-muted-foreground">{cliente.direccion}</td>
                   <td className="px-6 py-4">
                     <span
                       className={`px-2.5 py-1 rounded-full text-xs font-medium ${
@@ -175,7 +175,7 @@ export default function ClientesPage() {
                         <Edit className="w-4 h-4" />
                       </button>
                       <button
-                        onClick={() => setDeleteDialog({ isOpen: true, id: cliente.id, nombre: cliente.nombre })}
+                        onClick={() => setDeleteDialog({ isOpen: true, id: cliente.id_cliente, nombre: cliente.nombre })}
                         className="p-2 hover:bg-muted rounded-lg text-destructive"
                         title="Eliminar"
                       >
@@ -204,15 +204,13 @@ export default function ClientesPage() {
           <div className="bg-card p-6 rounded-lg max-w-md w-full border border-border space-y-4">
             <h3 className="text-lg font-bold">Detalle del Cliente</h3>
             <div className="space-y-2 text-sm">
-              <p><strong>Código:</strong> {detailModal.data.codigo}</p>
+              <p><strong>ID:</strong> {detailModal.data.id_cliente}</p>
               <p><strong>Cliente:</strong> {detailModal.data.nombre}</p>
-              <p><strong>NIT:</strong> {detailModal.data.nit}</p>
+              <p><strong>Documento:</strong> {detailModal.data.documento}</p>
               <p><strong>Teléfono:</strong> {detailModal.data.telefono}</p>
-              <p><strong>Email:</strong> {detailModal.data.email}</p>
-              <p><strong>Ciudad:</strong> {detailModal.data.ciudad}</p>
-              <p><strong>Tipo de Cliente:</strong> {detailModal.data.tipoCliente}</p>
-              <p><strong>Pedidos Realizados:</strong> {detailModal.data.pedidosRealizados}</p>
-              <p><strong>Total Facturado:</strong> {detailModal.data.totalComprado}</p>
+              <p><strong>Correo:</strong> {detailModal.data.correo}</p>
+              <p><strong>Dirección:</strong> {detailModal.data.direccion}</p>
+              <p><strong>Fecha de Creación:</strong> {detailModal.data.fecha_creacion}</p>
               <p><strong>Estado:</strong> {detailModal.data.estado}</p>
             </div>
             <div className="flex justify-end pt-4">
