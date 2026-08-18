@@ -1,54 +1,59 @@
 // usuariosService.js - Servicio para la gestión de usuarios en Masarepas
 export const mockUsuarios = [
   {
-    id: 1,
-    codigo: "USR-001",
+    id_usuario: 1,
     nombre: "Carlos Eduardo Gómez",
-    email: "carlos.gomez@masarepas.com",
-    telefono: "+57 300 123 4567",
-    rol: "Administrador de Planta",
-    estado: "Activo",
-    fechaRegistro: "2024-01-15",
+    correo: "carlos.gomez@masarepas.com",
+    contrasena_hash: "$2b$10$mockHashCarlos",
+    id_rol: 1,
+    estado: "activo",
+    token_recuperacion: null,
+    token_expiracion: null,
+    fecha_creacion: "2024-01-15T00:00:00",
   },
   {
-    id: 2,
-    codigo: "USR-002",
+    id_usuario: 2,
     nombre: "María Fernanda Rojas",
-    email: "maria.rojas@masarepas.com",
-    telefono: "+57 311 987 6543",
-    rol: "Supervisor de Producción",
-    estado: "Activo",
-    fechaRegistro: "2024-01-20",
+    correo: "maria.rojas@masarepas.com",
+    contrasena_hash: "$2b$10$mockHashMaria",
+    id_rol: 2,
+    estado: "activo",
+    token_recuperacion: null,
+    token_expiracion: null,
+    fecha_creacion: "2024-01-20T00:00:00",
   },
   {
-    id: 3,
-    codigo: "USR-003",
+    id_usuario: 3,
     nombre: "Jorge Eliecer Restrepo",
-    email: "jorge.restrepo@masarepas.com",
-    telefono: "+57 315 456 7890",
-    rol: "Gestor de Compras y Proveedores",
-    estado: "Activo",
-    fechaRegistro: "2024-02-01",
+    correo: "jorge.restrepo@masarepas.com",
+    contrasena_hash: "$2b$10$mockHashJorge",
+    id_rol: 3,
+    estado: "activo",
+    token_recuperacion: null,
+    token_expiracion: null,
+    fecha_creacion: "2024-02-01T00:00:00",
   },
   {
-    id: 4,
-    codigo: "USR-004",
+    id_usuario: 4,
     nombre: "Ana Lucía Benítez",
-    email: "ana.benitez@masarepas.com",
-    telefono: "+57 320 654 3210",
-    rol: "Vendedor y Distribución",
-    estado: "Activo",
-    fechaRegistro: "2024-02-10",
+    correo: "ana.benitez@masarepas.com",
+    contrasena_hash: "$2b$10$mockHashAna",
+    id_rol: 4,
+    estado: "activo",
+    token_recuperacion: null,
+    token_expiracion: null,
+    fecha_creacion: "2024-02-10T00:00:00",
   },
   {
-    id: 5,
-    codigo: "USR-005",
+    id_usuario: 5,
     nombre: "Andrés Felipe Morales",
-    email: "andres.morales@masarepas.com",
-    telefono: "+57 318 789 0123",
-    rol: "Auditor de Calidad",
-    estado: "Inactivo",
-    fechaRegistro: "2024-03-05",
+    correo: "andres.morales@masarepas.com",
+    contrasena_hash: "$2b$10$mockHashAndres",
+    id_rol: 5,
+    estado: "inactivo",
+    token_recuperacion: null,
+    token_expiracion: null,
+    fecha_creacion: "2024-03-05T00:00:00",
   },
 ];
 
@@ -56,7 +61,7 @@ export const getUsuarios = async () => {
   return [...mockUsuarios];
 };
 
-export const createUsuario = async (usuario) => ({ id: Date.now(), ...usuario });
-export const updateUsuario = async (id, usuario) => ({ id, ...usuario });
-export const deleteUsuario = async (id) => true;
+export const createUsuario = async (usuario) => ({ id_usuario: Date.now(), ...usuario });
+export const updateUsuario = async (id_usuario, usuario) => ({ id_usuario, ...usuario });
+export const deleteUsuario = async (id_usuario) => true;
 

@@ -14,7 +14,7 @@ export function UsuarioEditModal({ open, editData, setEditData, onClose, onSave,
         </div>
         <div className="space-y-4">
           <div>
-            <label className="block mb-2">Nombre Completo</label>
+            <label className="block mb-2">Nombre</label>
             <input
               type="text"
               value={editData.nombre}
@@ -26,30 +26,24 @@ export function UsuarioEditModal({ open, editData, setEditData, onClose, onSave,
             <label className="block mb-2">Email</label>
             <input
               type="email"
-              value={editData.email}
-              onChange={(e) => setEditData({ ...editData, email: e.target.value })}
-              className="w-full px-4 py-2 border border-input bg-input-background rounded-lg focus:outline-none focus:ring-2 focus:ring-ring"
-            />
-          </div>
-          <div>
-            <label className="block mb-2">Teléfono</label>
-            <input
-              type="tel"
-              value={editData.telefono}
-              onChange={(e) => setEditData({ ...editData, telefono: e.target.value })}
+              value={editData.correo}
+              maxLength={100}
+              onChange={(e) => setEditData({ ...editData, correo: e.target.value })}
               className="w-full px-4 py-2 border border-input bg-input-background rounded-lg focus:outline-none focus:ring-2 focus:ring-ring"
             />
           </div>
           <div>
             <label className="block mb-2">Rol</label>
             <select
-              value={editData.rol}
-              onChange={(e) => setEditData({ ...editData, rol: e.target.value })}
+              value={editData.id_rol}
+              onChange={(e) => setEditData({ ...editData, id_rol: Number(e.target.value) })}
               className="w-full px-4 py-2 border border-input bg-input-background rounded-lg focus:outline-none focus:ring-2 focus:ring-ring"
             >
-              <option>Administrador</option>
-              <option>Vendedor</option>
-              <option>Almacenista</option>
+              <option value="1">Administrador de Planta</option>
+              <option value="2">Supervisor de Producción</option>
+              <option value="3">Gestor de Compras y Proveedores</option>
+              <option value="4">Vendedor y Distribución</option>
+              <option value="5">Auditor de Calidad</option>
             </select>
           </div>
           <div>
@@ -59,8 +53,8 @@ export function UsuarioEditModal({ open, editData, setEditData, onClose, onSave,
               onChange={(e) => setEditData({ ...editData, estado: e.target.value })}
               className="w-full px-4 py-2 border border-input bg-input-background rounded-lg focus:outline-none focus:ring-2 focus:ring-ring"
             >
-              <option>Activo</option>
-              <option>Inactivo</option>
+              <option value="activo">Activo</option>
+              <option value="inactivo">Inactivo</option>
             </select>
           </div>
           <div className="flex gap-2 pt-4">

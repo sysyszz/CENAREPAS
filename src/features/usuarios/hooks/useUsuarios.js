@@ -23,8 +23,8 @@ export function useUsuarios() {
   const filteredUsuarios = usuarios.filter((usuario) => {
     const matchesSearch =
       usuario.nombre.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      usuario.email.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesRol = filterRol === 'Todos los roles' || usuario.rol === filterRol;
+      usuario.correo.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesRol = filterRol === 'Todos los roles' || String(usuario.id_rol) === filterRol;
     const matchesEstado = filterEstado === 'Todos los estados' || usuario.estado === filterEstado;
     return matchesSearch && matchesRol && matchesEstado;
   });
@@ -34,7 +34,7 @@ export function useUsuarios() {
     setIsDeleting(true);
     await new Promise((resolve) => setTimeout(resolve, 1000));
     await deleteUsuario(deleteDialog.id);
-    setUsuarios((prev) => prev.filter((u) => u.id !== deleteDialog.id));
+    setUsuarios((prev) => prev.filter((u) => u.id_usuario !== deleteDialog.id));
     setIsDeleting(false);
     setDeleteDialog({ isOpen: false, id: null, nombre: '' });
     setToast({ isOpen: true, type: 'success', message: 'Usuario eliminado correctamente' });
@@ -54,8 +54,8 @@ export function useUsuarios() {
     if (!editData) return;
     setIsSaving(true);
     await new Promise((resolve) => setTimeout(resolve, 1000));
-    await updateUsuario(editData.id, editData);
-    setUsuarios((prev) => prev.map((u) => (u.id === editData.id ? editData : u)));
+    await updateUsuario(editData.id_usuario, editData);
+    setUsuarios((prev) => prev.map((u) => (u.id_usuario === editData.id_usuario ? editData : u)));
     setIsSaving(false);
     setShowEditModal(false);
     setEditData(null);

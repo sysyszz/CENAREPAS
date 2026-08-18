@@ -1,5 +1,6 @@
-import { Plus, Search, Edit, Trash2, Lock, Eye, FileDown, FileSpreadsheet, Users, UserCheck, Shield, Clock } from 'lucide-react';
+import { Plus, Search, Edit, Trash2, Lock, Eye, FileDown, FileSpreadsheet, Users, UserCheck } from 'lucide-react';
 import { useUsuarios } from '../hooks/useUsuarios';
+import { mockRoles } from '../../roles/services/rolesService';
 import { usePagination } from '../../../shared/hooks/usePagination';
 import { PaginationControls } from '../../../shared/components/PaginationControls';
 import { UsuarioFormModal } from '../components/UsuarioFormModal';
@@ -41,9 +42,8 @@ export default function UsuariosPage() {
   const pagination = usePagination(filteredUsuarios);
 
   const totalUsuarios = usuarios.length;
-  const usuariosActivos = usuarios.filter((u) => u.estado === 'Activo').length;
-  const adminCount = usuarios.filter((u) => u.rol?.includes('Admin')).length;
-  const supervisoresCount = usuarios.filter((u) => u.rol?.includes('Supervisor') || u.rol?.includes('Gestor')).length;
+  const usuariosActivos = usuarios.filter((u) => u.estado === 'activo').length;
+  const roleNames = Object.fromEntries(mockRoles.map((role) => [role.id_rol, role.nombre]));
 
   return (
     <div className="space-y-6">
@@ -92,24 +92,6 @@ export default function UsuariosPage() {
             <h3 className="text-xl font-bold">{usuariosActivos}</h3>
           </div>
         </div>
-        <div className="bg-card p-4 rounded-lg border border-border flex items-center gap-3">
-          <div className="p-3 bg-accent/10 rounded-lg text-primary">
-            <Shield className="w-5 h-5" />
-          </div>
-          <div>
-            <p className="text-sm text-muted-foreground">Administradores</p>
-            <h3 className="text-xl font-bold">{adminCount}</h3>
-          </div>
-        </div>
-        <div className="bg-card p-4 rounded-lg border border-border flex items-center gap-3">
-          <div className="p-3 bg-warning/10 rounded-lg text-warning">
-            <Clock className="w-5 h-5" />
-          </div>
-          <div>
-            <p className="text-sm text-muted-foreground">Supervisores/Gestores</p>
-            <h3 className="text-xl font-bold">{supervisoresCount}</h3>
-          </div>
-        </div>
       </div>
 
 
@@ -131,9 +113,11 @@ export default function UsuariosPage() {
             className="px-4 py-2 border border-input bg-input-background rounded-lg focus:outline-none focus:ring-2 focus:ring-ring"
           >
             <option>Todos los roles</option>
-            <option>Administrador</option>
-            <option>Vendedor</option>
-            <option>Almacenista</option>
+            <option value="1">Administrador de Planta</option>
+            <option value="2">Supervisor de Producción</option>
+            <option value="3">Gestor de Compras y Proveedores</option>
+            <option value="4">Vendedor y Distribución</option>
+            <option value="5">Auditor de Calidad</option>
           </select>
           <select
             value={filterEstado}
@@ -141,8 +125,8 @@ export default function UsuariosPage() {
             className="px-4 py-2 border border-input bg-input-background rounded-lg focus:outline-none focus:ring-2 focus:ring-ring"
           >
             <option>Todos los estados</option>
-            <option>Activo</option>
-            <option>Inactivo</option>
+            <option value="activo">Activo</option>
+            <option value="inactivo">Inactivo</option>
           </select>
         </div>
       </div>
@@ -153,9 +137,10 @@ export default function UsuariosPage() {
             <tr>
               <th className="text-left px-6 py-3">ID</th>
               <th className="text-left px-6 py-3">Nombre</th>
-              <th className="text-left px-6 py-3">Email</th>
+              <th className="text-left px-6 py-3">Correo</th>
               <th className="text-left px-6 py-3">Rol</th>
               <th className="text-left px-6 py-3">Estado</th>
+              <th className="text-left px-6 py-3">Fecha de Creación</th>
               <th className="text-left px-6 py-3">Acciones</th>
             </tr>
           </thead>
@@ -168,24 +153,25 @@ export default function UsuariosPage() {
               </tr>
             ) : (
               pagination.paginatedData.map((usuario) => (
-                <tr key={usuario.id} className="border-b border-border hover:bg-muted/50">
-                  <td className="px-6 py-4">{usuario.id}</td>
+                <tr key={usuario.id_usuario} className="border-b border-border hover:bg-muted/50">
+                  <td className="px-6 py-4">{usuario.id_usuario}</td>
                   <td className="px-6 py-4">{usuario.nombre}</td>
-                  <td className="px-6 py-4 text-muted-foreground">{usuario.email}</td>
+                  <td className="px-6 py-4 text-muted-foreground">{usuario.correo}</td>
                   <td className="px-6 py-4">
                     <span className="px-2 py-1 bg-primary/10 text-primary rounded text-sm">
-                      {usuario.rol}
+                      {roleNames[usuario.id_rol] || 'Rol no encontrado'}
                     </span>
                   </td>
                   <td className="px-6 py-4">
                     <span className={`px-2 py-1 rounded text-sm ${
-                      usuario.estado === 'Activo'
+                      usuario.estado === 'activo'
                         ? 'bg-success/10 text-success'
                         : 'bg-muted text-muted-foreground'
                     }`}>
                       {usuario.estado}
                     </span>
                   </td>
+                  <td className="px-6 py-4">{usuario.fecha_creacion}</td>
                   <td className="px-6 py-4">
                     <div className="flex items-center gap-2">
                       <button
@@ -206,7 +192,7 @@ export default function UsuariosPage() {
                         <Lock className="w-4 h-4" />
                       </button>
                       <button
-                        onClick={() => setDeleteDialog({ isOpen: true, id: usuario.id, nombre: usuario.nombre })}
+                        onClick={() => setDeleteDialog({ isOpen: true, id: usuario.id_usuario, nombre: usuario.nombre })}
                         className="p-2 hover:bg-muted rounded-lg text-destructive"
                         title="Eliminar"
                       >

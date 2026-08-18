@@ -1,7 +1,9 @@
 import { X } from 'lucide-react';
+import { mockRoles } from '../../roles/services/rolesService';
 
 export function UsuarioDetailModal({ open, usuario, onClose }) {
   if (!open || !usuario) return null;
+  const roleName = mockRoles.find((role) => role.id_rol === usuario.id_rol)?.nombre || 'Rol no encontrado';
 
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
@@ -21,7 +23,7 @@ export function UsuarioDetailModal({ open, usuario, onClose }) {
           <div className="space-y-3">
             <div className="border-b border-border pb-3">
               <p className="text-sm text-muted-foreground">ID</p>
-              <p className="font-medium">#{usuario.id}</p>
+              <p className="font-medium">#{usuario.id_usuario}</p>
             </div>
             <div className="border-b border-border pb-3">
               <p className="text-sm text-muted-foreground">Nombre Completo</p>
@@ -29,22 +31,18 @@ export function UsuarioDetailModal({ open, usuario, onClose }) {
             </div>
             <div className="border-b border-border pb-3">
               <p className="text-sm text-muted-foreground">Email</p>
-              <p className="font-medium">{usuario.email}</p>
-            </div>
-            <div className="border-b border-border pb-3">
-              <p className="text-sm text-muted-foreground">Teléfono</p>
-              <p className="font-medium">{usuario.telefono}</p>
+              <p className="font-medium">{usuario.correo}</p>
             </div>
             <div className="border-b border-border pb-3">
               <p className="text-sm text-muted-foreground">Rol</p>
               <span className="inline-block px-2 py-1 bg-primary/10 text-primary rounded text-sm">
-                {usuario.rol}
+                {roleName}
               </span>
             </div>
             <div className="border-b border-border pb-3">
               <p className="text-sm text-muted-foreground">Estado</p>
               <span className={`inline-block px-2 py-1 rounded text-sm ${
-                usuario.estado === 'Activo'
+                usuario.estado === 'activo'
                   ? 'bg-success/10 text-success'
                   : 'bg-muted text-muted-foreground'
               }`}>
@@ -53,7 +51,15 @@ export function UsuarioDetailModal({ open, usuario, onClose }) {
             </div>
             <div className="pb-3">
               <p className="text-sm text-muted-foreground">Fecha de Creación</p>
-              <p className="font-medium">{usuario.fechaCreacion}</p>
+              <p className="font-medium">{usuario.fecha_creacion}</p>
+            </div>
+            <div className="border-b border-border pb-3">
+              <p className="text-sm text-muted-foreground">Token de Recuperación</p>
+              <p className="font-medium">{usuario.token_recuperacion || 'Sin token'}</p>
+            </div>
+            <div className="pb-3">
+              <p className="text-sm text-muted-foreground">Expiración del Token</p>
+              <p className="font-medium">{usuario.token_expiracion || 'Sin expiración'}</p>
             </div>
           </div>
           <button
