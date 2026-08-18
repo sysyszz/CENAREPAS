@@ -10,15 +10,14 @@ export function ProduccionFormModal({ open, onClose }) {
             <label className="block mb-2">Ficha Técnica (Receta)</label>
             <select className="w-full px-4 py-2 border border-input bg-input-background rounded-lg focus:outline-none focus:ring-2 focus:ring-ring">
               <option>Seleccionar receta</option>
-              <option>Pan Francés</option>
-              <option>Torta de Chocolate</option>
-              <option>Croissant</option>
+              <option value="1">Arepa de Chócolo con Queso</option><option value="2">Arepa Telita Tradicional</option>
             </select>
           </div>
           <div>
             <label className="block mb-2">Cantidad a Producir</label>
-            <input type="number" placeholder="Número de unidades" className="w-full px-4 py-2 border border-input bg-input-background rounded-lg focus:outline-none focus:ring-2 focus:ring-ring" />
+            <input type="number" min="0" required placeholder="Cantidad producida" className="w-full px-4 py-2 border border-input bg-input-background rounded-lg focus:outline-none focus:ring-2 focus:ring-ring" />
           </div>
+          <div><label className="block mb-2">Usuario Responsable ID</label><input type="number" min="1" required className="w-full px-4 py-2 border border-input bg-input-background rounded-lg" /></div><div><label className="block mb-2">Fecha de Producción</label><input type="date" className="w-full px-4 py-2 border border-input bg-input-background rounded-lg" /></div><div><label className="block mb-2">Estado</label><select defaultValue="en_proceso" className="w-full px-4 py-2 border border-input bg-input-background rounded-lg"><option value="en_proceso">En proceso</option><option value="finalizado">Finalizado</option></select></div><div><label className="block mb-2">Observaciones</label><textarea maxLength={255} className="w-full px-4 py-2 border border-input bg-input-background rounded-lg" /></div>
           <div className="p-4 bg-accent/10 rounded-lg">
             <h4 className="mb-2">Insumos Requeridos</h4>
             <div className="space-y-1 text-sm">

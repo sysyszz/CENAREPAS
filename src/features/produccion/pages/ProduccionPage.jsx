@@ -105,7 +105,7 @@ export default function ProduccionPage() {
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
           <input
             type="search"
-            placeholder="Buscar por código de lote, producto o supervisor..."
+            placeholder="Buscar por ID de lote, ficha o usuario responsable..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             className="w-full pl-10 pr-4 py-2 border border-input bg-input-background rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-ring"
@@ -134,7 +134,7 @@ export default function ProduccionPage() {
               <th className="px-6 py-3">Cantidad Prog.</th>
               <th className="px-6 py-3">Obtenida</th>
               <th className="px-6 py-3">Fecha</th>
-              <th className="px-6 py-3">Supervisor</th>
+              <th className="px-6 py-3">Usuario Responsable</th>
               <th className="px-6 py-3">Estado</th>
               <th className="px-6 py-3">Acciones</th>
             </tr>
@@ -142,13 +142,8 @@ export default function ProduccionPage() {
           <tbody className="divide-y divide-border">
             {lotes.length > 0 ? (
               pagination.paginatedData.map((lote) => (
-                <tr key={lote.id} className="hover:bg-muted/50 transition-colors">
-                  <td className="px-6 py-4 font-mono font-medium">{lote.codigo}</td>
-                  <td className="px-6 py-4 font-semibold">{lote.producto}</td>
-                  <td className="px-6 py-4">{lote.cantidadProgramada}</td>
-                  <td className="px-6 py-4 text-muted-foreground">{lote.cantidadObtenida}</td>
-                  <td className="px-6 py-4 text-muted-foreground">{lote.fechaProduccion}</td>
-                  <td className="px-6 py-4 text-muted-foreground">{lote.supervisor}</td>
+                <tr key={lote.id_lote} className="hover:bg-muted/50 transition-colors">
+                  <td className="px-6 py-4 font-mono font-medium">{lote.id_lote}</td><td className="px-6 py-4">{lote.id_ficha}</td><td className="px-6 py-4">{lote.id_usuario_responsable}</td><td className="px-6 py-4">{lote.cantidad_producida}</td><td className="px-6 py-4 text-muted-foreground">{lote.fecha_produccion}</td>
                   <td className="px-6 py-4">
                     <span
                       className={`px-2.5 py-1 rounded-full text-xs font-medium ${
@@ -182,7 +177,7 @@ export default function ProduccionPage() {
                       </button>
                       {lote.estado !== 'Anulado' && (
                         <button
-                          onClick={() => setDeleteDialog({ isOpen: true, id: lote.id, nombre: lote.codigo })}
+                          onClick={() => setDeleteDialog({ isOpen: true, id: lote.id_lote, nombre: lote.id_lote })}
                           className="p-2 hover:bg-muted rounded-lg text-destructive"
                           title="Anular Lote"
                         >
@@ -210,13 +205,7 @@ export default function ProduccionPage() {
           <div className="bg-card p-6 rounded-lg max-w-md w-full border border-border space-y-4">
             <h3 className="text-lg font-bold">Detalle del Lote de Producción</h3>
             <div className="space-y-2 text-sm">
-              <p><strong>Código de Lote:</strong> {detailModal.data.codigo}</p>
-              <p><strong>Producto:</strong> {detailModal.data.producto}</p>
-              <p><strong>Cantidad Programada:</strong> {detailModal.data.cantidadProgramada}</p>
-              <p><strong>Cantidad Obtenida:</strong> {detailModal.data.cantidadObtenida}</p>
-              <p><strong>Fecha de Producción:</strong> {detailModal.data.fechaProduccion}</p>
-              <p><strong>Turno de Trabajo:</strong> {detailModal.data.turno}</p>
-              <p><strong>Supervisor Responsable:</strong> {detailModal.data.supervisor}</p>
+              <p><strong>ID:</strong> {detailModal.data.id_lote}</p><p><strong>Ficha ID:</strong> {detailModal.data.id_ficha}</p><p><strong>Usuario Responsable ID:</strong> {detailModal.data.id_usuario_responsable}</p><p><strong>Fecha:</strong> {detailModal.data.fecha_produccion}</p><p><strong>Cantidad:</strong> {detailModal.data.cantidad_producida}</p><p><strong>Observaciones:</strong> {detailModal.data.observaciones}</p>
               <p><strong>Estado:</strong> {detailModal.data.estado}</p>
             </div>
             <div className="flex justify-end pt-4">

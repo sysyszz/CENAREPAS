@@ -17,9 +17,9 @@ export function useProduccion() {
 
   const filteredLotes = lotes.filter((l) => {
     const matchesSearch =
-      l.codigo.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      l.producto.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      l.supervisor.toLowerCase().includes(searchQuery.toLowerCase());
+      String(l.id_lote).includes(searchQuery.toLowerCase()) ||
+      String(l.id_ficha).includes(searchQuery.toLowerCase()) ||
+      String(l.id_usuario_responsable).includes(searchQuery.toLowerCase());
     const matchesEstado = estadoFilter === 'Todos' || l.estado === estadoFilter;
     return matchesSearch && matchesEstado;
   });
@@ -29,7 +29,7 @@ export function useProduccion() {
     setIsDeleting(true);
     await new Promise((resolve) => setTimeout(resolve, 500));
     await anularLote(deleteDialog.id);
-    setLotes((prev) => prev.map((l) => (l.id === deleteDialog.id ? { ...l, estado: 'Anulado' } : l)));
+    setLotes((prev) => prev.map((l) => (l.id_lote === deleteDialog.id ? { ...l, estado: 'anulado' } : l)));
     setIsDeleting(false);
     setDeleteDialog({ isOpen: false, id: null, nombre: '' });
     setToast({ isOpen: true, type: 'success', message: 'Lote de producción anulado correctamente' });
