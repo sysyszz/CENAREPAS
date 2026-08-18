@@ -29,8 +29,8 @@ export default function ClientesPage() {
 
   const totalClientes = rawClientes.length;
   const activos = rawClientes.filter((c) => c.estado === 'Activo').length;
-  const totalPedidosHistorico = rawClientes.reduce((acc, c) => acc + (c.pedidosRealizados || 0), 0);
-  const totalFacturadoHistorico = rawClientes.reduce((acc, c) => acc + (c.totalCompradoNum || 0), 0);
+  const totalPedidosHistorico = 0;
+  const totalFacturadoHistorico = 0;
 
   return (
     <div className="space-y-6">
