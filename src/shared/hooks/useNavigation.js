@@ -5,7 +5,7 @@ export function useNavigation() {
 
   const goToAdmin = () => navigate('/admin');
 
-  const scrollTo = (sectionId: string) => {
+  const scrollTo = (sectionId) => {
     const section = document.getElementById(sectionId);
     if (section) {
       section.scrollIntoView({ behavior: 'smooth', block: 'start' });
