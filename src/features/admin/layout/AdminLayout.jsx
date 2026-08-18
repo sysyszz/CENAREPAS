@@ -16,7 +16,9 @@ export default function AdminLayout({ onLogout }) {
       <div className="flex-1 flex flex-col overflow-hidden">
         <Header onLogout={onLogout} />
         <main className="flex-1 overflow-auto p-6">
-          <Outlet />
+          <div className="mx-auto w-full max-w-screen-2xl">
+            <Outlet />
+          </div>
         </main>
       </div>
     </div>
