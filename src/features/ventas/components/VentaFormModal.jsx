@@ -9,14 +9,12 @@ export function VentaFormModal({ open, onClose }) {
         <h2 className="mb-4">Nueva Venta</h2>
         <div className="space-y-4">
           <div>
-            <label className="block mb-2">Cliente (Opcional)</label>
+            <label className="block mb-2">Cliente</label>
             <select className="w-full px-4 py-2 border border-input bg-input-background rounded-lg focus:outline-none focus:ring-2 focus:ring-ring">
-              <option>Cliente Genérico</option>
-              <option>Juan Pérez</option>
-              <option>María García</option>
-              <option>Carlos López</option>
+              <option value="1">Supermercados Mercacentro S.A.</option><option value="2">Tiendas D1 Regional Tolima</option>
             </select>
           </div>
+          <div><label className="block mb-2">Sede ID</label><input type="number" min="1" required className="w-full px-4 py-2 border border-input bg-input-background rounded-lg" /></div><div><label className="block mb-2">Usuario ID</label><input type="number" min="1" required className="w-full px-4 py-2 border border-input bg-input-background rounded-lg" /></div><div><label className="block mb-2">Pedido ID</label><input type="number" min="1" className="w-full px-4 py-2 border border-input bg-input-background rounded-lg" /></div>
           <div>
             <label className="block mb-4">Productos</label>
             <div className="space-y-2 mb-4">
@@ -40,6 +38,7 @@ export function VentaFormModal({ open, onClose }) {
               </div>
             </div>
           </div>
+          <div><label className="block mb-2">Fecha de Venta</label><input type="datetime-local" className="w-full px-4 py-2 border border-input bg-input-background rounded-lg" /></div><div><label className="block mb-2">Medio de Pago</label><input type="text" maxLength={20} className="w-full px-4 py-2 border border-input bg-input-background rounded-lg" /></div><div><label className="block mb-2">Comprobante URL</label><input type="url" maxLength={255} className="w-full px-4 py-2 border border-input bg-input-background rounded-lg" /></div><div><label className="block mb-2">Estado</label><select defaultValue="completada" className="w-full px-4 py-2 border border-input bg-input-background rounded-lg"><option value="completada">Completada</option><option value="anulada">Anulada</option></select></div>
           <div className="flex gap-2 pt-4">
             <button onClick={onClose} className="flex-1 px-4 py-2 border border-border rounded-lg hover:bg-muted">
               Cancelar

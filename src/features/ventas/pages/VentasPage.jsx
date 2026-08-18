@@ -136,23 +136,15 @@ export default function VentasPage() {
         <table className="w-full">
           <thead className="bg-muted">
             <tr>
-              <th className="text-left px-6 py-3">Código</th>
-              <th className="text-left px-6 py-3">Cliente</th>
-              <th className="text-left px-6 py-3">Fecha</th>
-              <th className="text-left px-6 py-3">Hora</th>
-              <th className="text-left px-6 py-3">Total</th>
+              <th className="text-left px-6 py-3">ID</th><th className="text-left px-6 py-3">Sede ID</th><th className="text-left px-6 py-3">Cliente ID</th><th className="text-left px-6 py-3">Usuario ID</th><th className="text-left px-6 py-3">Fecha Venta</th><th className="text-left px-6 py-3">Valor Total</th>
               <th className="text-left px-6 py-3">Estado</th>
               <th className="text-left px-6 py-3">Acciones</th>
             </tr>
           </thead>
           <tbody>
             {pagination.paginatedData.map((venta) => (
-              <tr key={venta.id} className="border-b border-border hover:bg-muted/50">
-                <td className="px-6 py-4">{venta.codigo}</td>
-                <td className="px-6 py-4">{venta.cliente}</td>
-                <td className="px-6 py-4 text-muted-foreground">{venta.fecha}</td>
-                <td className="px-6 py-4 text-muted-foreground">{venta.hora}</td>
-                <td className="px-6 py-4">{venta.total}</td>
+              <tr key={venta.id_venta} className="border-b border-border hover:bg-muted/50">
+                <td className="px-6 py-4">{venta.id_venta}</td><td className="px-6 py-4">{venta.id_sede}</td><td className="px-6 py-4">{venta.id_cliente}</td><td className="px-6 py-4">{venta.id_usuario}</td><td className="px-6 py-4">{venta.fecha_venta}</td><td className="px-6 py-4">{venta.valor_total}</td>
                 <td className="px-6 py-4">
                   <span className={`px-2 py-1 rounded text-sm ${
                     venta.estado === 'Completada'
@@ -169,7 +161,7 @@ export default function VentasPage() {
                     </button>
                     {venta.estado !== 'Anulada' && (
                       <button
-                        onClick={() => setDeleteDialog({ isOpen: true, id: venta.id, nombre: venta.codigo })}
+                        onClick={() => setDeleteDialog({ isOpen: true, id: venta.id_venta, nombre: venta.id_venta })}
                         className="p-2 hover:bg-muted rounded-lg text-destructive"
                       >
                         <XCircle className="w-4 h-4" />

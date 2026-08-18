@@ -16,8 +16,8 @@ export function useVentas() {
     setIsDeleting(true);
     await new Promise(resolve => setTimeout(resolve, 1000));
 
-    await updateVenta(deleteDialog.id, { estado: 'Anulada' });
-    setVentas(ventas.map(v => v.id === deleteDialog.id ? { ...v, estado: 'Anulada' } : v));
+    await updateVenta(deleteDialog.id, { estado: 'anulada' });
+    setVentas(ventas.map(v => v.id_venta === deleteDialog.id ? { ...v, estado: 'anulada' } : v));
     setIsDeleting(false);
     setDeleteDialog({ isOpen: false, id: null, nombre: '' });
     setToast({ isOpen: true, type: 'success', message: 'Venta anulada correctamente' });
