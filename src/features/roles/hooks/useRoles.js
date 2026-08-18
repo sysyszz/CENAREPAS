@@ -19,8 +19,7 @@ export function useRoles() {
   const filteredRoles = roles.filter((r) => {
     const matchesSearch =
       r.nombre.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      r.codigo.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      r.descripcion.toLowerCase().includes(searchQuery.toLowerCase());
+      (r.descripcion || '').toLowerCase().includes(searchQuery.toLowerCase());
     const matchesEstado = estadoFilter === 'Todos' || r.estado === estadoFilter;
     return matchesSearch && matchesEstado;
   });
@@ -30,7 +29,7 @@ export function useRoles() {
     setIsDeleting(true);
     await new Promise((resolve) => setTimeout(resolve, 500));
     await deleteRol(deleteDialog.id);
-    setRoles((prev) => prev.filter((r) => r.id !== deleteDialog.id));
+    setRoles((prev) => prev.filter((r) => r.id_rol !== deleteDialog.id));
     setIsDeleting(false);
     setDeleteDialog({ isOpen: false, id: null, nombre: '' });
     setToast({ isOpen: true, type: 'success', message: 'Rol eliminado correctamente' });
