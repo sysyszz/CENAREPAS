@@ -41,7 +41,7 @@ export function ProveedorEditModal({ open, editData, setEditData, onClose, onSav
             />
           </div>
           <div>
-            <label className="block mb-2">Email</label>
+            <label className="block mb-2">Correo</label>
             <input
               type="email"
               value={editData.correo}
