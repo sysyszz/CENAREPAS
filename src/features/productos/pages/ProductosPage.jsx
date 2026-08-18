@@ -141,10 +141,10 @@ export default function ProductosPage() {
         <table className="w-full text-sm text-left">
           <thead className="bg-muted text-muted-foreground font-semibold">
             <tr>
-              <th className="px-6 py-3">Código</th>
+              <th className="px-6 py-3">ID</th>
               <th className="px-6 py-3">Producto</th>
               <th className="px-6 py-3">Categoría</th>
-              <th className="px-6 py-3">Presentación</th>
+              <th className="px-6 py-3">Descripción</th>
               <th className="px-6 py-3">Precio</th>
               <th className="px-6 py-3">Stock</th>
               <th className="px-6 py-3">Estado</th>
@@ -154,13 +154,13 @@ export default function ProductosPage() {
           <tbody className="divide-y divide-border">
             {filteredProductos.length > 0 ? (
               pagination.paginatedData.map((producto) => (
-                <tr key={producto.id} className="hover:bg-muted/50 transition-colors">
-                  <td className="px-6 py-4 font-mono font-medium">{producto.codigo}</td>
+                <tr key={producto.id_producto} className="hover:bg-muted/50 transition-colors">
+                  <td className="px-6 py-4 font-mono font-medium">{producto.id_producto}</td>
                   <td className="px-6 py-4 font-semibold">{producto.nombre}</td>
                   <td className="px-6 py-4 text-muted-foreground">{producto.categoria}</td>
-                  <td className="px-6 py-4 text-muted-foreground">{producto.unidadMedida}</td>
-                  <td className="px-6 py-4 font-medium">{producto.precio}</td>
-                  <td className="px-6 py-4 font-semibold">{producto.stock} un.</td>
+                  <td className="px-6 py-4 text-muted-foreground">{producto.descripcion}</td>
+                  <td className="px-6 py-4 font-medium">{producto.precio_venta}</td>
+                  <td className="px-6 py-4 font-semibold">{producto.stock_actual}</td>
                   <td className="px-6 py-4">
                     <span
                       className={`px-2.5 py-1 rounded-full text-xs font-medium ${
@@ -189,7 +189,7 @@ export default function ProductosPage() {
                         <Edit className="w-4 h-4" />
                       </button>
                       <button
-                        onClick={() => setDeleteDialog({ isOpen: true, id: producto.id, nombre: producto.nombre })}
+                        onClick={() => setDeleteDialog({ isOpen: true, id: producto.id_producto, nombre: producto.nombre })}
                         className="p-2 hover:bg-muted rounded-lg text-destructive"
                         title="Eliminar"
                       >
@@ -218,13 +218,13 @@ export default function ProductosPage() {
           <div className="bg-card p-6 rounded-lg max-w-md w-full border border-border space-y-4">
             <h3 className="text-lg font-bold">Detalle del Producto</h3>
             <div className="space-y-2 text-sm">
-              <p><strong>Código:</strong> {detailModal.data.codigo}</p>
+              <p><strong>ID:</strong> {detailModal.data.id_producto}</p>
               <p><strong>Nombre:</strong> {detailModal.data.nombre}</p>
               <p><strong>Categoría:</strong> {detailModal.data.categoria}</p>
-              <p><strong>Presentación:</strong> {detailModal.data.unidadMedida}</p>
-              <p><strong>Precio Unitario:</strong> {detailModal.data.precio}</p>
-              <p><strong>Stock Actual:</strong> {detailModal.data.stock} paquetes</p>
-              <p><strong>Stock Mínimo:</strong> {detailModal.data.stockMinimo} paquetes</p>
+              <p><strong>Descripción:</strong> {detailModal.data.descripcion}</p>
+              <p><strong>Precio de Venta:</strong> {detailModal.data.precio_venta}</p>
+              <p><strong>Stock Actual:</strong> {detailModal.data.stock_actual}</p>
+              <p><strong>Stock Mínimo:</strong> {detailModal.data.stock_minimo}</p>
               <p><strong>Estado:</strong> {detailModal.data.estado}</p>
             </div>
             <div className="flex justify-end pt-4">
