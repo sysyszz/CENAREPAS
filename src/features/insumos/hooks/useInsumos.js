@@ -19,9 +19,8 @@ export function useInsumos() {
   const filteredInsumos = insumos.filter((i) => {
     const matchesSearch =
       i.nombre.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      i.codigo.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      i.proveedor.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesCat = categoriaFilter === 'Todas' || i.categoria === categoriaFilter;
+      String(i.id_proveedor).includes(searchQuery.toLowerCase());
+    const matchesCat = categoriaFilter === 'Todas' || String(i.id_proveedor) === categoriaFilter;
     const matchesEstado = estadoFilter === 'Todos' || i.estado === estadoFilter;
     return matchesSearch && matchesCat && matchesEstado;
   });
@@ -31,7 +30,7 @@ export function useInsumos() {
     setIsDeleting(true);
     await new Promise((resolve) => setTimeout(resolve, 500));
     await deleteInsumo(deleteDialog.id);
-    setInsumos((prev) => prev.filter((i) => i.id !== deleteDialog.id));
+    setInsumos((prev) => prev.filter((i) => i.id_insumo !== deleteDialog.id));
     setIsDeleting(false);
     setDeleteDialog({ isOpen: false, id: null, nombre: '' });
     setToast({ isOpen: true, type: 'success', message: 'Insumo eliminado correctamente' });
