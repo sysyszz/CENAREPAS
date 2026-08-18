@@ -7,12 +7,17 @@ export function ClienteFormModal({ open, onClose }) {
         <h2 className="mb-4 text-lg font-semibold">Nuevo Cliente</h2>
         <div className="space-y-4">
           <div>
-            <label className="block mb-2 text-sm font-medium">Nombre Completo</label>
+            <label className="block mb-2 text-sm font-medium">Nombre</label>
             <input
               type="text"
               className="w-full px-4 py-2 border border-input bg-input-background rounded-lg focus:outline-none focus:ring-2 focus:ring-ring text-sm"
-              placeholder="Juan Pérez"
+              maxLength={150}
+              required
             />
+          </div>
+          <div>
+            <label className="block mb-2 text-sm font-medium">Documento</label>
+            <input type="text" maxLength={20} required className="w-full px-4 py-2 border border-input bg-input-background rounded-lg focus:outline-none focus:ring-2 focus:ring-ring text-sm" />
           </div>
           <div>
             <label className="block mb-2 text-sm font-medium">Teléfono</label>
@@ -23,11 +28,11 @@ export function ClienteFormModal({ open, onClose }) {
             />
           </div>
           <div>
-            <label className="block mb-2 text-sm font-medium">Email</label>
+            <label className="block mb-2 text-sm font-medium">Correo</label>
             <input
               type="email"
               className="w-full px-4 py-2 border border-input bg-input-background rounded-lg focus:outline-none focus:ring-2 focus:ring-ring text-sm"
-              placeholder="juan@example.com"
+              maxLength={150}
             />
           </div>
           <div>
@@ -35,8 +40,15 @@ export function ClienteFormModal({ open, onClose }) {
             <textarea
               rows={2}
               className="w-full px-4 py-2 border border-input bg-input-background rounded-lg focus:outline-none focus:ring-2 focus:ring-ring text-sm"
-              placeholder="Dirección del cliente"
+              maxLength={255}
             />
+          </div>
+          <div>
+            <label className="block mb-2 text-sm font-medium">Estado</label>
+            <select defaultValue="activo" className="w-full px-4 py-2 border border-input bg-input-background rounded-lg text-sm">
+              <option value="activo">Activo</option>
+              <option value="inactivo">Inactivo</option>
+            </select>
           </div>
           <div className="flex gap-2 pt-4">
             <button

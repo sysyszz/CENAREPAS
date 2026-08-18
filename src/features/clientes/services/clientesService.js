@@ -1,60 +1,44 @@
 // clientesService.js - Servicio para la gestión de clientes en Masarepas
 export const mockClientes = [
   {
-    id: 1,
-    codigo: "CLI-001",
+    id_cliente: 1,
     nombre: "Supermercados Mercacentro S.A.",
-    nit: "890.701.234-1",
+    documento: "8907012341",
     telefono: "+57 (608) 261-0000",
-    email: "compras@mercacentro.com.co",
-    ciudad: "Ibagué",
-    tipoCliente: "Cadena de Supermercados",
-    pedidosRealizados: 48,
-    totalComprado: "$125.000.000",
-    totalCompradoNum: 125000000,
-    estado: "Activo",
+    correo: "compras@mercacentro.com.co",
+    direccion: "Ibagué",
+    estado: "activo",
+    fecha_creacion: "2024-01-15T00:00:00",
   },
   {
-    id: 2,
-    codigo: "CLI-002",
+    id_cliente: 2,
     nombre: "Tiendas D1 Regional Tolima",
-    nit: "900.234.567-8",
+    documento: "9002345678",
     telefono: "+57 (601) 742-0000",
-    email: "proveedores@koba-group.com",
-    ciudad: "Ibagué / Espinal",
-    tipoCliente: "Cadena de Descuento",
-    pedidosRealizados: 85,
-    totalComprado: "$240.000.000",
-    totalCompradoNum: 240000000,
-    estado: "Activo",
+    correo: "proveedores@koba-group.com",
+    direccion: "Ibagué / Espinal",
+    estado: "activo",
+    fecha_creacion: "2024-01-20T00:00:00",
   },
   {
-    id: 3,
-    codigo: "CLI-003",
+    id_cliente: 3,
     nombre: "Distribuidora Arepas Don Juan",
-    nit: "901.112.334-5",
+    documento: "9011123345",
     telefono: "+57 312 456 7890",
-    email: "ventas@donjuanarepas.com",
-    ciudad: "Espinal",
-    tipoCliente: "Distribuidor Mayorista",
-    pedidosRealizados: 32,
-    totalComprado: "$45.800.000",
-    totalCompradoNum: 45800000,
-    estado: "Activo",
+    correo: "ventas@donjuanarepas.com",
+    direccion: "Espinal",
+    estado: "activo",
+    fecha_creacion: "2024-02-01T00:00:00",
   },
   {
-    id: 4,
-    codigo: "CLI-004",
+    id_cliente: 4,
     nombre: "Restaurantes El Arriero Tradicional",
-    nit: "800.556.778-9",
+    documento: "8005567789",
     telefono: "+57 310 987 6543",
-    email: "contacto@elarrierorestaurante.com",
-    ciudad: "Girardot",
-    tipoCliente: "HORECA / Institucional",
-    pedidosRealizados: 19,
-    totalComprado: "$18.200.000",
-    totalCompradoNum: 18200000,
-    estado: "Activo",
+    correo: "contacto@elarrierorestaurante.com",
+    direccion: "Girardot",
+    estado: "activo",
+    fecha_creacion: "2024-02-10T00:00:00",
   },
 ];
 
@@ -62,7 +46,7 @@ export const getClientes = async () => {
   return [...mockClientes];
 };
 
-export const createCliente = async (cliente) => ({ id: Date.now(), ...cliente });
-export const updateCliente = async (id, cliente) => ({ id, ...cliente });
-export const deleteCliente = async (id) => true;
+export const createCliente = async (cliente) => ({ id_cliente: Date.now(), ...cliente });
+export const updateCliente = async (id_cliente, cliente) => ({ id_cliente, ...cliente });
+export const deleteCliente = async (id_cliente) => true;
 

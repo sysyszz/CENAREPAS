@@ -18,9 +18,8 @@ export function useClientes() {
   const filteredClientes = clientes.filter((c) => {
     const matchesSearch =
       c.nombre.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      c.codigo.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      c.ciudad.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      c.nit.toLowerCase().includes(searchQuery.toLowerCase());
+      c.documento.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      (c.correo || '').toLowerCase().includes(searchQuery.toLowerCase());
     const matchesEstado = estadoFilter === 'Todos' || c.estado === estadoFilter;
     return matchesSearch && matchesEstado;
   });
@@ -30,7 +29,7 @@ export function useClientes() {
     setIsDeleting(true);
     await new Promise((resolve) => setTimeout(resolve, 500));
     await deleteCliente(deleteDialog.id);
-    setClientes((prev) => prev.filter((c) => c.id !== deleteDialog.id));
+    setClientes((prev) => prev.filter((c) => c.id_cliente !== deleteDialog.id));
     setIsDeleting(false);
     setDeleteDialog({ isOpen: false, id: null, nombre: '' });
     setToast({ isOpen: true, type: 'success', message: 'Cliente eliminado correctamente' });
