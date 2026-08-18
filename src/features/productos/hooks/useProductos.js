@@ -19,8 +19,8 @@ export function useProductos() {
   const filteredProductos = productos.filter((producto) => {
     const matchesSearch =
       producto.nombre.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      producto.codigo.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesCategoria = filterCategoria === 'Todas las categorías' || producto.categoria === filterCategoria;
+      producto.descripcion.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesCategoria = filterCategoria === 'Todas las categorías' || String(producto.id_categoria) === filterCategoria;
     const matchesEstado = filterEstado === 'Todos los estados' || producto.estado === filterEstado;
 
     return matchesSearch && matchesCategoria && matchesEstado;
@@ -31,7 +31,7 @@ export function useProductos() {
     setIsDeleting(true);
     await new Promise((resolve) => setTimeout(resolve, 500));
     await deleteProducto(deleteDialog.id);
-    setProductos((prev) => prev.filter((p) => p.id !== deleteDialog.id));
+    setProductos((prev) => prev.filter((p) => p.id_producto !== deleteDialog.id));
     setIsDeleting(false);
     setDeleteDialog({ isOpen: false, id: null, nombre: '' });
     setToast({ isOpen: true, type: 'success', message: 'Producto eliminado correctamente' });
