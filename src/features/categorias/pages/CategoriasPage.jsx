@@ -29,7 +29,7 @@ export default function CategoriasPage() {
 
   const totalCategorias = rawCategorias.length;
   const activas = rawCategorias.filter((c) => c.estado === 'Activo').length;
-  const totalProductosAsignados = rawCategorias.reduce((acc, c) => acc + (c.productosCount || 0), 0);
+  const totalProductosAsignados = 0;
   const promedioProductos = totalCategorias > 0 ? (totalProductosAsignados / totalCategorias).toFixed(1) : 0;
 
   return (
