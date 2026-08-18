@@ -1,4 +1,4 @@
-import { Plus, Search, Edit, Trash2, Lock, Eye } from 'lucide-react';
+import { Plus, Search, Edit, Trash2, Lock, Eye, FileDown, FileSpreadsheet, Users, UserCheck, Shield, Clock } from 'lucide-react';
 import { useUsuarios } from '../hooks/useUsuarios';
 import { UsuarioFormModal } from '../components/UsuarioFormModal';
 import { UsuarioDetailModal } from '../components/UsuarioDetailModal';
@@ -37,21 +37,78 @@ export default function UsuariosPage() {
     handleSaveEdit,
   } = useUsuarios();
 
+  const totalUsuarios = usuarios.length;
+  const usuariosActivos = usuarios.filter((u) => u.estado === 'Activo').length;
+  const adminCount = usuarios.filter((u) => u.rol?.includes('Admin')).length;
+  const supervisoresCount = usuarios.filter((u) => u.rol?.includes('Supervisor') || u.rol?.includes('Gestor')).length;
+
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      {/* Header con Exportación */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1>Usuarios</h1>
-          <p className="text-muted-foreground">Gestión de usuarios del sistema</p>
+          <h1 className="text-2xl font-bold">Usuarios</h1>
+          <p className="text-muted-foreground">Gestión de usuarios y accesos del sistema Masarepas</p>
         </div>
-        <button
-          onClick={() => setShowModal(true)}
-          className="flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:opacity-90"
-        >
-          <Plus className="w-5 h-5" />
-          Nuevo Usuario
-        </button>
+        <div className="flex items-center gap-2">
+          <button className="flex items-center gap-2 px-4 py-2 border border-border rounded-lg hover:bg-muted text-sm font-medium transition-colors">
+            <FileDown className="w-4 h-4" />
+            Exportar PDF
+          </button>
+          <button className="flex items-center gap-2 px-4 py-2 border border-border rounded-lg hover:bg-muted text-sm font-medium transition-colors">
+            <FileSpreadsheet className="w-4 h-4" />
+            Exportar Excel
+          </button>
+          <button
+            onClick={() => setShowModal(true)}
+            className="flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:opacity-90 text-sm font-medium transition-colors"
+          >
+            <Plus className="w-4 h-4" />
+            Nuevo Usuario
+          </button>
+        </div>
       </div>
+
+      {/* Tarjetas de Consolidado */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
+        <div className="bg-card p-4 rounded-lg border border-border flex items-center gap-3">
+          <div className="p-3 bg-primary/10 rounded-lg text-primary">
+            <Users className="w-5 h-5" />
+          </div>
+          <div>
+            <p className="text-sm text-muted-foreground">Total Usuarios</p>
+            <h3 className="text-xl font-bold">{totalUsuarios}</h3>
+          </div>
+        </div>
+        <div className="bg-card p-4 rounded-lg border border-border flex items-center gap-3">
+          <div className="p-3 bg-success/10 rounded-lg text-success">
+            <UserCheck className="w-5 h-5" />
+          </div>
+          <div>
+            <p className="text-sm text-muted-foreground">Usuarios Activos</p>
+            <h3 className="text-xl font-bold">{usuariosActivos}</h3>
+          </div>
+        </div>
+        <div className="bg-card p-4 rounded-lg border border-border flex items-center gap-3">
+          <div className="p-3 bg-accent/10 rounded-lg text-primary">
+            <Shield className="w-5 h-5" />
+          </div>
+          <div>
+            <p className="text-sm text-muted-foreground">Administradores</p>
+            <h3 className="text-xl font-bold">{adminCount}</h3>
+          </div>
+        </div>
+        <div className="bg-card p-4 rounded-lg border border-border flex items-center gap-3">
+          <div className="p-3 bg-warning/10 rounded-lg text-warning">
+            <Clock className="w-5 h-5" />
+          </div>
+          <div>
+            <p className="text-sm text-muted-foreground">Supervisores/Gestores</p>
+            <h3 className="text-xl font-bold">{supervisoresCount}</h3>
+          </div>
+        </div>
+      </div>
+
 
       <div className="bg-card p-4 rounded-lg border border-border">
         <div className="flex gap-4">
