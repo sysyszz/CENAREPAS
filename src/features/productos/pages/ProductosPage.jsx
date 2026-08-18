@@ -32,7 +32,7 @@ export default function ProductosPage() {
   const totalProductos = productos.length;
   const disponibles = productos.filter((p) => p.estado === 'Disponible').length;
   const bajoStock = productos.filter((p) => p.estado === 'Bajo Stock').length;
-  const valorInventario = productos.reduce((acc, p) => acc + (p.precioNum * p.stock), 0);
+  const valorInventario = productos.reduce((acc, p) => acc + (p.precio_venta * p.stock_actual), 0);
 
   return (
     <div className="space-y-6">
@@ -157,7 +157,7 @@ export default function ProductosPage() {
                 <tr key={producto.id_producto} className="hover:bg-muted/50 transition-colors">
                   <td className="px-6 py-4 font-mono font-medium">{producto.id_producto}</td>
                   <td className="px-6 py-4 font-semibold">{producto.nombre}</td>
-                  <td className="px-6 py-4 text-muted-foreground">{producto.categoria}</td>
+                  <td className="px-6 py-4 text-muted-foreground">{producto.id_categoria}</td>
                   <td className="px-6 py-4 text-muted-foreground">{producto.descripcion}</td>
                   <td className="px-6 py-4 font-medium">{producto.precio_venta}</td>
                   <td className="px-6 py-4 font-semibold">{producto.stock_actual}</td>
@@ -220,7 +220,7 @@ export default function ProductosPage() {
             <div className="space-y-2 text-sm">
               <p><strong>ID:</strong> {detailModal.data.id_producto}</p>
               <p><strong>Nombre:</strong> {detailModal.data.nombre}</p>
-              <p><strong>Categoría:</strong> {detailModal.data.categoria}</p>
+              <p><strong>Categoría ID:</strong> {detailModal.data.id_categoria}</p>
               <p><strong>Descripción:</strong> {detailModal.data.descripcion}</p>
               <p><strong>Precio de Venta:</strong> {detailModal.data.precio_venta}</p>
               <p><strong>Stock Actual:</strong> {detailModal.data.stock_actual}</p>
