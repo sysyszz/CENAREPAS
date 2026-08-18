@@ -1,48 +1,14 @@
 // comprasService.js - Servicio para la gestión de compras en Masarepas
 export const mockCompras = [
   {
-    id: 1,
-    codigo: "CMP-2024-001",
-    proveedor: "Agrícola del Valle S.A.",
-    insumo: "Maíz Blanco Trillado (100 sacos)",
-    fecha: "2024-03-10",
-    total: "$14.500.000",
-    totalNum: 14500000,
-    comprador: "Jorge Eliecer Restrepo",
-    estado: "Recibida",
+    id_compra: 1, id_proveedor: 1, id_usuario: 3, fecha_compra: "2024-03-10",
+    valor_total: 14500000, medio_pago: "transferencia", comprobante_url: null,
+    estado: "activo", fecha_registro: "2024-03-10T00:00:00",
   },
   {
-    id: 2,
-    codigo: "CMP-2024-002",
-    proveedor: "Lácteos El Campesino",
-    insumo: "Queso Doble Crema (50 bloques)",
-    fecha: "2024-03-12",
-    total: "$11.000.000",
-    totalNum: 11000000,
-    comprador: "Jorge Eliecer Restrepo",
-    estado: "Recibida",
-  },
-  {
-    id: 3,
-    codigo: "CMP-2024-003",
-    proveedor: "Plásticos San José Ltda.",
-    insumo: "Bolsas Impresas Polipropileno (30 millares)",
-    fecha: "2024-03-14",
-    total: "$2.850.000",
-    totalNum: 2850000,
-    comprador: "Jorge Eliecer Restrepo",
-    estado: "Pendiente",
-  },
-  {
-    id: 4,
-    codigo: "CMP-2024-004",
-    proveedor: "Distribuidora del Campo",
-    insumo: "Maíz Amarillo Chócolo (60 sacos)",
-    fecha: "2024-03-15",
-    total: "$7.800.000",
-    totalNum: 7800000,
-    comprador: "Jorge Eliecer Restrepo",
-    estado: "Recibida",
+    id_compra: 2, id_proveedor: 2, id_usuario: 3, fecha_compra: "2024-03-12",
+    valor_total: 11000000, medio_pago: "transferencia", comprobante_url: null,
+    estado: "activo", fecha_registro: "2024-03-12T00:00:00",
   },
 ];
 
@@ -50,7 +16,12 @@ export const getCompras = async () => {
   return [...mockCompras];
 };
 
-export const createCompra = async (compra) => ({ id: Date.now(), ...compra });
-export const updateCompra = async (id, compra) => ({ id, ...compra });
-export const anularCompra = async (id) => true;
+export const mockDetallesCompra = [
+  { id_detalle_compra: 1, id_compra: 1, id_insumo: 1, cantidad: 100, valor_unitario: 145000, subtotal: 14500000 },
+  { id_detalle_compra: 2, id_compra: 2, id_insumo: 3, cantidad: 50, valor_unitario: 220000, subtotal: 11000000 },
+];
+
+export const createCompra = async (compra) => ({ id_compra: Date.now(), ...compra });
+export const updateCompra = async (id_compra, compra) => ({ id_compra, ...compra });
+export const anularCompra = async (id_compra) => true;
 

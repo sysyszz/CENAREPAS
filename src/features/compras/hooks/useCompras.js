@@ -17,9 +17,9 @@ export function useCompras() {
 
   const filteredCompras = compras.filter((c) => {
     const matchesSearch =
-      c.codigo.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      c.proveedor.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      c.insumo.toLowerCase().includes(searchQuery.toLowerCase());
+      String(c.id_compra).includes(searchQuery.toLowerCase()) ||
+      String(c.id_proveedor).includes(searchQuery.toLowerCase()) ||
+      String(c.id_usuario).includes(searchQuery.toLowerCase());
     const matchesEstado = estadoFilter === 'Todos' || c.estado === estadoFilter;
     return matchesSearch && matchesEstado;
   });
@@ -29,7 +29,7 @@ export function useCompras() {
     setIsDeleting(true);
     await new Promise((resolve) => setTimeout(resolve, 500));
     await anularCompra(deleteDialog.id);
-    setCompras((prev) => prev.map((c) => (c.id === deleteDialog.id ? { ...c, estado: 'Anulada' } : c)));
+    setCompras((prev) => prev.map((c) => (c.id_compra === deleteDialog.id ? { ...c, estado: 'anulado' } : c)));
     setIsDeleting(false);
     setDeleteDialog({ isOpen: false, id: null, nombre: '' });
     setToast({ isOpen: true, type: 'success', message: 'Orden de compra anulada correctamente' });

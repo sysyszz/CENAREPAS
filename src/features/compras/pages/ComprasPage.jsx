@@ -128,11 +128,7 @@ export default function ComprasPage() {
         <table className="w-full text-sm text-left">
           <thead className="bg-muted text-muted-foreground font-semibold">
             <tr>
-              <th className="px-6 py-3">Orden #</th>
-              <th className="px-6 py-3">Proveedor</th>
-              <th className="px-6 py-3">Insumo Adquirido</th>
-              <th className="px-6 py-3">Fecha</th>
-              <th className="px-6 py-3">Total Compra</th>
+              <th className="px-6 py-3">ID</th><th className="px-6 py-3">Proveedor ID</th><th className="px-6 py-3">Usuario ID</th><th className="px-6 py-3">Fecha Compra</th><th className="px-6 py-3">Valor Total</th>
               <th className="px-6 py-3">Estado</th>
               <th className="px-6 py-3">Acciones</th>
             </tr>
@@ -140,12 +136,8 @@ export default function ComprasPage() {
           <tbody className="divide-y divide-border">
             {compras.length > 0 ? (
               pagination.paginatedData.map((compra) => (
-                <tr key={compra.id} className="hover:bg-muted/50 transition-colors">
-                  <td className="px-6 py-4 font-mono font-medium">{compra.codigo}</td>
-                  <td className="px-6 py-4 font-semibold">{compra.proveedor}</td>
-                  <td className="px-6 py-4 text-muted-foreground">{compra.insumo}</td>
-                  <td className="px-6 py-4 text-muted-foreground">{compra.fecha}</td>
-                  <td className="px-6 py-4 font-semibold">{compra.total}</td>
+                <tr key={compra.id_compra} className="hover:bg-muted/50 transition-colors">
+                  <td className="px-6 py-4 font-mono font-medium">{compra.id_compra}</td><td className="px-6 py-4">{compra.id_proveedor}</td><td className="px-6 py-4">{compra.id_usuario}</td><td className="px-6 py-4">{compra.fecha_compra}</td><td className="px-6 py-4 font-semibold">{compra.valor_total}</td>
                   <td className="px-6 py-4">
                     <span
                       className={`px-2.5 py-1 rounded-full text-xs font-medium ${
@@ -177,7 +169,7 @@ export default function ComprasPage() {
                       </button>
                       {compra.estado !== 'Anulada' && (
                         <button
-                          onClick={() => setDeleteDialog({ isOpen: true, id: compra.id, nombre: compra.codigo })}
+                          onClick={() => setDeleteDialog({ isOpen: true, id: compra.id_compra, nombre: compra.id_compra })}
                           className="p-2 hover:bg-muted rounded-lg text-destructive"
                           title="Anular compra"
                         >
@@ -205,12 +197,7 @@ export default function ComprasPage() {
           <div className="bg-card p-6 rounded-lg max-w-md w-full border border-border space-y-4">
             <h3 className="text-lg font-bold">Detalle de la Compra</h3>
             <div className="space-y-2 text-sm">
-              <p><strong>Orden #:</strong> {detailModal.data.codigo}</p>
-              <p><strong>Proveedor:</strong> {detailModal.data.proveedor}</p>
-              <p><strong>Insumo / Cantidad:</strong> {detailModal.data.insumo}</p>
-              <p><strong>Fecha de Orden:</strong> {detailModal.data.fecha}</p>
-              <p><strong>Total Facturado:</strong> {detailModal.data.total}</p>
-              <p><strong>Comprador Registrado:</strong> {detailModal.data.comprador}</p>
+              <p><strong>ID:</strong> {detailModal.data.id_compra}</p><p><strong>Proveedor ID:</strong> {detailModal.data.id_proveedor}</p><p><strong>Usuario ID:</strong> {detailModal.data.id_usuario}</p><p><strong>Fecha:</strong> {detailModal.data.fecha_compra}</p><p><strong>Valor Total:</strong> {detailModal.data.valor_total}</p><p><strong>Medio de Pago:</strong> {detailModal.data.medio_pago}</p><p><strong>Comprobante:</strong> {detailModal.data.comprobante_url}</p><p><strong>Fecha Registro:</strong> {detailModal.data.fecha_registro}</p>
               <p><strong>Estado:</strong> {detailModal.data.estado}</p>
             </div>
             <div className="flex justify-end pt-4">
