@@ -1,4 +1,4 @@
-import { Plus, Search, Eye, XCircle } from 'lucide-react';
+import { Plus, Search, Eye, Edit, XCircle, FileDown, FileSpreadsheet, ShoppingCart, CheckCircle, Clock, DollarSign } from 'lucide-react';
 import { useCompras } from '../hooks/useCompras';
 import { CompraFormModal } from '../components/CompraFormModal';
 import ConfirmDialog from '../../../shared/components/ConfirmDialog';
@@ -7,8 +7,15 @@ import Toast from '../../../shared/components/Toast';
 export default function ComprasPage() {
   const {
     compras,
+    rawCompras,
+    searchQuery,
+    setSearchQuery,
+    estadoFilter,
+    setEstadoFilter,
     showModal,
     setShowModal,
+    detailModal,
+    setDetailModal,
     deleteDialog,
     setDeleteDialog,
     isDeleting,
@@ -17,92 +24,203 @@ export default function ComprasPage() {
     handleAnular,
   } = useCompras();
 
+  const totalCompras = rawCompras.length;
+  const recibidas = rawCompras.filter((c) => c.estado === 'Recibida').length;
+  const pendientes = rawCompras.filter((c) => c.estado === 'Pendiente').length;
+  const totalInvertido = rawCompras.reduce((acc, c) => acc + (c.totalNum || 0), 0);
+
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      {/* Header con exportación */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1>Compras</h1>
-          <p className="text-muted-foreground">Gestión de compras a proveedores</p>
+          <h1 className="text-2xl font-bold">Compras de Insumos</h1>
+          <p className="text-muted-foreground">Órdenes de compra de materias primas e insumos a proveedores</p>
         </div>
-        <button
-          onClick={() => setShowModal(true)}
-          className="flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:opacity-90"
-        >
-          <Plus className="w-5 h-5" />
-          Nueva Compra
-        </button>
+        <div className="flex items-center gap-2">
+          <button className="flex items-center gap-2 px-4 py-2 border border-border rounded-lg hover:bg-muted text-sm font-medium transition-colors">
+            <FileDown className="w-4 h-4" />
+            Exportar PDF
+          </button>
+          <button className="flex items-center gap-2 px-4 py-2 border border-border rounded-lg hover:bg-muted text-sm font-medium transition-colors">
+            <FileSpreadsheet className="w-4 h-4" />
+            Exportar Excel
+          </button>
+          <button
+            onClick={() => setShowModal(true)}
+            className="flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:opacity-90 text-sm font-medium transition-colors"
+          >
+            <Plus className="w-4 h-4" />
+            Nueva Compra
+          </button>
+        </div>
       </div>
 
-      <div className="bg-card p-4 rounded-lg border border-border">
-        <div className="flex gap-4">
-          <div className="flex-1 relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
-            <input
-              type="search"
-              placeholder="Buscar compra..."
-              className="w-full pl-10 pr-4 py-2 border border-input bg-input-background rounded-lg focus:outline-none focus:ring-2 focus:ring-ring"
-            />
+      {/* Tarjetas de Consolidado */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
+        <div className="bg-card p-4 rounded-lg border border-border flex items-center gap-3">
+          <div className="p-3 bg-primary/10 rounded-lg text-primary">
+            <ShoppingCart className="w-5 h-5" />
           </div>
-          <input
-            type="date"
-            className="px-4 py-2 border border-input bg-input-background rounded-lg focus:outline-none focus:ring-2 focus:ring-ring"
-          />
-          <select className="px-4 py-2 border border-input bg-input-background rounded-lg focus:outline-none focus:ring-2 focus:ring-ring">
-            <option>Todos los proveedores</option>
-            <option>Distribuidora ABC</option>
-            <option>Insumos XYZ</option>
-          </select>
+          <div>
+            <p className="text-sm text-muted-foreground">Total Compras</p>
+            <h3 className="text-xl font-bold">{totalCompras}</h3>
+          </div>
+        </div>
+        <div className="bg-card p-4 rounded-lg border border-border flex items-center gap-3">
+          <div className="p-3 bg-success/10 rounded-lg text-success">
+            <CheckCircle className="w-5 h-5" />
+          </div>
+          <div>
+            <p className="text-sm text-muted-foreground">Recibidas</p>
+            <h3 className="text-xl font-bold">{recibidas}</h3>
+          </div>
+        </div>
+        <div className="bg-card p-4 rounded-lg border border-border flex items-center gap-3">
+          <div className="p-3 bg-warning/10 rounded-lg text-warning">
+            <Clock className="w-5 h-5" />
+          </div>
+          <div>
+            <p className="text-sm text-muted-foreground">Pendientes</p>
+            <h3 className="text-xl font-bold">{pendientes}</h3>
+          </div>
+        </div>
+        <div className="bg-card p-4 rounded-lg border border-border flex items-center gap-3">
+          <div className="p-3 bg-accent/10 rounded-lg text-primary">
+            <DollarSign className="w-5 h-5" />
+          </div>
+          <div>
+            <p className="text-sm text-muted-foreground">Total Invertido</p>
+            <h3 className="text-xl font-bold">${totalInvertido.toLocaleString('es-CO')}</h3>
+          </div>
         </div>
       </div>
 
+      {/* Filtros y Búsqueda */}
+      <div className="bg-card p-4 rounded-lg border border-border flex flex-col sm:flex-row gap-4">
+        <div className="flex-1 relative">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+          <input
+            type="search"
+            placeholder="Buscar por código, proveedor o insumo..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="w-full pl-10 pr-4 py-2 border border-input bg-input-background rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+          />
+        </div>
+        <select
+          value={estadoFilter}
+          onChange={(e) => setEstadoFilter(e.target.value)}
+          className="px-4 py-2 border border-input bg-input-background rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+        >
+          <option value="Todos">Todos los estados</option>
+          <option value="Recibida">Recibida</option>
+          <option value="Pendiente">Pendiente</option>
+          <option value="Anulada">Anulada</option>
+        </select>
+      </div>
+
+      {/* Tabla Estandarizada */}
       <div className="bg-card rounded-lg border border-border overflow-hidden">
-        <table className="w-full">
-          <thead className="bg-muted">
+        <table className="w-full text-sm text-left">
+          <thead className="bg-muted text-muted-foreground font-semibold">
             <tr>
-              <th className="text-left px-6 py-3">Factura</th>
-              <th className="text-left px-6 py-3">Proveedor</th>
-              <th className="text-left px-6 py-3">Fecha</th>
-              <th className="text-left px-6 py-3">Total</th>
-              <th className="text-left px-6 py-3">Estado</th>
-              <th className="text-left px-6 py-3">Acciones</th>
+              <th className="px-6 py-3">Orden #</th>
+              <th className="px-6 py-3">Proveedor</th>
+              <th className="px-6 py-3">Insumo Adquirido</th>
+              <th className="px-6 py-3">Fecha</th>
+              <th className="px-6 py-3">Total Compra</th>
+              <th className="px-6 py-3">Estado</th>
+              <th className="px-6 py-3">Acciones</th>
             </tr>
           </thead>
-          <tbody>
-            {compras.map((compra) => (
-              <tr key={compra.id} className="border-b border-border hover:bg-muted/50">
-                <td className="px-6 py-4">{compra.factura}</td>
-                <td className="px-6 py-4">{compra.proveedor}</td>
-                <td className="px-6 py-4 text-muted-foreground">{compra.fecha}</td>
-                <td className="px-6 py-4">{compra.total}</td>
-                <td className="px-6 py-4">
-                  <span className={`px-2 py-1 rounded text-sm ${
-                    compra.estado === 'Completada'
-                      ? 'bg-success/10 text-success'
-                      : 'bg-destructive/10 text-destructive'
-                  }`}>
-                    {compra.estado}
-                  </span>
-                </td>
-                <td className="px-6 py-4">
-                  <div className="flex items-center gap-2">
-                    <button className="p-2 hover:bg-muted rounded-lg">
-                      <Eye className="w-4 h-4" />
-                    </button>
-                    {compra.estado !== 'Anulada' && (
+          <tbody className="divide-y divide-border">
+            {compras.length > 0 ? (
+              compras.map((compra) => (
+                <tr key={compra.id} className="hover:bg-muted/50 transition-colors">
+                  <td className="px-6 py-4 font-mono font-medium">{compra.codigo}</td>
+                  <td className="px-6 py-4 font-semibold">{compra.proveedor}</td>
+                  <td className="px-6 py-4 text-muted-foreground">{compra.insumo}</td>
+                  <td className="px-6 py-4 text-muted-foreground">{compra.fecha}</td>
+                  <td className="px-6 py-4 font-semibold">{compra.total}</td>
+                  <td className="px-6 py-4">
+                    <span
+                      className={`px-2.5 py-1 rounded-full text-xs font-medium ${
+                        compra.estado === 'Recibida'
+                          ? 'bg-success/10 text-success'
+                          : compra.estado === 'Pendiente'
+                          ? 'bg-warning/10 text-warning'
+                          : 'bg-destructive/10 text-destructive'
+                      }`}
+                    >
+                      {compra.estado}
+                    </span>
+                  </td>
+                  <td className="px-6 py-4">
+                    <div className="flex items-center gap-1">
                       <button
-                        onClick={() => setDeleteDialog({ isOpen: true, id: compra.id, nombre: compra.factura })}
-                        className="p-2 hover:bg-muted rounded-lg text-destructive"
+                        onClick={() => setDetailModal({ isOpen: true, data: compra })}
+                        className="p-2 hover:bg-muted rounded-lg text-muted-foreground hover:text-foreground"
+                        title="Ver detalle"
                       >
-                        <XCircle className="w-4 h-4" />
+                        <Eye className="w-4 h-4" />
                       </button>
-                    )}
-                  </div>
+                      <button
+                        onClick={() => setShowModal(true)}
+                        className="p-2 hover:bg-muted rounded-lg text-muted-foreground hover:text-foreground"
+                        title="Editar"
+                      >
+                        <Edit className="w-4 h-4" />
+                      </button>
+                      {compra.estado !== 'Anulada' && (
+                        <button
+                          onClick={() => setDeleteDialog({ isOpen: true, id: compra.id, nombre: compra.codigo })}
+                          className="p-2 hover:bg-muted rounded-lg text-destructive"
+                          title="Anular compra"
+                        >
+                          <XCircle className="w-4 h-4" />
+                        </button>
+                      )}
+                    </div>
+                  </td>
+                </tr>
+              ))
+            ) : (
+              <tr>
+                <td colSpan={7} className="px-6 py-8 text-center text-muted-foreground">
+                  No se encontraron compras.
                 </td>
               </tr>
-            ))}
+            )}
           </tbody>
         </table>
       </div>
+
+      {/* Modal de Detalle */}
+      {detailModal.isOpen && detailModal.data && (
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+          <div className="bg-card p-6 rounded-lg max-w-md w-full border border-border space-y-4">
+            <h3 className="text-lg font-bold">Detalle de la Compra</h3>
+            <div className="space-y-2 text-sm">
+              <p><strong>Orden #:</strong> {detailModal.data.codigo}</p>
+              <p><strong>Proveedor:</strong> {detailModal.data.proveedor}</p>
+              <p><strong>Insumo / Cantidad:</strong> {detailModal.data.insumo}</p>
+              <p><strong>Fecha de Orden:</strong> {detailModal.data.fecha}</p>
+              <p><strong>Total Facturado:</strong> {detailModal.data.total}</p>
+              <p><strong>Comprador Registrado:</strong> {detailModal.data.comprador}</p>
+              <p><strong>Estado:</strong> {detailModal.data.estado}</p>
+            </div>
+            <div className="flex justify-end pt-4">
+              <button
+                onClick={() => setDetailModal({ isOpen: false, data: null })}
+                className="px-4 py-2 bg-primary text-primary-foreground rounded-lg text-sm font-medium"
+              >
+                Cerrar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       <CompraFormModal open={showModal} onClose={() => setShowModal(false)} />
 
@@ -125,3 +243,4 @@ export default function ComprasPage() {
     </div>
   );
 }
+
