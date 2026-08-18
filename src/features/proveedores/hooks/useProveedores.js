@@ -22,9 +22,8 @@ export function useProveedores() {
   const filteredProveedores = proveedores.filter((proveedor) => {
     const matchesSearch =
       proveedor.nombre.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      proveedor.codigo.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      proveedor.contacto.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      proveedor.categoriaInsumo.toLowerCase().includes(searchTerm.toLowerCase());
+      proveedor.nit.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (proveedor.correo || '').toLowerCase().includes(searchTerm.toLowerCase());
     const matchesEstado = filterEstado === 'Todos los estados' || proveedor.estado === filterEstado;
     return matchesSearch && matchesEstado;
   });
@@ -34,7 +33,7 @@ export function useProveedores() {
     setIsDeleting(true);
     await new Promise((resolve) => setTimeout(resolve, 500));
     await deleteProveedor(deleteDialog.id);
-    setProveedores((prev) => prev.filter((p) => p.id !== deleteDialog.id));
+    setProveedores((prev) => prev.filter((p) => p.id_proveedor !== deleteDialog.id));
     setIsDeleting(false);
     setDeleteDialog({ isOpen: false, id: null, nombre: '' });
     setToast({ isOpen: true, type: 'success', message: 'Proveedor eliminado correctamente' });
@@ -54,8 +53,8 @@ export function useProveedores() {
     if (!editData) return;
     setIsSaving(true);
     await new Promise((resolve) => setTimeout(resolve, 500));
-    await updateProveedor(editData.id, editData);
-    setProveedores((prev) => prev.map((p) => (p.id === editData.id ? editData : p)));
+    await updateProveedor(editData.id_proveedor, editData);
+    setProveedores((prev) => prev.map((p) => (p.id_proveedor === editData.id_proveedor ? editData : p)));
     setIsSaving(false);
     setShowEditModal(false);
     setEditData(null);

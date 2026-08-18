@@ -14,7 +14,7 @@ export function ProveedorEditModal({ open, editData, setEditData, onClose, onSav
         </div>
         <div className="space-y-4">
           <div>
-            <label className="block mb-2">Nombre de la Empresa</label>
+            <label className="block mb-2">Nombre</label>
             <input
               type="text"
               value={editData.nombre}
@@ -32,15 +32,6 @@ export function ProveedorEditModal({ open, editData, setEditData, onClose, onSav
             />
           </div>
           <div>
-            <label className="block mb-2">Persona de Contacto</label>
-            <input
-              type="text"
-              value={editData.contacto}
-              onChange={(e) => setEditData({ ...editData, contacto: e.target.value })}
-              className="w-full px-4 py-2 border border-input bg-input-background rounded-lg focus:outline-none focus:ring-2 focus:ring-ring"
-            />
-          </div>
-          <div>
             <label className="block mb-2">Teléfono</label>
             <input
               type="tel"
@@ -53,8 +44,8 @@ export function ProveedorEditModal({ open, editData, setEditData, onClose, onSav
             <label className="block mb-2">Email</label>
             <input
               type="email"
-              value={editData.email}
-              onChange={(e) => setEditData({ ...editData, email: e.target.value })}
+              value={editData.correo}
+              onChange={(e) => setEditData({ ...editData, correo: e.target.value })}
               className="w-full px-4 py-2 border border-input bg-input-background rounded-lg focus:outline-none focus:ring-2 focus:ring-ring"
             />
           </div>
@@ -74,8 +65,8 @@ export function ProveedorEditModal({ open, editData, setEditData, onClose, onSav
               onChange={(e) => setEditData({ ...editData, estado: e.target.value })}
               className="w-full px-4 py-2 border border-input bg-input-background rounded-lg focus:outline-none focus:ring-2 focus:ring-ring"
             >
-              <option>Activo</option>
-              <option>Inactivo</option>
+              <option value="activo">Activo</option>
+              <option value="inactivo">Inactivo</option>
             </select>
           </div>
           <div className="flex gap-2 pt-4">

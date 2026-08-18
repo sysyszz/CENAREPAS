@@ -15,7 +15,7 @@ export function ProveedorDetailModal({ open, proveedor, onClose }) {
         <div className="space-y-3">
           <div className="border-b border-border pb-3">
             <p className="text-sm text-muted-foreground">ID</p>
-            <p className="font-medium">#{proveedor.id}</p>
+            <p className="font-medium">#{proveedor.id_proveedor}</p>
           </div>
           <div className="border-b border-border pb-3">
             <p className="text-sm text-muted-foreground">Nombre de la Empresa</p>
@@ -26,16 +26,12 @@ export function ProveedorDetailModal({ open, proveedor, onClose }) {
             <p className="font-medium">{proveedor.nit}</p>
           </div>
           <div className="border-b border-border pb-3">
-            <p className="text-sm text-muted-foreground">Persona de Contacto</p>
-            <p className="font-medium">{proveedor.contacto}</p>
-          </div>
-          <div className="border-b border-border pb-3">
             <p className="text-sm text-muted-foreground">Teléfono</p>
             <p className="font-medium">{proveedor.telefono}</p>
           </div>
           <div className="border-b border-border pb-3">
             <p className="text-sm text-muted-foreground">Email</p>
-            <p className="font-medium">{proveedor.email}</p>
+            <p className="font-medium">{proveedor.correo}</p>
           </div>
           <div className="border-b border-border pb-3">
             <p className="text-sm text-muted-foreground">Dirección</p>
@@ -44,12 +40,16 @@ export function ProveedorDetailModal({ open, proveedor, onClose }) {
           <div className="pb-3">
             <p className="text-sm text-muted-foreground">Estado</p>
             <span className={`inline-block px-2 py-1 rounded text-sm ${
-              proveedor.estado === 'Activo'
+              proveedor.estado === 'activo'
                 ? 'bg-success/10 text-success'
                 : 'bg-muted text-muted-foreground'
             }`}>
               {proveedor.estado}
             </span>
+          </div>
+          <div className="border-b border-border pb-3">
+            <p className="text-sm text-muted-foreground">Fecha de Creación</p>
+            <p className="font-medium">{proveedor.fecha_creacion}</p>
           </div>
         </div>
         <button

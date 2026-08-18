@@ -1,4 +1,4 @@
-import { Plus, Search, Eye, Edit, Trash2, FileDown, FileSpreadsheet, Truck, CheckCircle, ShoppingBag, DollarSign } from 'lucide-react';
+import { Plus, Search, Eye, Edit, Trash2, FileDown, FileSpreadsheet, Truck, CheckCircle } from 'lucide-react';
 import { useProveedores } from '../hooks/useProveedores';
 import { usePagination } from '../../../shared/hooks/usePagination';
 import { PaginationControls } from '../../../shared/components/PaginationControls';
@@ -39,9 +39,7 @@ export default function ProveedoresPage() {
   const pagination = usePagination(filteredProveedores);
 
   const totalProveedores = rawProveedores.length;
-  const activos = rawProveedores.filter((p) => p.estado === 'Activo').length;
-  const totalComprasRealizadas = rawProveedores.reduce((acc, p) => acc + (p.comprasRealizadas || 0), 0);
-  const totalInvertido = rawProveedores.reduce((acc, p) => acc + (p.totalCompradoNum || 0), 0);
+  const activos = rawProveedores.filter((p) => p.estado === 'activo').length;
 
   return (
     <div className="space-y-6">
@@ -90,24 +88,6 @@ export default function ProveedoresPage() {
             <h3 className="text-xl font-bold">{activos}</h3>
           </div>
         </div>
-        <div className="bg-card p-4 rounded-lg border border-border flex items-center gap-3">
-          <div className="p-3 bg-accent/10 rounded-lg text-primary">
-            <ShoppingBag className="w-5 h-5" />
-          </div>
-          <div>
-            <p className="text-sm text-muted-foreground">Órdenes de Compra</p>
-            <h3 className="text-xl font-bold">{totalComprasRealizadas}</h3>
-          </div>
-        </div>
-        <div className="bg-card p-4 rounded-lg border border-border flex items-center gap-3">
-          <div className="p-3 bg-warning/10 rounded-lg text-warning">
-            <DollarSign className="w-5 h-5" />
-          </div>
-          <div>
-            <p className="text-sm text-muted-foreground">Inversión Total</p>
-            <h3 className="text-xl font-bold">${totalInvertido.toLocaleString('es-CO')}</h3>
-          </div>
-        </div>
       </div>
 
       {/* Filtros y Búsqueda */}
@@ -116,7 +96,7 @@ export default function ProveedoresPage() {
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
           <input
             type="search"
-            placeholder="Buscar por código, nombre, contacto o insumo..."
+            placeholder="Buscar por nombre, NIT o correo..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             className="w-full pl-10 pr-4 py-2 border border-input bg-input-background rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-ring"
@@ -128,8 +108,8 @@ export default function ProveedoresPage() {
           className="px-4 py-2 border border-input bg-input-background rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-ring"
         >
           <option value="Todos los estados">Todos los estados</option>
-          <option value="Activo">Activo</option>
-          <option value="Inactivo">Inactivo</option>
+          <option value="activo">Activo</option>
+          <option value="inactivo">Inactivo</option>
         </select>
       </div>
 
@@ -138,30 +118,31 @@ export default function ProveedoresPage() {
         <table className="w-full text-sm text-left">
           <thead className="bg-muted text-muted-foreground font-semibold">
             <tr>
-              <th className="px-6 py-3">Código</th>
+              <th className="px-6 py-3">ID</th>
               <th className="px-6 py-3">Proveedor</th>
-              <th className="px-6 py-3">Contacto</th>
-              <th className="px-6 py-3">Categoría Insumo</th>
-              <th className="px-6 py-3">Compras</th>
-              <th className="px-6 py-3">Total Comprado</th>
+              <th className="px-6 py-3">NIT</th>
+              <th className="px-6 py-3">Teléfono</th>
+              <th className="px-6 py-3">Correo</th>
+              <th className="px-6 py-3">Dirección</th>
               <th className="px-6 py-3">Estado</th>
+              <th className="px-6 py-3">Fecha de Creación</th>
               <th className="px-6 py-3">Acciones</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-border">
             {filteredProveedores.length > 0 ? (
               pagination.paginatedData.map((proveedor) => (
-                <tr key={proveedor.id} className="hover:bg-muted/50 transition-colors">
-                  <td className="px-6 py-4 font-mono font-medium">{proveedor.codigo}</td>
+                <tr key={proveedor.id_proveedor} className="hover:bg-muted/50 transition-colors">
+                  <td className="px-6 py-4 font-mono font-medium">{proveedor.id_proveedor}</td>
                   <td className="px-6 py-4 font-semibold">{proveedor.nombre}</td>
-                  <td className="px-6 py-4 text-muted-foreground">{proveedor.contacto}</td>
-                  <td className="px-6 py-4 text-muted-foreground">{proveedor.categoriaInsumo}</td>
-                  <td className="px-6 py-4">{proveedor.comprasRealizadas} ordenes</td>
-                  <td className="px-6 py-4 font-semibold">{proveedor.totalComprado}</td>
+                  <td className="px-6 py-4">{proveedor.nit}</td>
+                  <td className="px-6 py-4">{proveedor.telefono}</td>
+                  <td className="px-6 py-4">{proveedor.correo}</td>
+                  <td className="px-6 py-4">{proveedor.direccion}</td>
                   <td className="px-6 py-4">
                     <span
                       className={`px-2.5 py-1 rounded-full text-xs font-medium ${
-                        proveedor.estado === 'Activo'
+                        proveedor.estado === 'activo'
                           ? 'bg-success/10 text-success'
                           : 'bg-destructive/10 text-destructive'
                       }`}
@@ -169,6 +150,7 @@ export default function ProveedoresPage() {
                       {proveedor.estado}
                     </span>
                   </td>
+                  <td className="px-6 py-4">{proveedor.fecha_creacion}</td>
                   <td className="px-6 py-4">
                     <div className="flex items-center gap-1">
                       <button
@@ -186,7 +168,7 @@ export default function ProveedoresPage() {
                         <Edit className="w-4 h-4" />
                       </button>
                       <button
-                        onClick={() => setDeleteDialog({ isOpen: true, id: proveedor.id, nombre: proveedor.nombre })}
+                        onClick={() => setDeleteDialog({ isOpen: true, id: proveedor.id_proveedor, nombre: proveedor.nombre })}
                         className="p-2 hover:bg-muted rounded-lg text-destructive"
                         title="Eliminar"
                       >
@@ -198,7 +180,7 @@ export default function ProveedoresPage() {
               ))
             ) : (
               <tr>
-                <td colSpan={8} className="px-6 py-8 text-center text-muted-foreground">
+                <td colSpan={9} className="px-6 py-8 text-center text-muted-foreground">
                   No se encontraron proveedores.
                 </td>
               </tr>
