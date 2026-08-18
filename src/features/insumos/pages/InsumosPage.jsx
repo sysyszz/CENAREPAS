@@ -32,7 +32,7 @@ export default function InsumosPage() {
   const totalInsumos = rawInsumos.length;
   const disponibles = rawInsumos.filter((i) => i.estado === 'Disponible').length;
   const bajoStock = rawInsumos.filter((i) => i.estado === 'Bajo Stock').length;
-  const proveedoresCount = new Set(rawInsumos.map((i) => i.proveedor)).size;
+  const proveedoresCount = new Set(rawInsumos.map((i) => i.id_proveedor).filter(Boolean)).size;
 
   return (
     <div className="space-y-6">
