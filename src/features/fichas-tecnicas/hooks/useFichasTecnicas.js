@@ -17,9 +17,8 @@ export function useFichasTecnicas() {
 
   const filteredFichas = fichas.filter((f) => {
     const matchesSearch =
-      f.producto.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      f.codigo.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      f.insumosClave.toLowerCase().includes(searchQuery.toLowerCase());
+      f.nombre.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      (f.descripcion || '').toLowerCase().includes(searchQuery.toLowerCase());
     const matchesEstado = estadoFilter === 'Todos' || f.estado === estadoFilter;
     return matchesSearch && matchesEstado;
   });
@@ -29,7 +28,7 @@ export function useFichasTecnicas() {
     setIsDeleting(true);
     await new Promise((resolve) => setTimeout(resolve, 500));
     await deleteFichaTecnica(deleteDialog.id);
-    setFichas((prev) => prev.filter((f) => f.id !== deleteDialog.id));
+    setFichas((prev) => prev.filter((f) => f.id_ficha !== deleteDialog.id));
     setIsDeleting(false);
     setDeleteDialog({ isOpen: false, id: null, nombre: '' });
     setToast({ isOpen: true, type: 'success', message: 'Ficha técnica eliminada correctamente' });

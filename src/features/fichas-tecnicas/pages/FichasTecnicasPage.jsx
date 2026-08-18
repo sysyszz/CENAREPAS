@@ -137,12 +137,8 @@ export default function FichasTecnicasPage() {
           <tbody className="divide-y divide-border">
             {fichas.length > 0 ? (
               pagination.paginatedData.map((ficha) => (
-                <tr key={ficha.id} className="hover:bg-muted/50 transition-colors">
-                  <td className="px-6 py-4 font-mono font-medium">{ficha.codigo}</td>
-                  <td className="px-6 py-4 font-semibold">{ficha.producto}</td>
-                  <td className="px-6 py-4 font-mono text-xs">{ficha.version}</td>
-                  <td className="px-6 py-4 text-muted-foreground">{ficha.rendimientoEsperado}</td>
-                  <td className="px-6 py-4 text-muted-foreground max-w-xs truncate">{ficha.insumosClave}</td>
+                <tr key={ficha.id_ficha} className="hover:bg-muted/50 transition-colors">
+                  <td className="px-6 py-4 font-mono font-medium">{ficha.id_ficha}</td><td className="px-6 py-4 font-semibold">{ficha.nombre}</td><td className="px-6 py-4">{ficha.tiempo_estimado_minutos}</td><td className="px-6 py-4">{ficha.rendimiento_lote}</td><td className="px-6 py-4 text-muted-foreground max-w-xs truncate">{ficha.descripcion}</td>
                   <td className="px-6 py-4">
                     <span
                       className={`px-2.5 py-1 rounded-full text-xs font-medium ${
@@ -171,7 +167,7 @@ export default function FichasTecnicasPage() {
                         <Edit className="w-4 h-4" />
                       </button>
                       <button
-                        onClick={() => setDeleteDialog({ isOpen: true, id: ficha.id, nombre: ficha.producto })}
+                        onClick={() => setDeleteDialog({ isOpen: true, id: ficha.id_ficha, nombre: ficha.nombre })}
                         className="p-2 hover:bg-muted rounded-lg text-destructive"
                         title="Eliminar"
                       >
@@ -198,14 +194,8 @@ export default function FichasTecnicasPage() {
           <div className="bg-card p-6 rounded-lg max-w-md w-full border border-border space-y-4">
             <h3 className="text-lg font-bold">Detalle de Ficha Técnica</h3>
             <div className="space-y-2 text-sm">
-              <p><strong>Código:</strong> {detailModal.data.codigo}</p>
-              <p><strong>Producto:</strong> {detailModal.data.producto}</p>
-              <p><strong>Versión:</strong> {detailModal.data.version}</p>
-              <p><strong>Rendimiento por Lote:</strong> {detailModal.data.rendimientoEsperado}</p>
-              <p><strong>Vida Útil:</strong> {detailModal.data.vidaUtil}</p>
-              <p><strong>Formulación / Insumos:</strong> {detailModal.data.insumosClave}</p>
+              <p><strong>ID:</strong> {detailModal.data.id_ficha}</p><p><strong>Nombre:</strong> {detailModal.data.nombre}</p><p><strong>Descripción:</strong> {detailModal.data.descripcion}</p><p><strong>Instrucciones:</strong> {detailModal.data.instrucciones_preparacion}</p><p><strong>Tiempo:</strong> {detailModal.data.tiempo_estimado_minutos}</p><p><strong>Rendimiento:</strong> {detailModal.data.rendimiento_lote}</p>
               <p><strong>Estado:</strong> {detailModal.data.estado}</p>
-              <p><strong>Última Actualización:</strong> {detailModal.data.fechaActualizacion}</p>
             </div>
             <div className="flex justify-end pt-4">
               <button
