@@ -8,11 +8,18 @@ export function CategoriaFormModal({ open, onClose }) {
         <div className="space-y-4">
           <div>
             <label className="block mb-2">Nombre de la Categoría</label>
-            <input type="text" className="w-full px-4 py-2 border border-input bg-input-background rounded-lg focus:outline-none focus:ring-2 focus:ring-ring" />
+            <input type="text" maxLength={80} required className="w-full px-4 py-2 border border-input bg-input-background rounded-lg focus:outline-none focus:ring-2 focus:ring-ring" />
           </div>
           <div>
             <label className="block mb-2">Descripción</label>
             <textarea rows={3} className="w-full px-4 py-2 border border-input bg-input-background rounded-lg focus:outline-none focus:ring-2 focus:ring-ring"></textarea>
+          </div>
+          <div>
+            <label className="block mb-2">Estado</label>
+            <select defaultValue="activo" className="w-full px-4 py-2 border border-input bg-input-background rounded-lg focus:outline-none focus:ring-2 focus:ring-ring">
+              <option value="activo">Activo</option>
+              <option value="inactivo">Inactivo</option>
+            </select>
           </div>
           <div className="flex gap-2 pt-4">
             <button onClick={onClose} className="flex-1 px-4 py-2 border border-border rounded-lg hover:bg-muted">

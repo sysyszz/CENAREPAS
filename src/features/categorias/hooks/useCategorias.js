@@ -18,8 +18,7 @@ export function useCategorias() {
   const filteredCategorias = categorias.filter((c) => {
     const matchesSearch =
       c.nombre.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      c.codigo.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      c.descripcion.toLowerCase().includes(searchQuery.toLowerCase());
+      (c.descripcion || '').toLowerCase().includes(searchQuery.toLowerCase());
     const matchesEstado = estadoFilter === 'Todos' || c.estado === estadoFilter;
     return matchesSearch && matchesEstado;
   });
@@ -29,7 +28,7 @@ export function useCategorias() {
     setIsDeleting(true);
     await new Promise((resolve) => setTimeout(resolve, 500));
     await deleteCategoria(deleteDialog.id);
-    setCategorias((prev) => prev.filter((c) => c.id !== deleteDialog.id));
+    setCategorias((prev) => prev.filter((c) => c.id_categoria !== deleteDialog.id));
     setIsDeleting(false);
     setDeleteDialog({ isOpen: false, id: null, nombre: '' });
     setToast({ isOpen: true, type: 'success', message: 'Categoría eliminada correctamente' });

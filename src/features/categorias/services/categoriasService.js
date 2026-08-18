@@ -1,44 +1,34 @@
 // categoriasService.js - Servicio para la gestión de categorías en Masarepas
 export const mockCategorias = [
   {
-    id: 1,
-    codigo: "CAT-001",
+    id_categoria: 1,
     nombre: "Arepas Dulces",
     descripcion: "Arepas a base de chócolo tierno, queso y toques dulces",
-    productosCount: 4,
-    estado: "Activo",
+    estado: "activo",
   },
   {
-    id: 2,
-    codigo: "CAT-002",
+    id_categoria: 2,
     nombre: "Arepas Blancas",
     descripcion: "Arepas tradicionales de maíz blanco trillado y pilado",
-    productosCount: 6,
-    estado: "Activo",
+    estado: "activo",
   },
   {
-    id: 3,
-    codigo: "CAT-003",
+    id_categoria: 3,
     nombre: "Arepas Rellenas",
     descripcion: "Arepas precocidas rellenas de queso doble crema y quesillo",
-    productosCount: 5,
-    estado: "Activo",
+    estado: "activo",
   },
   {
-    id: 4,
-    codigo: "CAT-004",
+    id_categoria: 4,
     nombre: "Arepas Especiales",
     descripcion: "Arepas saborizadas con chicharrón, especias y recetas de casa",
-    productosCount: 3,
-    estado: "Activo",
+    estado: "activo",
   },
   {
-    id: 5,
-    codigo: "CAT-005",
+    id_categoria: 5,
     nombre: "Derivados de Maíz",
     descripcion: "Masa molienda, peto cocido listo e insumos preelaborados",
-    productosCount: 8,
-    estado: "Activo",
+    estado: "activo",
   },
 ];
 
@@ -46,7 +36,7 @@ export const getCategorias = async () => {
   return [...mockCategorias];
 };
 
-export const createCategoria = async (categoria) => ({ id: Date.now(), ...categoria });
-export const updateCategoria = async (id, categoria) => ({ id, ...categoria });
-export const deleteCategoria = async (id) => true;
+export const createCategoria = async (categoria) => ({ id_categoria: Date.now(), ...categoria });
+export const updateCategoria = async (id_categoria, categoria) => ({ id_categoria, ...categoria });
+export const deleteCategoria = async (id_categoria) => true;
 
