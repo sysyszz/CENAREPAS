@@ -17,9 +17,9 @@ export function usePedidos() {
 
   const filteredPedidos = pedidos.filter((p) => {
     const matchesSearch =
-      p.codigo.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      p.cliente.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      p.itemsResumen.toLowerCase().includes(searchQuery.toLowerCase());
+      String(p.id_pedido).includes(searchQuery.toLowerCase()) ||
+      String(p.id_cliente).includes(searchQuery.toLowerCase()) ||
+      (p.observaciones || '').toLowerCase().includes(searchQuery.toLowerCase());
     const matchesEstado = estadoFilter === 'Todos' || p.estado === estadoFilter;
     return matchesSearch && matchesEstado;
   });
@@ -29,7 +29,7 @@ export function usePedidos() {
     setIsDeleting(true);
     await new Promise((resolve) => setTimeout(resolve, 500));
     await deletePedido(deleteDialog.id);
-    setPedidos((prev) => prev.filter((p) => p.id !== deleteDialog.id));
+    setPedidos((prev) => prev.filter((p) => p.id_pedido !== deleteDialog.id));
     setIsDeleting(false);
     setDeleteDialog({ isOpen: false, id: null, nombre: '' });
     setToast({ isOpen: true, type: 'success', message: 'Pedido eliminado correctamente' });

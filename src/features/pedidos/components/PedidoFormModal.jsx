@@ -13,9 +13,7 @@ export function PedidoFormModal({ open, onClose }) {
               <label className="block mb-2">Cliente</label>
               <select className="w-full px-4 py-2 border border-input bg-input-background rounded-lg focus:outline-none focus:ring-2 focus:ring-ring">
                 <option>Seleccionar cliente</option>
-                <option>Juan Pérez</option>
-                <option>María García</option>
-                <option>Carlos López</option>
+                <option value="1">Supermercados Mercacentro S.A.</option><option value="2">Tiendas D1 Regional Tolima</option>
               </select>
             </div>
             <div>
@@ -23,6 +21,8 @@ export function PedidoFormModal({ open, onClose }) {
               <input type="date" className="w-full px-4 py-2 border border-input bg-input-background rounded-lg focus:outline-none focus:ring-2 focus:ring-ring" />
             </div>
           </div>
+          <div><label className="block mb-2">Sede ID</label><input type="number" min="1" required className="w-full px-4 py-2 border border-input bg-input-background rounded-lg" /></div>
+          <div><label className="block mb-2">Usuario ID</label><input type="number" min="1" required className="w-full px-4 py-2 border border-input bg-input-background rounded-lg" /></div>
           <div>
             <label className="block mb-4">Productos</label>
             <div className="space-y-2">
@@ -42,14 +42,15 @@ export function PedidoFormModal({ open, onClose }) {
           </div>
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block mb-2">Abono Inicial</label>
-              <input type="number" step="0.01" placeholder="0.00" className="w-full px-4 py-2 border border-input bg-input-background rounded-lg focus:outline-none focus:ring-2 focus:ring-ring" />
+              <label className="block mb-2">Valor Total</label>
+              <input type="number" min="0" step="0.01" className="w-full px-4 py-2 border border-input bg-input-background rounded-lg focus:outline-none focus:ring-2 focus:ring-ring" />
             </div>
             <div>
               <label className="block mb-2">Total</label>
-              <input type="text" value="$0.00" disabled className="w-full px-4 py-2 border border-input bg-muted rounded-lg" />
+              <input type="text" value="pendiente" disabled className="w-full px-4 py-2 border border-input bg-muted rounded-lg" />
             </div>
           </div>
+          <div><label className="block mb-2">Observaciones</label><textarea maxLength={255} className="w-full px-4 py-2 border border-input bg-input-background rounded-lg" /></div><div><label className="block mb-2">Motivo de Anulación</label><textarea maxLength={255} className="w-full px-4 py-2 border border-input bg-input-background rounded-lg" /></div>
           <div className="flex gap-2 pt-4">
             <button onClick={onClose} className="flex-1 px-4 py-2 border border-border rounded-lg hover:bg-muted">
               Cancelar

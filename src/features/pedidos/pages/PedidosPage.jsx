@@ -128,12 +128,7 @@ export default function PedidosPage() {
         <table className="w-full text-sm text-left">
           <thead className="bg-muted text-muted-foreground font-semibold">
             <tr>
-              <th className="px-6 py-3">Pedido #</th>
-              <th className="px-6 py-3">Cliente</th>
-              <th className="px-6 py-3">Resumen de Items</th>
-              <th className="px-6 py-3">Fecha Pedido</th>
-              <th className="px-6 py-3">Fecha Entrega</th>
-              <th className="px-6 py-3">Total</th>
+              <th className="px-6 py-3">ID</th><th className="px-6 py-3">Cliente ID</th><th className="px-6 py-3">Sede ID</th><th className="px-6 py-3">Usuario ID</th><th className="px-6 py-3">Fecha Pedido</th><th className="px-6 py-3">Fecha Entrega</th><th className="px-6 py-3">Valor Total</th>
               <th className="px-6 py-3">Estado</th>
               <th className="px-6 py-3">Acciones</th>
             </tr>
@@ -141,13 +136,8 @@ export default function PedidosPage() {
           <tbody className="divide-y divide-border">
             {pedidos.length > 0 ? (
               pagination.paginatedData.map((pedido) => (
-                <tr key={pedido.id} className="hover:bg-muted/50 transition-colors">
-                  <td className="px-6 py-4 font-mono font-medium">{pedido.codigo}</td>
-                  <td className="px-6 py-4 font-semibold">{pedido.cliente}</td>
-                  <td className="px-6 py-4 text-muted-foreground max-w-xs truncate">{pedido.itemsResumen}</td>
-                  <td className="px-6 py-4 text-muted-foreground">{pedido.fechaPedido}</td>
-                  <td className="px-6 py-4 text-muted-foreground">{pedido.fechaEntrega}</td>
-                  <td className="px-6 py-4 font-semibold">{pedido.total}</td>
+                <tr key={pedido.id_pedido} className="hover:bg-muted/50 transition-colors">
+                  <td className="px-6 py-4 font-mono font-medium">{pedido.id_pedido}</td><td className="px-6 py-4">{pedido.id_cliente}</td><td className="px-6 py-4">{pedido.id_sede}</td><td className="px-6 py-4">{pedido.id_usuario}</td><td className="px-6 py-4">{pedido.fecha_pedido}</td><td className="px-6 py-4">{pedido.fecha_entrega}</td><td className="px-6 py-4 font-semibold">{pedido.valor_total}</td>
                   <td className="px-6 py-4">
                     <span
                       className={`px-2.5 py-1 rounded-full text-xs font-medium ${
@@ -178,7 +168,7 @@ export default function PedidosPage() {
                         <Edit className="w-4 h-4" />
                       </button>
                       <button
-                        onClick={() => setDeleteDialog({ isOpen: true, id: pedido.id, nombre: pedido.codigo })}
+                        onClick={() => setDeleteDialog({ isOpen: true, id: pedido.id_pedido, nombre: pedido.id_pedido })}
                         className="p-2 hover:bg-muted rounded-lg text-destructive"
                         title="Eliminar pedido"
                       >
@@ -205,13 +195,7 @@ export default function PedidosPage() {
           <div className="bg-card p-6 rounded-lg max-w-md w-full border border-border space-y-4">
             <h3 className="text-lg font-bold">Detalle del Pedido</h3>
             <div className="space-y-2 text-sm">
-              <p><strong>Pedido #:</strong> {detailModal.data.codigo}</p>
-              <p><strong>Cliente:</strong> {detailModal.data.cliente}</p>
-              <p><strong>Detalle de la Orden:</strong> {detailModal.data.itemsResumen}</p>
-              <p><strong>Fecha de Solicitud:</strong> {detailModal.data.fechaPedido}</p>
-              <p><strong>Fecha Prometida de Entrega:</strong> {detailModal.data.fechaEntrega}</p>
-              <p><strong>Valor Total:</strong> {detailModal.data.total}</p>
-              <p><strong>Vendedor Encargado:</strong> {detailModal.data.vendedor}</p>
+              <p><strong>ID:</strong> {detailModal.data.id_pedido}</p><p><strong>Cliente ID:</strong> {detailModal.data.id_cliente}</p><p><strong>Sede ID:</strong> {detailModal.data.id_sede}</p><p><strong>Usuario ID:</strong> {detailModal.data.id_usuario}</p><p><strong>Fecha Pedido:</strong> {detailModal.data.fecha_pedido}</p><p><strong>Fecha Entrega:</strong> {detailModal.data.fecha_entrega}</p><p><strong>Valor Total:</strong> {detailModal.data.valor_total}</p><p><strong>Observaciones:</strong> {detailModal.data.observaciones}</p><p><strong>Motivo Anulación:</strong> {detailModal.data.motivo_anulacion}</p>
               <p><strong>Estado:</strong> {detailModal.data.estado}</p>
             </div>
             <div className="flex justify-end pt-4">
