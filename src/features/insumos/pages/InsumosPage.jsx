@@ -1,4 +1,4 @@
-import { Plus, Search, Edit, Trash2, AlertTriangle, Clock } from 'lucide-react';
+import { Plus, Search, Eye, Edit, Trash2, FileDown, FileSpreadsheet, Package, AlertTriangle, CheckCircle, Truck } from 'lucide-react';
 import { useInsumos } from '../hooks/useInsumos';
 import { InsumoFormModal } from '../components/InsumoFormModal';
 import ConfirmDialog from '../../../shared/components/ConfirmDialog';
@@ -7,8 +7,17 @@ import Toast from '../../../shared/components/Toast';
 export default function InsumosPage() {
   const {
     insumos,
+    rawInsumos,
+    searchQuery,
+    setSearchQuery,
+    categoriaFilter,
+    setCategoriaFilter,
+    estadoFilter,
+    setEstadoFilter,
     showModal,
     setShowModal,
+    detailModal,
+    setDetailModal,
     deleteDialog,
     setDeleteDialog,
     isDeleting,
@@ -17,141 +26,213 @@ export default function InsumosPage() {
     handleDelete,
   } = useInsumos();
 
+  const totalInsumos = rawInsumos.length;
+  const disponibles = rawInsumos.filter((i) => i.estado === 'Disponible').length;
+  const bajoStock = rawInsumos.filter((i) => i.estado === 'Bajo Stock').length;
+  const proveedoresCount = new Set(rawInsumos.map((i) => i.proveedor)).size;
+
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      {/* Header con exportación */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1>Insumos</h1>
-          <p className="text-muted-foreground">Gestión de inventario de insumos</p>
+          <h1 className="text-2xl font-bold">Insumos y Materia Prima</h1>
+          <p className="text-muted-foreground">Inventario de granos, lácteos y embalajes para Masarepas</p>
         </div>
-        <button
-          onClick={() => setShowModal(true)}
-          className="flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:opacity-90"
+        <div className="flex items-center gap-2">
+          <button className="flex items-center gap-2 px-4 py-2 border border-border rounded-lg hover:bg-muted text-sm font-medium transition-colors">
+            <FileDown className="w-4 h-4" />
+            Exportar PDF
+          </button>
+          <button className="flex items-center gap-2 px-4 py-2 border border-border rounded-lg hover:bg-muted text-sm font-medium transition-colors">
+            <FileSpreadsheet className="w-4 h-4" />
+            Exportar Excel
+          </button>
+          <button
+            onClick={() => setShowModal(true)}
+            className="flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:opacity-90 text-sm font-medium transition-colors"
+          >
+            <Plus className="w-4 h-4" />
+            Nuevo Insumo
+          </button>
+        </div>
+      </div>
+
+      {/* Tarjetas de Consolidado */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
+        <div className="bg-card p-4 rounded-lg border border-border flex items-center gap-3">
+          <div className="p-3 bg-primary/10 rounded-lg text-primary">
+            <Package className="w-5 h-5" />
+          </div>
+          <div>
+            <p className="text-sm text-muted-foreground">Total Insumos</p>
+            <h3 className="text-xl font-bold">{totalInsumos}</h3>
+          </div>
+        </div>
+        <div className="bg-card p-4 rounded-lg border border-border flex items-center gap-3">
+          <div className="p-3 bg-success/10 rounded-lg text-success">
+            <CheckCircle className="w-5 h-5" />
+          </div>
+          <div>
+            <p className="text-sm text-muted-foreground">Disponibles</p>
+            <h3 className="text-xl font-bold">{disponibles}</h3>
+          </div>
+        </div>
+        <div className="bg-card p-4 rounded-lg border border-border flex items-center gap-3">
+          <div className="p-3 bg-warning/10 rounded-lg text-warning">
+            <AlertTriangle className="w-5 h-5" />
+          </div>
+          <div>
+            <p className="text-sm text-muted-foreground">Bajo Stock</p>
+            <h3 className="text-xl font-bold">{bajoStock}</h3>
+          </div>
+        </div>
+        <div className="bg-card p-4 rounded-lg border border-border flex items-center gap-3">
+          <div className="p-3 bg-accent/10 rounded-lg text-primary">
+            <Truck className="w-5 h-5" />
+          </div>
+          <div>
+            <p className="text-sm text-muted-foreground">Proveedores Activos</p>
+            <h3 className="text-xl font-bold">{proveedoresCount}</h3>
+          </div>
+        </div>
+      </div>
+
+      {/* Filtros y Búsqueda */}
+      <div className="bg-card p-4 rounded-lg border border-border flex flex-col sm:flex-row gap-4">
+        <div className="flex-1 relative">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+          <input
+            type="search"
+            placeholder="Buscar por código, nombre o proveedor..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="w-full pl-10 pr-4 py-2 border border-input bg-input-background rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+          />
+        </div>
+        <select
+          value={categoriaFilter}
+          onChange={(e) => setCategoriaFilter(e.target.value)}
+          className="px-4 py-2 border border-input bg-input-background rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-ring"
         >
-          <Plus className="w-5 h-5" />
-          Nuevo Insumo
-        </button>
+          <option value="Todas">Todas las categorías</option>
+          <option value="Granos y Cereales">Granos y Cereales</option>
+          <option value="Lácteos y Quesos">Lácteos y Quesos</option>
+          <option value="Lácteos y Grasas">Lácteos y Grasas</option>
+          <option value="Empaques y Embalajes">Empaques y Embalajes</option>
+        </select>
+        <select
+          value={estadoFilter}
+          onChange={(e) => setEstadoFilter(e.target.value)}
+          className="px-4 py-2 border border-input bg-input-background rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+        >
+          <option value="Todos">Todos los estados</option>
+          <option value="Disponible">Disponible</option>
+          <option value="Bajo Stock">Bajo Stock</option>
+        </select>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <div className="bg-card p-4 rounded-lg border border-warning">
-          <div className="flex items-center gap-3">
-            <div className="p-2 bg-warning/10 rounded-lg">
-              <AlertTriangle className="w-5 h-5 text-warning" />
-            </div>
-            <div>
-              <p className="text-sm text-muted-foreground">Stock Bajo</p>
-              <h3>1 insumo</h3>
-            </div>
-          </div>
-        </div>
-        <div className="bg-card p-4 rounded-lg border border-destructive">
-          <div className="flex items-center gap-3">
-            <div className="p-2 bg-destructive/10 rounded-lg">
-              <Clock className="w-5 h-5 text-destructive" />
-            </div>
-            <div>
-              <p className="text-sm text-muted-foreground">Por Vencer</p>
-              <h3>1 insumo</h3>
-            </div>
-          </div>
-        </div>
-        <div className="bg-card p-4 rounded-lg border border-success">
-          <div className="flex items-center gap-3">
-            <div className="p-2 bg-success/10 rounded-lg">
-              <svg className="w-5 h-5 text-success" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-              </svg>
-            </div>
-            <div>
-              <p className="text-sm text-muted-foreground">Stock Normal</p>
-              <h3>2 insumos</h3>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <div className="bg-card p-4 rounded-lg border border-border">
-        <div className="flex gap-4">
-          <div className="flex-1 relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
-            <input
-              type="search"
-              placeholder="Buscar insumo..."
-              className="w-full pl-10 pr-4 py-2 border border-input bg-input-background rounded-lg focus:outline-none focus:ring-2 focus:ring-ring"
-            />
-          </div>
-          <select className="px-4 py-2 border border-input bg-input-background rounded-lg focus:outline-none focus:ring-2 focus:ring-ring">
-            <option>Todas las alertas</option>
-            <option>Stock bajo</option>
-            <option>Por vencer</option>
-          </select>
-        </div>
-      </div>
-
+      {/* Tabla Estandarizada */}
       <div className="bg-card rounded-lg border border-border overflow-hidden">
-        <table className="w-full">
-          <thead className="bg-muted">
+        <table className="w-full text-sm text-left">
+          <thead className="bg-muted text-muted-foreground font-semibold">
             <tr>
-              <th className="text-left px-6 py-3">ID</th>
-              <th className="text-left px-6 py-3">Nombre</th>
-              <th className="text-left px-6 py-3">Stock</th>
-              <th className="text-left px-6 py-3">Vencimiento</th>
-              <th className="text-left px-6 py-3">Alertas</th>
-              <th className="text-left px-6 py-3">Estado</th>
-              <th className="text-left px-6 py-3">Acciones</th>
+              <th className="px-6 py-3">Código</th>
+              <th className="px-6 py-3">Insumo</th>
+              <th className="px-6 py-3">Categoría</th>
+              <th className="px-6 py-3">Presentación</th>
+              <th className="px-6 py-3">Stock Actual</th>
+              <th className="px-6 py-3">Proveedor</th>
+              <th className="px-6 py-3">Estado</th>
+              <th className="px-6 py-3">Acciones</th>
             </tr>
           </thead>
-          <tbody>
-            {insumos.map((insumo) => (
-              <tr key={insumo.id} className="border-b border-border hover:bg-muted/50">
-                <td className="px-6 py-4">{insumo.id}</td>
-                <td className="px-6 py-4">{insumo.nombre}</td>
-                <td className="px-6 py-4">
-                  <span className={insumo.alerta ? 'text-warning' : ''}>
-                    {insumo.stock} {insumo.unidad}
-                  </span>
-                </td>
-                <td className="px-6 py-4 text-muted-foreground">{insumo.vencimiento}</td>
-                <td className="px-6 py-4">
-                  <div className="flex gap-2">
-                    {insumo.alerta && (
-                      <span className="flex items-center gap-1 px-2 py-1 bg-warning/10 text-warning rounded text-xs">
-                        <AlertTriangle className="w-3 h-3" />
-                        Stock bajo
-                      </span>
-                    )}
-                    {insumo.vencimientoProximo && (
-                      <span className="flex items-center gap-1 px-2 py-1 bg-destructive/10 text-destructive rounded text-xs">
-                        <Clock className="w-3 h-3" />
-                        Por vencer
-                      </span>
-                    )}
-                  </div>
-                </td>
-                <td className="px-6 py-4">
-                  <span className="px-2 py-1 bg-success/10 text-success rounded text-sm">
-                    {insumo.estado}
-                  </span>
-                </td>
-                <td className="px-6 py-4">
-                  <div className="flex items-center gap-2">
-                    <button className="p-2 hover:bg-muted rounded-lg">
-                      <Edit className="w-4 h-4" />
-                    </button>
-                    <button
-                      onClick={() => setDeleteDialog({ isOpen: true, id: insumo.id, nombre: insumo.nombre })}
-                      className="p-2 hover:bg-muted rounded-lg text-destructive"
+          <tbody className="divide-y divide-border">
+            {insumos.length > 0 ? (
+              insumos.map((insumo) => (
+                <tr key={insumo.id} className="hover:bg-muted/50 transition-colors">
+                  <td className="px-6 py-4 font-mono font-medium">{insumo.codigo}</td>
+                  <td className="px-6 py-4 font-semibold">{insumo.nombre}</td>
+                  <td className="px-6 py-4 text-muted-foreground">{insumo.categoria}</td>
+                  <td className="px-6 py-4 text-muted-foreground">{insumo.unidadMedida}</td>
+                  <td className="px-6 py-4 font-semibold">{insumo.stock} un.</td>
+                  <td className="px-6 py-4 text-muted-foreground">{insumo.proveedor}</td>
+                  <td className="px-6 py-4">
+                    <span
+                      className={`px-2.5 py-1 rounded-full text-xs font-medium ${
+                        insumo.estado === 'Disponible'
+                          ? 'bg-success/10 text-success'
+                          : 'bg-warning/10 text-warning'
+                      }`}
                     >
-                      <Trash2 className="w-4 h-4" />
-                    </button>
-                  </div>
+                      {insumo.estado}
+                    </span>
+                  </td>
+                  <td className="px-6 py-4">
+                    <div className="flex items-center gap-1">
+                      <button
+                        onClick={() => setDetailModal({ isOpen: true, data: insumo })}
+                        className="p-2 hover:bg-muted rounded-lg text-muted-foreground hover:text-foreground"
+                        title="Ver detalle"
+                      >
+                        <Eye className="w-4 h-4" />
+                      </button>
+                      <button
+                        onClick={() => setShowModal(true)}
+                        className="p-2 hover:bg-muted rounded-lg text-muted-foreground hover:text-foreground"
+                        title="Editar"
+                      >
+                        <Edit className="w-4 h-4" />
+                      </button>
+                      <button
+                        onClick={() => setDeleteDialog({ isOpen: true, id: insumo.id, nombre: insumo.nombre })}
+                        className="p-2 hover:bg-muted rounded-lg text-destructive"
+                        title="Eliminar"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              ))
+            ) : (
+              <tr>
+                <td colSpan={8} className="px-6 py-8 text-center text-muted-foreground">
+                  No se encontraron insumos.
                 </td>
               </tr>
-            ))}
+            )}
           </tbody>
         </table>
       </div>
+
+      {/* Modal de Detalle */}
+      {detailModal.isOpen && detailModal.data && (
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+          <div className="bg-card p-6 rounded-lg max-w-md w-full border border-border space-y-4">
+            <h3 className="text-lg font-bold">Detalle del Insumo</h3>
+            <div className="space-y-2 text-sm">
+              <p><strong>Código:</strong> {detailModal.data.codigo}</p>
+              <p><strong>Nombre:</strong> {detailModal.data.nombre}</p>
+              <p><strong>Categoría:</strong> {detailModal.data.categoria}</p>
+              <p><strong>Presentación:</strong> {detailModal.data.unidadMedida}</p>
+              <p><strong>Stock Actual:</strong> {detailModal.data.stock} un.</p>
+              <p><strong>Stock Mínimo:</strong> {detailModal.data.stockMinimo} un.</p>
+              <p><strong>Precio Unitario Est.:</strong> {detailModal.data.precioUnitario}</p>
+              <p><strong>Proveedor Principal:</strong> {detailModal.data.proveedor}</p>
+              <p><strong>Estado:</strong> {detailModal.data.estado}</p>
+            </div>
+            <div className="flex justify-end pt-4">
+              <button
+                onClick={() => setDetailModal({ isOpen: false, data: null })}
+                className="px-4 py-2 bg-primary text-primary-foreground rounded-lg text-sm font-medium"
+              >
+                Cerrar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       <InsumoFormModal open={showModal} onClose={() => setShowModal(false)} />
 
@@ -159,6 +240,7 @@ export default function InsumosPage() {
         isOpen={deleteDialog.isOpen}
         title="Eliminar Insumo"
         message={`¿Estás seguro de que deseas eliminar el insumo "${deleteDialog.nombre}"? Esta acción no se puede deshacer.`}
+        confirmText="Eliminar"
         onConfirm={handleDelete}
         onCancel={() => setDeleteDialog({ isOpen: false, id: null, nombre: '' })}
         isLoading={isDeleting}
@@ -173,3 +255,4 @@ export default function InsumosPage() {
     </div>
   );
 }
+
