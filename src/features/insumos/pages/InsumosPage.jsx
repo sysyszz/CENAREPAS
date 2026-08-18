@@ -140,10 +140,9 @@ export default function InsumosPage() {
         <table className="w-full text-sm text-left">
           <thead className="bg-muted text-muted-foreground font-semibold">
             <tr>
-              <th className="px-6 py-3">Código</th>
+              <th className="px-6 py-3">ID</th>
               <th className="px-6 py-3">Insumo</th>
-              <th className="px-6 py-3">Categoría</th>
-              <th className="px-6 py-3">Presentación</th>
+              <th className="px-6 py-3">Unidad de Medida</th>
               <th className="px-6 py-3">Stock Actual</th>
               <th className="px-6 py-3">Proveedor</th>
               <th className="px-6 py-3">Estado</th>
@@ -153,13 +152,12 @@ export default function InsumosPage() {
           <tbody className="divide-y divide-border">
             {insumos.length > 0 ? (
               pagination.paginatedData.map((insumo) => (
-                <tr key={insumo.id} className="hover:bg-muted/50 transition-colors">
-                  <td className="px-6 py-4 font-mono font-medium">{insumo.codigo}</td>
+                <tr key={insumo.id_insumo} className="hover:bg-muted/50 transition-colors">
+                  <td className="px-6 py-4 font-mono font-medium">{insumo.id_insumo}</td>
                   <td className="px-6 py-4 font-semibold">{insumo.nombre}</td>
-                  <td className="px-6 py-4 text-muted-foreground">{insumo.categoria}</td>
-                  <td className="px-6 py-4 text-muted-foreground">{insumo.unidadMedida}</td>
-                  <td className="px-6 py-4 font-semibold">{insumo.stock} un.</td>
-                  <td className="px-6 py-4 text-muted-foreground">{insumo.proveedor}</td>
+                  <td className="px-6 py-4 text-muted-foreground">{insumo.unidad_medida}</td>
+                  <td className="px-6 py-4 font-semibold">{insumo.stock_actual}</td>
+                  <td className="px-6 py-4 text-muted-foreground">{insumo.id_proveedor}</td>
                   <td className="px-6 py-4">
                     <span
                       className={`px-2.5 py-1 rounded-full text-xs font-medium ${
@@ -188,7 +186,7 @@ export default function InsumosPage() {
                         <Edit className="w-4 h-4" />
                       </button>
                       <button
-                        onClick={() => setDeleteDialog({ isOpen: true, id: insumo.id, nombre: insumo.nombre })}
+                        onClick={() => setDeleteDialog({ isOpen: true, id: insumo.id_insumo, nombre: insumo.nombre })}
                         className="p-2 hover:bg-muted rounded-lg text-destructive"
                         title="Eliminar"
                       >
@@ -217,14 +215,13 @@ export default function InsumosPage() {
           <div className="bg-card p-6 rounded-lg max-w-md w-full border border-border space-y-4">
             <h3 className="text-lg font-bold">Detalle del Insumo</h3>
             <div className="space-y-2 text-sm">
-              <p><strong>Código:</strong> {detailModal.data.codigo}</p>
+              <p><strong>ID:</strong> {detailModal.data.id_insumo}</p>
               <p><strong>Nombre:</strong> {detailModal.data.nombre}</p>
-              <p><strong>Categoría:</strong> {detailModal.data.categoria}</p>
-              <p><strong>Presentación:</strong> {detailModal.data.unidadMedida}</p>
-              <p><strong>Stock Actual:</strong> {detailModal.data.stock} un.</p>
-              <p><strong>Stock Mínimo:</strong> {detailModal.data.stockMinimo} un.</p>
-              <p><strong>Precio Unitario Est.:</strong> {detailModal.data.precioUnitario}</p>
-              <p><strong>Proveedor Principal:</strong> {detailModal.data.proveedor}</p>
+              <p><strong>Unidad de Medida:</strong> {detailModal.data.unidad_medida}</p>
+              <p><strong>Stock Actual:</strong> {detailModal.data.stock_actual}</p>
+              <p><strong>Stock Mínimo:</strong> {detailModal.data.stock_minimo}</p>
+              <p><strong>Fecha de Vencimiento:</strong> {detailModal.data.fecha_vencimiento}</p>
+              <p><strong>Proveedor:</strong> {detailModal.data.id_proveedor}</p>
               <p><strong>Estado:</strong> {detailModal.data.estado}</p>
             </div>
             <div className="flex justify-end pt-4">
