@@ -8,7 +8,6 @@ import Toast from '../../../shared/components/Toast';
 
 export default function ProveedoresPage() {
   const {
-    proveedores,
     filteredProveedores,
     searchTerm,
     setSearchTerm,

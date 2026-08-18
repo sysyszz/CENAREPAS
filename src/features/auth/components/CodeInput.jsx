@@ -1,5 +1,3 @@
-// components/CodeInput.jsx
-import { useState } from 'react';
 
 export const CodeInput = ({ code, setCode, error }) => {
   const handleCodeChange = (index, value) => {
