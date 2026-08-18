@@ -127,10 +127,9 @@ export default function CategoriasPage() {
         <table className="w-full text-sm text-left">
           <thead className="bg-muted text-muted-foreground font-semibold">
             <tr>
-              <th className="px-6 py-3">Código</th>
+              <th className="px-6 py-3">ID</th>
               <th className="px-6 py-3">Nombre Categoría</th>
               <th className="px-6 py-3">Descripción</th>
-              <th className="px-6 py-3">Productos Asignados</th>
               <th className="px-6 py-3">Estado</th>
               <th className="px-6 py-3">Acciones</th>
             </tr>
@@ -138,11 +137,10 @@ export default function CategoriasPage() {
           <tbody className="divide-y divide-border">
             {categorias.length > 0 ? (
               pagination.paginatedData.map((categoria) => (
-                <tr key={categoria.id} className="hover:bg-muted/50 transition-colors">
-                  <td className="px-6 py-4 font-mono font-medium">{categoria.codigo}</td>
+                <tr key={categoria.id_categoria} className="hover:bg-muted/50 transition-colors">
+                  <td className="px-6 py-4 font-mono font-medium">{categoria.id_categoria}</td>
                   <td className="px-6 py-4 font-semibold">{categoria.nombre}</td>
                   <td className="px-6 py-4 text-muted-foreground max-w-xs truncate">{categoria.descripcion}</td>
-                  <td className="px-6 py-4">{categoria.productosCount} productos</td>
                   <td className="px-6 py-4">
                     <span
                       className={`px-2.5 py-1 rounded-full text-xs font-medium ${
@@ -171,7 +169,7 @@ export default function CategoriasPage() {
                         <Edit className="w-4 h-4" />
                       </button>
                       <button
-                        onClick={() => setDeleteDialog({ isOpen: true, id: categoria.id, nombre: categoria.nombre })}
+                        onClick={() => setDeleteDialog({ isOpen: true, id: categoria.id_categoria, nombre: categoria.nombre })}
                         className="p-2 hover:bg-muted rounded-lg text-destructive"
                         title="Eliminar"
                       >
@@ -200,10 +198,9 @@ export default function CategoriasPage() {
           <div className="bg-card p-6 rounded-lg max-w-md w-full border border-border space-y-4">
             <h3 className="text-lg font-bold">Detalle de Categoría</h3>
             <div className="space-y-2 text-sm">
-              <p><strong>Código:</strong> {detailModal.data.codigo}</p>
+              <p><strong>ID:</strong> {detailModal.data.id_categoria}</p>
               <p><strong>Nombre:</strong> {detailModal.data.nombre}</p>
               <p><strong>Descripción:</strong> {detailModal.data.descripcion}</p>
-              <p><strong>Productos Asignados:</strong> {detailModal.data.productosCount}</p>
               <p><strong>Estado:</strong> {detailModal.data.estado}</p>
             </div>
             <div className="flex justify-end pt-4">
