@@ -1,5 +1,7 @@
 import { Plus, Search, Eye, Edit, XCircle, FileDown, FileSpreadsheet, Factory, CheckCircle, Clock, Calendar } from 'lucide-react';
 import { useProduccion } from '../hooks/useProduccion';
+import { usePagination } from '../../../shared/hooks/usePagination';
+import { PaginationControls } from '../../../shared/components/PaginationControls';
 import { ProduccionFormModal } from '../components/ProduccionFormModal';
 import ConfirmDialog from '../../../shared/components/ConfirmDialog';
 import Toast from '../../../shared/components/Toast';
@@ -23,6 +25,7 @@ export default function ProduccionPage() {
     setToast,
     handleAnular,
   } = useProduccion();
+  const pagination = usePagination(lotes);
 
   const totalLotes = rawLotes.length;
   const finalizados = rawLotes.filter((l) => l.estado === 'Finalizado').length;
@@ -138,7 +141,7 @@ export default function ProduccionPage() {
           </thead>
           <tbody className="divide-y divide-border">
             {lotes.length > 0 ? (
-              lotes.map((lote) => (
+              pagination.paginatedData.map((lote) => (
                 <tr key={lote.id} className="hover:bg-muted/50 transition-colors">
                   <td className="px-6 py-4 font-mono font-medium">{lote.codigo}</td>
                   <td className="px-6 py-4 font-semibold">{lote.producto}</td>
@@ -227,6 +230,8 @@ export default function ProduccionPage() {
           </div>
         </div>
       )}
+
+      <PaginationControls {...pagination} />
 
       <ProduccionFormModal open={showModal} onClose={() => setShowModal(false)} />
 

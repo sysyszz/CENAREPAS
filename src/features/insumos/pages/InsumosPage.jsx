@@ -1,5 +1,7 @@
 import { Plus, Search, Eye, Edit, Trash2, FileDown, FileSpreadsheet, Package, AlertTriangle, CheckCircle, Truck } from 'lucide-react';
 import { useInsumos } from '../hooks/useInsumos';
+import { usePagination } from '../../../shared/hooks/usePagination';
+import { PaginationControls } from '../../../shared/components/PaginationControls';
 import { InsumoFormModal } from '../components/InsumoFormModal';
 import ConfirmDialog from '../../../shared/components/ConfirmDialog';
 import Toast from '../../../shared/components/Toast';
@@ -25,6 +27,7 @@ export default function InsumosPage() {
     setToast,
     handleDelete,
   } = useInsumos();
+  const pagination = usePagination(insumos);
 
   const totalInsumos = rawInsumos.length;
   const disponibles = rawInsumos.filter((i) => i.estado === 'Disponible').length;
@@ -149,7 +152,7 @@ export default function InsumosPage() {
           </thead>
           <tbody className="divide-y divide-border">
             {insumos.length > 0 ? (
-              insumos.map((insumo) => (
+              pagination.paginatedData.map((insumo) => (
                 <tr key={insumo.id} className="hover:bg-muted/50 transition-colors">
                   <td className="px-6 py-4 font-mono font-medium">{insumo.codigo}</td>
                   <td className="px-6 py-4 font-semibold">{insumo.nombre}</td>
@@ -205,6 +208,8 @@ export default function InsumosPage() {
           </tbody>
         </table>
       </div>
+
+      <PaginationControls {...pagination} />
 
       {/* Modal de Detalle */}
       {detailModal.isOpen && detailModal.data && (

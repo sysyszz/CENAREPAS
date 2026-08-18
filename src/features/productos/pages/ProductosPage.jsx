@@ -1,5 +1,7 @@
 import { Plus, Search, Eye, Edit, Trash2, FileDown, FileSpreadsheet, Box, CheckCircle, AlertTriangle, DollarSign } from 'lucide-react';
 import { useProductos } from '../hooks/useProductos';
+import { usePagination } from '../../../shared/hooks/usePagination';
+import { PaginationControls } from '../../../shared/components/PaginationControls';
 import { ProductoFormModal } from '../components/ProductoFormModal';
 import ConfirmDialog from '../../../shared/components/ConfirmDialog';
 import Toast from '../../../shared/components/Toast';
@@ -25,6 +27,7 @@ export default function ProductosPage() {
     filteredProductos,
     handleDelete,
   } = useProductos();
+  const pagination = usePagination(filteredProductos);
 
   const totalProductos = productos.length;
   const disponibles = productos.filter((p) => p.estado === 'Disponible').length;
@@ -150,7 +153,7 @@ export default function ProductosPage() {
           </thead>
           <tbody className="divide-y divide-border">
             {filteredProductos.length > 0 ? (
-              filteredProductos.map((producto) => (
+              pagination.paginatedData.map((producto) => (
                 <tr key={producto.id} className="hover:bg-muted/50 transition-colors">
                   <td className="px-6 py-4 font-mono font-medium">{producto.codigo}</td>
                   <td className="px-6 py-4 font-semibold">{producto.nombre}</td>
@@ -206,6 +209,8 @@ export default function ProductosPage() {
           </tbody>
         </table>
       </div>
+
+      <PaginationControls {...pagination} />
 
       {/* Modal de Detalle */}
       {detailModal.isOpen && detailModal.data && (

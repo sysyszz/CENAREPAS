@@ -1,5 +1,7 @@
 import { Plus, Search, Eye, Edit, Trash2, FileDown, FileSpreadsheet, FolderTree, CheckCircle, Package, Layers } from 'lucide-react';
 import { useCategorias } from '../hooks/useCategorias';
+import { usePagination } from '../../../shared/hooks/usePagination';
+import { PaginationControls } from '../../../shared/components/PaginationControls';
 import { CategoriaFormModal } from '../components/CategoriaFormModal';
 import ConfirmDialog from '../../../shared/components/ConfirmDialog';
 import Toast from '../../../shared/components/Toast';
@@ -23,6 +25,7 @@ export default function CategoriasPage() {
     setToast,
     handleDelete,
   } = useCategorias();
+  const pagination = usePagination(categorias);
 
   const totalCategorias = rawCategorias.length;
   const activas = rawCategorias.filter((c) => c.estado === 'Activo').length;
@@ -134,7 +137,7 @@ export default function CategoriasPage() {
           </thead>
           <tbody className="divide-y divide-border">
             {categorias.length > 0 ? (
-              categorias.map((categoria) => (
+              pagination.paginatedData.map((categoria) => (
                 <tr key={categoria.id} className="hover:bg-muted/50 transition-colors">
                   <td className="px-6 py-4 font-mono font-medium">{categoria.codigo}</td>
                   <td className="px-6 py-4 font-semibold">{categoria.nombre}</td>
@@ -188,6 +191,8 @@ export default function CategoriasPage() {
           </tbody>
         </table>
       </div>
+
+      <PaginationControls {...pagination} />
 
       {/* Modal de Detalle */}
       {detailModal.isOpen && detailModal.data && (

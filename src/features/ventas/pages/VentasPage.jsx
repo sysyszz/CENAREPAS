@@ -1,5 +1,8 @@
+import { useState } from 'react';
 import { Plus, Search, Eye, XCircle, FileDown, FileSpreadsheet } from 'lucide-react';
 import { useVentas } from '../hooks/useVentas';
+import { usePagination } from '../../../shared/hooks/usePagination';
+import { PaginationControls } from '../../../shared/components/PaginationControls';
 import { VentaFormModal } from '../components/VentaFormModal';
 import ConfirmDialog from '../../../shared/components/ConfirmDialog';
 import Toast from '../../../shared/components/Toast';
@@ -16,6 +19,13 @@ export default function VentasPage() {
     setToast,
     handleAnular,
   } = useVentas();
+  const [searchTerm, setSearchTerm] = useState('');
+  const filteredVentas = ventas.filter((venta) =>
+    Object.values(venta).some((value) =>
+      String(value).toLowerCase().includes(searchTerm.toLowerCase())
+    )
+  );
+  const pagination = usePagination(filteredVentas);
 
   return (
     <div className="space-y-6">
@@ -105,6 +115,8 @@ export default function VentasPage() {
             <input
               type="search"
               placeholder="Buscar venta..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
               className="w-full pl-10 pr-4 py-2 border border-input bg-input-background rounded-lg focus:outline-none focus:ring-2 focus:ring-ring"
             />
           </div>
@@ -134,7 +146,7 @@ export default function VentasPage() {
             </tr>
           </thead>
           <tbody>
-            {ventas.map((venta) => (
+            {pagination.paginatedData.map((venta) => (
               <tr key={venta.id} className="border-b border-border hover:bg-muted/50">
                 <td className="px-6 py-4">{venta.codigo}</td>
                 <td className="px-6 py-4">{venta.cliente}</td>
@@ -170,6 +182,8 @@ export default function VentasPage() {
           </tbody>
         </table>
       </div>
+
+      <PaginationControls {...pagination} />
 
       <VentaFormModal open={showModal} onClose={() => setShowModal(false)} />
 

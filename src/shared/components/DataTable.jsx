@@ -1,4 +1,6 @@
 import { useState } from "react";
+import { usePagination } from "../hooks/usePagination";
+import { PaginationControls } from "./PaginationControls";
 import {
   Table,
   TableBody,
@@ -30,8 +32,6 @@ import {
   Edit,
   Trash2,
   Eye,
-  ChevronLeft,
-  ChevronRight,
 } from "lucide-react";
 
 export function DataTable({
@@ -46,22 +46,15 @@ export function DataTable({
   filters,
 }) {
   const [searchTerm, setSearchTerm] = useState("");
-  const [currentPage, setCurrentPage] = useState(1);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [selectedRow, setSelectedRow] = useState(null);
-  const itemsPerPage = 10;
-
   const filteredData = data.filter((row) =>
     Object.values(row).some((value) =>
       String(value).toLowerCase().includes(searchTerm.toLowerCase())
     )
   );
 
-  const totalPages = Math.ceil(filteredData.length / itemsPerPage);
-  const paginatedData = filteredData.slice(
-    (currentPage - 1) * itemsPerPage,
-    currentPage * itemsPerPage
-  );
+  const pagination = usePagination(filteredData);
 
   const handleDelete = () => {
     if (onDelete && selectedRow) {
@@ -122,8 +115,8 @@ export function DataTable({
             </TableRow>
           </TableHeader>
           <TableBody>
-            {paginatedData.length > 0 ? (
-              paginatedData.map((row, index) => (
+            {pagination.paginatedData.length > 0 ? (
+              pagination.paginatedData.map((row, index) => (
                 <TableRow key={index}>
                   {columns.map((column) => (
                     <TableCell key={column.key} style={{ color: "#0F172A" }}>
@@ -187,50 +180,7 @@ export function DataTable({
       </div>
 
       {/* Pagination */}
-      {totalPages > 1 && (
-        <div className="flex items-center justify-between">
-          <p className="text-sm" style={{ color: "#64748B" }}>
-            Mostrando {(currentPage - 1) * itemsPerPage + 1} -{" "}
-            {Math.min(currentPage * itemsPerPage, filteredData.length)} de{" "}
-            {filteredData.length} registros
-          </p>
-          <div className="flex gap-2">
-            <Button
-              variant="outline"
-              size="icon"
-              onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
-              disabled={currentPage === 1}
-            >
-              <ChevronLeft className="w-4 h-4" />
-            </Button>
-            <div className="flex items-center gap-1">
-              {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
-                <Button
-                  key={page}
-                  variant={currentPage === page ? "default" : "outline"}
-                  size="icon"
-                  onClick={() => setCurrentPage(page)}
-                  style={
-                    currentPage === page
-                      ? { backgroundColor: "#2563EB", color: "#FFFFFF" }
-                      : {}
-                  }
-                >
-                  {page}
-                </Button>
-              ))}
-            </div>
-            <Button
-              variant="outline"
-              size="icon"
-              onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
-              disabled={currentPage === totalPages}
-            >
-              <ChevronRight className="w-4 h-4" />
-            </Button>
-          </div>
-        </div>
-      )}
+      <PaginationControls {...pagination} />
 
       {/* Delete Confirmation Dialog */}
       <Dialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>

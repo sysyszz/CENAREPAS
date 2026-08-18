@@ -1,5 +1,7 @@
 import { Plus, Search, Eye, Edit, Trash2, FileDown, FileSpreadsheet, Truck, CheckCircle, ShoppingBag, DollarSign } from 'lucide-react';
 import { useProveedores } from '../hooks/useProveedores';
+import { usePagination } from '../../../shared/hooks/usePagination';
+import { PaginationControls } from '../../../shared/components/PaginationControls';
 import { ProveedorFormModal } from '../components/ProveedorFormModal';
 import { ProveedorDetailModal } from '../components/ProveedorDetailModal';
 import { ProveedorEditModal } from '../components/ProveedorEditModal';
@@ -34,6 +36,7 @@ export default function ProveedoresPage() {
     handleEdit,
     handleSaveEdit,
   } = useProveedores();
+  const pagination = usePagination(filteredProveedores);
 
   const totalProveedores = rawProveedores.length;
   const activos = rawProveedores.filter((p) => p.estado === 'Activo').length;
@@ -147,7 +150,7 @@ export default function ProveedoresPage() {
           </thead>
           <tbody className="divide-y divide-border">
             {filteredProveedores.length > 0 ? (
-              filteredProveedores.map((proveedor) => (
+              pagination.paginatedData.map((proveedor) => (
                 <tr key={proveedor.id} className="hover:bg-muted/50 transition-colors">
                   <td className="px-6 py-4 font-mono font-medium">{proveedor.codigo}</td>
                   <td className="px-6 py-4 font-semibold">{proveedor.nombre}</td>
@@ -203,6 +206,8 @@ export default function ProveedoresPage() {
           </tbody>
         </table>
       </div>
+
+      <PaginationControls {...pagination} />
 
       <ProveedorFormModal open={showModal} onClose={() => setShowModal(false)} />
       <ProveedorDetailModal

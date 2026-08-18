@@ -1,5 +1,7 @@
 import { Plus, Search, Eye, Edit, Trash2, FileDown, FileSpreadsheet, Shield, ShieldCheck, Users, Lock } from 'lucide-react';
 import { useRoles } from '../hooks/useRoles';
+import { usePagination } from '../../../shared/hooks/usePagination';
+import { PaginationControls } from '../../../shared/components/PaginationControls';
 import { RoleFormModal } from '../components/RoleFormModal';
 import ConfirmDialog from '../../../shared/components/ConfirmDialog';
 import Toast from '../../../shared/components/Toast';
@@ -23,6 +25,7 @@ export default function RolesPage() {
     setToast,
     handleDelete,
   } = useRoles();
+  const pagination = usePagination(roles);
 
   const totalRoles = rawRoles.length;
   const rolesActivos = rawRoles.filter((r) => r.estado === 'Activo').length;
@@ -135,7 +138,7 @@ export default function RolesPage() {
           </thead>
           <tbody className="divide-y divide-border">
             {roles.length > 0 ? (
-              roles.map((rol) => (
+              pagination.paginatedData.map((rol) => (
                 <tr key={rol.id} className="hover:bg-muted/50 transition-colors">
                   <td className="px-6 py-4 font-mono font-medium">{rol.codigo}</td>
                   <td className="px-6 py-4 font-semibold">{rol.nombre}</td>
@@ -190,6 +193,8 @@ export default function RolesPage() {
           </tbody>
         </table>
       </div>
+
+      <PaginationControls {...pagination} />
 
       {/* Modal de Detalle */}
       {detailModal.isOpen && detailModal.data && (

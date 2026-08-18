@@ -1,5 +1,7 @@
 import { Plus, Search, Eye, Edit, Trash2, FileDown, FileSpreadsheet, BookOpen, CheckCircle, FileText, Clock } from 'lucide-react';
 import { useFichasTecnicas } from '../hooks/useFichasTecnicas';
+import { usePagination } from '../../../shared/hooks/usePagination';
+import { PaginationControls } from '../../../shared/components/PaginationControls';
 import { FichaTecnicaFormModal } from '../components/FichaTecnicaFormModal';
 import ConfirmDialog from '../../../shared/components/ConfirmDialog';
 import Toast from '../../../shared/components/Toast';
@@ -23,6 +25,7 @@ export default function FichasTecnicasPage() {
     setToast,
     handleDelete,
   } = useFichasTecnicas();
+  const pagination = usePagination(fichas);
 
   const totalFichas = rawFichas.length;
   const vigentes = rawFichas.filter((f) => f.estado === 'Vigente').length;
@@ -133,7 +136,7 @@ export default function FichasTecnicasPage() {
           </thead>
           <tbody className="divide-y divide-border">
             {fichas.length > 0 ? (
-              fichas.map((ficha) => (
+              pagination.paginatedData.map((ficha) => (
                 <tr key={ficha.id} className="hover:bg-muted/50 transition-colors">
                   <td className="px-6 py-4 font-mono font-medium">{ficha.codigo}</td>
                   <td className="px-6 py-4 font-semibold">{ficha.producto}</td>
@@ -215,6 +218,8 @@ export default function FichasTecnicasPage() {
           </div>
         </div>
       )}
+
+      <PaginationControls {...pagination} />
 
       <FichaTecnicaFormModal open={showModal} onClose={() => setShowModal(false)} />
 

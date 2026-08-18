@@ -1,5 +1,7 @@
 import { Plus, Search, Edit, Trash2, Lock, Eye, FileDown, FileSpreadsheet, Users, UserCheck, Shield, Clock } from 'lucide-react';
 import { useUsuarios } from '../hooks/useUsuarios';
+import { usePagination } from '../../../shared/hooks/usePagination';
+import { PaginationControls } from '../../../shared/components/PaginationControls';
 import { UsuarioFormModal } from '../components/UsuarioFormModal';
 import { UsuarioDetailModal } from '../components/UsuarioDetailModal';
 import { UsuarioEditModal } from '../components/UsuarioEditModal';
@@ -36,6 +38,7 @@ export default function UsuariosPage() {
     handleEdit,
     handleSaveEdit,
   } = useUsuarios();
+  const pagination = usePagination(filteredUsuarios);
 
   const totalUsuarios = usuarios.length;
   const usuariosActivos = usuarios.filter((u) => u.estado === 'Activo').length;
@@ -164,7 +167,7 @@ export default function UsuariosPage() {
                 </td>
               </tr>
             ) : (
-              filteredUsuarios.map((usuario) => (
+              pagination.paginatedData.map((usuario) => (
                 <tr key={usuario.id} className="border-b border-border hover:bg-muted/50">
                   <td className="px-6 py-4">{usuario.id}</td>
                   <td className="px-6 py-4">{usuario.nombre}</td>
@@ -218,17 +221,7 @@ export default function UsuariosPage() {
         </table>
       </div>
 
-      <div className="flex items-center justify-between">
-        <p className="text-sm text-muted-foreground">
-          Mostrando {filteredUsuarios.length} de {usuarios.length} usuarios
-          {searchTerm && <span className="ml-2 text-primary">• Búsqueda: "{searchTerm}"</span>}
-        </p>
-        <div className="flex gap-2">
-          <button className="px-3 py-2 border border-border rounded-lg hover:bg-muted">Anterior</button>
-          <button className="px-3 py-2 bg-primary text-primary-foreground rounded-lg">1</button>
-          <button className="px-3 py-2 border border-border rounded-lg hover:bg-muted">Siguiente</button>
-        </div>
-      </div>
+      <PaginationControls {...pagination} />
 
       <UsuarioFormModal open={showModal} onClose={() => setShowModal(false)} />
       <UsuarioDetailModal

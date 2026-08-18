@@ -1,5 +1,7 @@
 import { Plus, Search, Eye, Edit, XCircle, FileDown, FileSpreadsheet, ShoppingCart, CheckCircle, Clock, DollarSign } from 'lucide-react';
 import { useCompras } from '../hooks/useCompras';
+import { usePagination } from '../../../shared/hooks/usePagination';
+import { PaginationControls } from '../../../shared/components/PaginationControls';
 import { CompraFormModal } from '../components/CompraFormModal';
 import ConfirmDialog from '../../../shared/components/ConfirmDialog';
 import Toast from '../../../shared/components/Toast';
@@ -23,6 +25,7 @@ export default function ComprasPage() {
     setToast,
     handleAnular,
   } = useCompras();
+  const pagination = usePagination(compras);
 
   const totalCompras = rawCompras.length;
   const recibidas = rawCompras.filter((c) => c.estado === 'Recibida').length;
@@ -136,7 +139,7 @@ export default function ComprasPage() {
           </thead>
           <tbody className="divide-y divide-border">
             {compras.length > 0 ? (
-              compras.map((compra) => (
+              pagination.paginatedData.map((compra) => (
                 <tr key={compra.id} className="hover:bg-muted/50 transition-colors">
                   <td className="px-6 py-4 font-mono font-medium">{compra.codigo}</td>
                   <td className="px-6 py-4 font-semibold">{compra.proveedor}</td>
@@ -221,6 +224,8 @@ export default function ComprasPage() {
           </div>
         </div>
       )}
+
+      <PaginationControls {...pagination} />
 
       <CompraFormModal open={showModal} onClose={() => setShowModal(false)} />
 

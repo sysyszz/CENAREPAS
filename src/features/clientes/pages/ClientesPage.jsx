@@ -1,5 +1,7 @@
 import { Plus, Search, Eye, Edit, Trash2, FileDown, FileSpreadsheet, UserCircle, CheckCircle, ShoppingBag, DollarSign } from 'lucide-react';
 import { useClientes } from '../hooks/useClientes';
+import { usePagination } from '../../../shared/hooks/usePagination';
+import { PaginationControls } from '../../../shared/components/PaginationControls';
 import { ClienteFormModal } from '../components/ClienteFormModal';
 import ConfirmDialog from '../../../shared/components/ConfirmDialog';
 import Toast from '../../../shared/components/Toast';
@@ -23,6 +25,7 @@ export default function ClientesPage() {
     setToast,
     handleDelete,
   } = useClientes();
+  const pagination = usePagination(clientes);
 
   const totalClientes = rawClientes.length;
   const activos = rawClientes.filter((c) => c.estado === 'Activo').length;
@@ -136,7 +139,7 @@ export default function ClientesPage() {
           </thead>
           <tbody className="divide-y divide-border">
             {clientes.length > 0 ? (
-              clientes.map((cliente) => (
+              pagination.paginatedData.map((cliente) => (
                 <tr key={cliente.id} className="hover:bg-muted/50 transition-colors">
                   <td className="px-6 py-4 font-mono font-medium">{cliente.codigo}</td>
                   <td className="px-6 py-4 font-semibold">{cliente.nombre}</td>
@@ -192,6 +195,8 @@ export default function ClientesPage() {
           </tbody>
         </table>
       </div>
+
+      <PaginationControls {...pagination} />
 
       {/* Modal de Detalle */}
       {detailModal.isOpen && detailModal.data && (

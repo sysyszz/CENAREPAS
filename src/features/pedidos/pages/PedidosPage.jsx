@@ -1,5 +1,7 @@
 import { Plus, Search, Eye, Edit, Trash2, FileDown, FileSpreadsheet, ClipboardList, CheckCircle, Truck, DollarSign } from 'lucide-react';
 import { usePedidos } from '../hooks/usePedidos';
+import { usePagination } from '../../../shared/hooks/usePagination';
+import { PaginationControls } from '../../../shared/components/PaginationControls';
 import { PedidoFormModal } from '../components/PedidoFormModal';
 import ConfirmDialog from '../../../shared/components/ConfirmDialog';
 import Toast from '../../../shared/components/Toast';
@@ -23,6 +25,7 @@ export default function PedidosPage() {
     setToast,
     handleDelete,
   } = usePedidos();
+  const pagination = usePagination(pedidos);
 
   const totalPedidos = rawPedidos.length;
   const entregados = rawPedidos.filter((p) => p.estado === 'Entregado').length;
@@ -137,7 +140,7 @@ export default function PedidosPage() {
           </thead>
           <tbody className="divide-y divide-border">
             {pedidos.length > 0 ? (
-              pedidos.map((pedido) => (
+              pagination.paginatedData.map((pedido) => (
                 <tr key={pedido.id} className="hover:bg-muted/50 transition-colors">
                   <td className="px-6 py-4 font-mono font-medium">{pedido.codigo}</td>
                   <td className="px-6 py-4 font-semibold">{pedido.cliente}</td>
@@ -222,6 +225,8 @@ export default function PedidosPage() {
           </div>
         </div>
       )}
+
+      <PaginationControls {...pagination} />
 
       <PedidoFormModal open={showModal} onClose={() => setShowModal(false)} />
 
