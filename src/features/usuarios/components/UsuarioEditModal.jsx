@@ -5,14 +5,14 @@ export function UsuarioEditModal({ open, editData, setEditData, onClose, onSave,
 
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-      <div className="bg-card p-6 rounded-lg w-full max-w-md">
+      <div className="form-modal-panel bg-card p-6 rounded-lg">
         <div className="flex items-center justify-between mb-4">
           <h2>Editar Usuario</h2>
           <button onClick={onClose} className="p-2 hover:bg-muted rounded-lg">
             <X className="w-5 h-5" />
           </button>
         </div>
-        <div className="space-y-4">
+        <div className="modal-form-grid">
           <div>
             <label className="block mb-2">Nombre</label>
             <input
@@ -46,7 +46,7 @@ export function UsuarioEditModal({ open, editData, setEditData, onClose, onSave,
               <option value="5">Auditor de Calidad</option>
             </select>
           </div>
-          <div>
+          <div className="modal-field-wide">
             <label className="block mb-2">Estado</label>
             <select
               value={editData.estado}

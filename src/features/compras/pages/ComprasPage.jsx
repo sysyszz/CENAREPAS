@@ -5,8 +5,11 @@ import { PaginationControls } from '../../../shared/components/PaginationControl
 import { CompraFormModal } from '../components/CompraFormModal';
 import ConfirmDialog from '../../../shared/components/ConfirmDialog';
 import Toast from '../../../shared/components/Toast';
+import { usePermissions } from '../../../shared/contexts/PermissionContext';
+import StatusSwitch from '../../../shared/components/StatusSwitch';
 
 export default function ComprasPage() {
+  const { can } = usePermissions();
   const {
     compras,
     rawCompras,
@@ -50,7 +53,7 @@ export default function ComprasPage() {
             Exportar Excel
           </button>
           <button
-            onClick={() => setShowModal(true)}
+            onClick={() => setShowModal(true)} disabled={!can('compras', 'crear')}
             className="flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:opacity-90 text-sm font-medium transition-colors"
           >
             <Plus className="w-4 h-4" />
@@ -124,7 +127,7 @@ export default function ComprasPage() {
       </div>
 
       {/* Tabla Estandarizada */}
-      <div className="bg-card rounded-lg border border-border overflow-hidden">
+      <div className="records-table-shell bg-card rounded-lg border border-border overflow-hidden">
         <table className="w-full text-sm text-left">
           <thead className="bg-muted text-muted-foreground font-semibold">
             <tr>
@@ -139,17 +142,7 @@ export default function ComprasPage() {
                 <tr key={compra.id_compra} className="hover:bg-muted/50 transition-colors">
                   <td className="px-6 py-4 font-mono font-medium">{compra.id_compra}</td><td className="px-6 py-4">{compra.id_proveedor}</td><td className="px-6 py-4">{compra.id_usuario}</td><td className="px-6 py-4">{compra.fecha_compra}</td><td className="px-6 py-4 font-semibold">{compra.valor_total}</td>
                   <td className="px-6 py-4">
-                    <span
-                      className={`px-2.5 py-1 rounded-full text-xs font-medium ${
-                        compra.estado === 'Recibida'
-                          ? 'bg-success/10 text-success'
-                          : compra.estado === 'Pendiente'
-                          ? 'bg-warning/10 text-warning'
-                          : 'bg-destructive/10 text-destructive'
-                      }`}
-                    >
-                      {compra.estado}
-                    </span>
+                    <StatusSwitch value={compra.estado} />
                   </td>
                   <td className="px-6 py-4">
                     <div className="flex items-center gap-1">
@@ -161,7 +154,7 @@ export default function ComprasPage() {
                         <Eye className="w-4 h-4" />
                       </button>
                       <button
-                        onClick={() => setShowModal(true)}
+                        onClick={() => setShowModal(true)} disabled={!can('compras', 'editar')}
                         className="p-2 hover:bg-muted rounded-lg text-muted-foreground hover:text-foreground"
                         title="Editar"
                       >
@@ -169,7 +162,7 @@ export default function ComprasPage() {
                       </button>
                       {compra.estado !== 'Anulada' && (
                         <button
-                          onClick={() => setDeleteDialog({ isOpen: true, id: compra.id_compra, nombre: compra.id_compra })}
+                          onClick={() => setDeleteDialog({ isOpen: true, id: compra.id_compra, nombre: compra.id_compra })} disabled={!can('compras', 'eliminar')}
                           className="p-2 hover:bg-muted rounded-lg text-destructive"
                           title="Anular compra"
                         >

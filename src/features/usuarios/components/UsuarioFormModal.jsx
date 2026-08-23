@@ -1,11 +1,13 @@
+import { X } from 'lucide-react';
+
 export function UsuarioFormModal({ open, onClose }) {
   if (!open) return null;
 
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-      <div className="bg-card p-6 rounded-lg w-full max-w-md">
-        <h2 className="mb-4">Nuevo Usuario</h2>
-        <div className="space-y-4">
+      <div className="form-modal-panel bg-card p-6 rounded-lg">
+        <div className="flex items-start justify-between gap-4"><h2>Nuevo Usuario</h2><button onClick={onClose} className="p-2 -mr-2 -mt-2 rounded-lg hover:bg-muted text-muted-foreground" aria-label="Cerrar formulario"><X className="w-5 h-5" /></button></div>
+        <div className="modal-form-grid">
           <div>
             <label className="block mb-2">Nombre</label>
             <input type="text" maxLength={100} required className="w-full px-4 py-2 border border-input bg-input-background rounded-lg focus:outline-none focus:ring-2 focus:ring-ring" />

@@ -1,4 +1,5 @@
 import { Link, useLocation } from 'react-router-dom';
+import logoIcon from '../../../assets/logo-icon.png';
 import {
   LayoutDashboard,
   Users,
@@ -17,6 +18,7 @@ import {
   Menu,
   X,
 } from 'lucide-react';
+import { usePermissions } from '../../../shared/contexts/PermissionContext';
 
 const menuGroups = [
   {
@@ -35,8 +37,8 @@ const menuGroups = [
   {
     category: 'Inventario',
     items: [
-      { path: '/admin/productos', icon: Box, label: 'Productos' },
       { path: '/admin/categorias', icon: FolderTree, label: 'Categorías' },
+      { path: '/admin/productos', icon: Box, label: 'Productos' },
       { path: '/admin/insumos', icon: Package, label: 'Insumos' },
       { path: '/admin/fichas-tecnicas', icon: BookOpen, label: 'Fichas Técnicas' },
     ],
@@ -61,6 +63,7 @@ const menuGroups = [
 
 export default function Sidebar({ sidebarOpen, setSidebarOpen, onLogout }) {
   const location = useLocation();
+  const { can } = usePermissions();
 
   return (
     <aside
@@ -71,15 +74,11 @@ export default function Sidebar({ sidebarOpen, setSidebarOpen, onLogout }) {
       <div className="p-4 flex items-center justify-between border-b border-sidebar-border h-16 shrink-0">
         {sidebarOpen ? (
           <div className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center text-primary-foreground font-bold text-lg">
-              C
-            </div>
+            <img src={logoIcon} alt="CENAREPAS" className="h-8 w-8 object-contain" />
             <h2 className="text-lg font-bold tracking-wide">CENAREPAS</h2>
           </div>
         ) : (
-          <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center text-primary-foreground font-bold text-lg mx-auto">
-            C
-          </div>
+          <img src={logoIcon} alt="CENAREPAS" className="h-8 w-8 object-contain mx-auto" />
         )}
         <button
           onClick={() => setSidebarOpen(!sidebarOpen)}
@@ -92,16 +91,16 @@ export default function Sidebar({ sidebarOpen, setSidebarOpen, onLogout }) {
 
       <nav className="flex-1 overflow-y-auto custom-scrollbar scroll-smooth p-3 space-y-4">
         {menuGroups.map((group, groupIdx) => (
-          <div key={group.category} className="space-y-1">
+          <div key={group.category} className="space-y-1.5">
             {sidebarOpen ? (
-              <h3 className="px-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground/70 mb-1">
+              <h3 className="px-3 pt-1 text-xs font-semibold uppercase tracking-wider text-muted-foreground/70 mb-1.5">
                 {group.category}
               </h3>
             ) : (
               groupIdx > 0 && <div className="border-t border-sidebar-border/50 my-2" />
             )}
 
-            {group.items.map((item) => {
+            {group.items.filter((item) => can(item.permission || (item.path === '/admin' ? 'dashboard' : item.path.split('/').pop()), 'ver')).map((item) => {
               const Icon = item.icon;
               const isActive = location.pathname === item.path;
               return (
@@ -109,7 +108,7 @@ export default function Sidebar({ sidebarOpen, setSidebarOpen, onLogout }) {
                   key={item.path}
                   to={item.path}
                   title={!sidebarOpen ? item.label : undefined}
-                  className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all ${
+                  className={`flex items-center gap-3 h-10 px-3 rounded-lg text-sm font-medium transition-all ${
                     isActive
                       ? 'bg-sidebar-primary text-sidebar-primary-foreground shadow-sm'
                       : 'hover:bg-sidebar-accent text-sidebar-foreground'

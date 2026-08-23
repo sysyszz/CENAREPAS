@@ -7,8 +7,11 @@ import { ProveedorDetailModal } from '../components/ProveedorDetailModal';
 import { ProveedorEditModal } from '../components/ProveedorEditModal';
 import ConfirmDialog from '../../../shared/components/ConfirmDialog';
 import Toast from '../../../shared/components/Toast';
+import { usePermissions } from '../../../shared/contexts/PermissionContext';
+import StatusSwitch from '../../../shared/components/StatusSwitch';
 
 export default function ProveedoresPage() {
+  const { can } = usePermissions();
   const {
     rawProveedores,
     filteredProveedores,
@@ -59,7 +62,7 @@ export default function ProveedoresPage() {
             Exportar Excel
           </button>
           <button
-            onClick={() => setShowModal(true)}
+            onClick={() => setShowModal(true)} disabled={!can('proveedores', 'crear')}
             className="flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:opacity-90 text-sm font-medium transition-colors"
           >
             <Plus className="w-4 h-4" />
@@ -114,7 +117,7 @@ export default function ProveedoresPage() {
       </div>
 
       {/* Tabla Estandarizada */}
-      <div className="bg-card rounded-lg border border-border overflow-hidden">
+      <div className="records-table-shell bg-card rounded-lg border border-border overflow-hidden">
         <table className="w-full text-sm text-left">
           <thead className="bg-muted text-muted-foreground font-semibold">
             <tr>
@@ -140,15 +143,7 @@ export default function ProveedoresPage() {
                   <td className="px-6 py-4">{proveedor.correo}</td>
                   <td className="px-6 py-4">{proveedor.direccion}</td>
                   <td className="px-6 py-4">
-                    <span
-                      className={`px-2.5 py-1 rounded-full text-xs font-medium ${
-                        proveedor.estado === 'activo'
-                          ? 'bg-success/10 text-success'
-                          : 'bg-destructive/10 text-destructive'
-                      }`}
-                    >
-                      {proveedor.estado}
-                    </span>
+                    <StatusSwitch value={proveedor.estado} />
                   </td>
                   <td className="px-6 py-4">{proveedor.fecha_creacion}</td>
                   <td className="px-6 py-4">
@@ -161,14 +156,14 @@ export default function ProveedoresPage() {
                         <Eye className="w-4 h-4" />
                       </button>
                       <button
-                        onClick={() => handleEdit(proveedor)}
+                        onClick={() => handleEdit(proveedor)} disabled={!can('proveedores', 'editar')}
                         className="p-2 hover:bg-muted rounded-lg text-muted-foreground hover:text-foreground"
                         title="Editar"
                       >
                         <Edit className="w-4 h-4" />
                       </button>
                       <button
-                        onClick={() => setDeleteDialog({ isOpen: true, id: proveedor.id_proveedor, nombre: proveedor.nombre })}
+                        onClick={() => setDeleteDialog({ isOpen: true, id: proveedor.id_proveedor, nombre: proveedor.nombre })} disabled={!can('proveedores', 'eliminar')}
                         className="p-2 hover:bg-muted rounded-lg text-destructive"
                         title="Eliminar"
                       >

@@ -6,8 +6,11 @@ import { PaginationControls } from '../../../shared/components/PaginationControl
 import { VentaFormModal } from '../components/VentaFormModal';
 import ConfirmDialog from '../../../shared/components/ConfirmDialog';
 import Toast from '../../../shared/components/Toast';
+import { usePermissions } from '../../../shared/contexts/PermissionContext';
+import StatusSwitch from '../../../shared/components/StatusSwitch';
 
 export default function VentasPage() {
+  const { can } = usePermissions();
   const {
     ventas,
     showModal,
@@ -44,7 +47,7 @@ export default function VentasPage() {
             Exportar Excel
           </button>
           <button
-            onClick={() => setShowModal(true)}
+            onClick={() => setShowModal(true)} disabled={!can('ventas', 'crear')}
             className="flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:opacity-90"
           >
             <Plus className="w-5 h-5" />
@@ -132,7 +135,7 @@ export default function VentasPage() {
         </div>
       </div>
 
-      <div className="bg-card rounded-lg border border-border overflow-hidden">
+      <div className="records-table-shell bg-card rounded-lg border border-border overflow-hidden">
         <table className="w-full">
           <thead className="bg-muted">
             <tr>
@@ -146,13 +149,7 @@ export default function VentasPage() {
               <tr key={venta.id_venta} className="border-b border-border hover:bg-muted/50">
                 <td className="px-6 py-4">{venta.id_venta}</td><td className="px-6 py-4">{venta.id_sede}</td><td className="px-6 py-4">{venta.id_cliente}</td><td className="px-6 py-4">{venta.id_usuario}</td><td className="px-6 py-4">{venta.fecha_venta}</td><td className="px-6 py-4">{venta.valor_total}</td>
                 <td className="px-6 py-4">
-                  <span className={`px-2 py-1 rounded text-sm ${
-                    venta.estado === 'Completada'
-                      ? 'bg-success/10 text-success'
-                      : 'bg-destructive/10 text-destructive'
-                  }`}>
-                    {venta.estado}
-                  </span>
+                  <StatusSwitch value={venta.estado} activeValue="completada" inactiveValue="anulada" />
                 </td>
                 <td className="px-6 py-4">
                   <div className="flex items-center gap-2">
@@ -161,7 +158,7 @@ export default function VentasPage() {
                     </button>
                     {venta.estado !== 'Anulada' && (
                       <button
-                        onClick={() => setDeleteDialog({ isOpen: true, id: venta.id_venta, nombre: venta.id_venta })}
+                        onClick={() => setDeleteDialog({ isOpen: true, id: venta.id_venta, nombre: venta.id_venta })} disabled={!can('ventas', 'eliminar')}
                         className="p-2 hover:bg-muted rounded-lg text-destructive"
                       >
                         <XCircle className="w-4 h-4" />

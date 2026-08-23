@@ -5,8 +5,11 @@ import { PaginationControls } from '../../../shared/components/PaginationControl
 import { PedidoFormModal } from '../components/PedidoFormModal';
 import ConfirmDialog from '../../../shared/components/ConfirmDialog';
 import Toast from '../../../shared/components/Toast';
+import { usePermissions } from '../../../shared/contexts/PermissionContext';
+import StatusSwitch from '../../../shared/components/StatusSwitch';
 
 export default function PedidosPage() {
+  const { can } = usePermissions();
   const {
     pedidos,
     rawPedidos,
@@ -50,7 +53,7 @@ export default function PedidosPage() {
             Exportar Excel
           </button>
           <button
-            onClick={() => setShowModal(true)}
+            onClick={() => setShowModal(true)} disabled={!can('pedidos', 'crear')}
             className="flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:opacity-90 text-sm font-medium transition-colors"
           >
             <Plus className="w-4 h-4" />
@@ -124,7 +127,7 @@ export default function PedidosPage() {
       </div>
 
       {/* Tabla Estandarizada */}
-      <div className="bg-card rounded-lg border border-border overflow-hidden">
+      <div className="records-table-shell bg-card rounded-lg border border-border overflow-hidden">
         <table className="w-full text-sm text-left">
           <thead className="bg-muted text-muted-foreground font-semibold">
             <tr>
@@ -139,17 +142,7 @@ export default function PedidosPage() {
                 <tr key={pedido.id_pedido} className="hover:bg-muted/50 transition-colors">
                   <td className="px-6 py-4 font-mono font-medium">{pedido.id_pedido}</td><td className="px-6 py-4">{pedido.id_cliente}</td><td className="px-6 py-4">{pedido.id_sede}</td><td className="px-6 py-4">{pedido.id_usuario}</td><td className="px-6 py-4">{pedido.fecha_pedido}</td><td className="px-6 py-4">{pedido.fecha_entrega}</td><td className="px-6 py-4 font-semibold">{pedido.valor_total}</td>
                   <td className="px-6 py-4">
-                    <span
-                      className={`px-2.5 py-1 rounded-full text-xs font-medium ${
-                        pedido.estado === 'Entregado'
-                          ? 'bg-success/10 text-success'
-                          : pedido.estado === 'En Camino'
-                          ? 'bg-warning/10 text-warning'
-                          : 'bg-primary/10 text-primary'
-                      }`}
-                    >
-                      {pedido.estado}
-                    </span>
+                    <StatusSwitch value={pedido.estado} />
                   </td>
                   <td className="px-6 py-4">
                     <div className="flex items-center gap-1">
@@ -161,14 +154,14 @@ export default function PedidosPage() {
                         <Eye className="w-4 h-4" />
                       </button>
                       <button
-                        onClick={() => setShowModal(true)}
+                        onClick={() => setShowModal(true)} disabled={!can('pedidos', 'editar')}
                         className="p-2 hover:bg-muted rounded-lg text-muted-foreground hover:text-foreground"
                         title="Editar"
                       >
                         <Edit className="w-4 h-4" />
                       </button>
                       <button
-                        onClick={() => setDeleteDialog({ isOpen: true, id: pedido.id_pedido, nombre: pedido.id_pedido })}
+                        onClick={() => setDeleteDialog({ isOpen: true, id: pedido.id_pedido, nombre: pedido.id_pedido })} disabled={!can('pedidos', 'eliminar')}
                         className="p-2 hover:bg-muted rounded-lg text-destructive"
                         title="Eliminar pedido"
                       >

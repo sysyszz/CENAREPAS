@@ -18,6 +18,12 @@ import ProduccionPage from './features/produccion/pages/ProduccionPage';
 import ProductosPage from './features/productos/pages/ProductosPage';
 import PedidosPage from './features/pedidos/pages/PedidosPage';
 import VentasPage from './features/ventas/pages/VentasPage';
+import { usePermissions } from './shared/contexts/PermissionContext';
+
+function ProtectedModule({ modulo, children }) {
+  const { can } = usePermissions();
+  return can(modulo, 'ver') ? children : <Navigate to="/admin" replace />;
+}
 
 export function AppRoutes({ isAuthenticated, setIsAuthenticated }) {
   return (
@@ -40,18 +46,18 @@ export function AppRoutes({ isAuthenticated, setIsAuthenticated }) {
       >
         <Route index element={<DashboardPage />} />
         <Route path="profile" element={<ProfilePage />} />
-        <Route path="usuarios" element={<UsuariosPage />} />
-        <Route path="roles" element={<RolesPage />} />
-        <Route path="proveedores" element={<ProveedoresPage />} />
-        <Route path="compras" element={<ComprasPage />} />
-        <Route path="categorias" element={<CategoriasPage />} />
-        <Route path="fichas-tecnicas" element={<FichasTecnicasPage />} />
-        <Route path="insumos" element={<InsumosPage />} />
-        <Route path="produccion" element={<ProduccionPage />} />
-        <Route path="productos" element={<ProductosPage />} />
-        <Route path="clientes" element={<ClientesPage />} />
-        <Route path="pedidos" element={<PedidosPage />} />
-        <Route path="ventas" element={<VentasPage />} />
+        <Route path="usuarios" element={<ProtectedModule modulo="usuarios"><UsuariosPage /></ProtectedModule>} />
+        <Route path="roles" element={<ProtectedModule modulo="roles"><RolesPage /></ProtectedModule>} />
+        <Route path="proveedores" element={<ProtectedModule modulo="proveedores"><ProveedoresPage /></ProtectedModule>} />
+        <Route path="compras" element={<ProtectedModule modulo="compras"><ComprasPage /></ProtectedModule>} />
+        <Route path="categorias" element={<ProtectedModule modulo="categorias"><CategoriasPage /></ProtectedModule>} />
+        <Route path="fichas-tecnicas" element={<ProtectedModule modulo="fichas-tecnicas"><FichasTecnicasPage /></ProtectedModule>} />
+        <Route path="insumos" element={<ProtectedModule modulo="insumos"><InsumosPage /></ProtectedModule>} />
+        <Route path="produccion" element={<ProtectedModule modulo="produccion"><ProduccionPage /></ProtectedModule>} />
+        <Route path="productos" element={<ProtectedModule modulo="productos"><ProductosPage /></ProtectedModule>} />
+        <Route path="clientes" element={<ProtectedModule modulo="clientes"><ClientesPage /></ProtectedModule>} />
+        <Route path="pedidos" element={<ProtectedModule modulo="pedidos"><PedidosPage /></ProtectedModule>} />
+        <Route path="ventas" element={<ProtectedModule modulo="ventas"><VentasPage /></ProtectedModule>} />
       </Route>
     </Routes>
   );

@@ -5,8 +5,11 @@ import { PaginationControls } from '../../../shared/components/PaginationControl
 import { ClienteFormModal } from '../components/ClienteFormModal';
 import ConfirmDialog from '../../../shared/components/ConfirmDialog';
 import Toast from '../../../shared/components/Toast';
+import { usePermissions } from '../../../shared/contexts/PermissionContext';
+import StatusSwitch from '../../../shared/components/StatusSwitch';
 
 export default function ClientesPage() {
+  const { can } = usePermissions();
   const {
     clientes,
     rawClientes,
@@ -50,7 +53,7 @@ export default function ClientesPage() {
             Exportar Excel
           </button>
           <button
-            onClick={() => setShowModal(true)}
+            onClick={() => setShowModal(true)} disabled={!can('clientes', 'crear')}
             className="flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:opacity-90 text-sm font-medium transition-colors"
           >
             <Plus className="w-4 h-4" />
@@ -123,7 +126,7 @@ export default function ClientesPage() {
       </div>
 
       {/* Tabla Estandarizada */}
-      <div className="bg-card rounded-lg border border-border overflow-hidden">
+      <div className="records-table-shell bg-card rounded-lg border border-border overflow-hidden">
         <table className="w-full text-sm text-left">
           <thead className="bg-muted text-muted-foreground font-semibold">
             <tr>
@@ -148,15 +151,7 @@ export default function ClientesPage() {
                   <td className="px-6 py-4 text-muted-foreground">{cliente.correo}</td>
                   <td className="px-6 py-4 text-muted-foreground">{cliente.direccion}</td>
                   <td className="px-6 py-4">
-                    <span
-                      className={`px-2.5 py-1 rounded-full text-xs font-medium ${
-                        cliente.estado === 'Activo'
-                          ? 'bg-success/10 text-success'
-                          : 'bg-destructive/10 text-destructive'
-                      }`}
-                    >
-                      {cliente.estado}
-                    </span>
+                    <StatusSwitch value={cliente.estado} />
                   </td>
                   <td className="px-6 py-4">
                     <div className="flex items-center gap-1">
@@ -168,14 +163,14 @@ export default function ClientesPage() {
                         <Eye className="w-4 h-4" />
                       </button>
                       <button
-                        onClick={() => setShowModal(true)}
+                        onClick={() => setShowModal(true)} disabled={!can('clientes', 'editar')}
                         className="p-2 hover:bg-muted rounded-lg text-muted-foreground hover:text-foreground"
                         title="Editar"
                       >
                         <Edit className="w-4 h-4" />
                       </button>
                       <button
-                        onClick={() => setDeleteDialog({ isOpen: true, id: cliente.id_cliente, nombre: cliente.nombre })}
+                        onClick={() => setDeleteDialog({ isOpen: true, id: cliente.id_cliente, nombre: cliente.nombre })} disabled={!can('clientes', 'eliminar')}
                         className="p-2 hover:bg-muted rounded-lg text-destructive"
                         title="Eliminar"
                       >

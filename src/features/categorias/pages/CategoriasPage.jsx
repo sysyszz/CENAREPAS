@@ -5,8 +5,11 @@ import { PaginationControls } from '../../../shared/components/PaginationControl
 import { CategoriaFormModal } from '../components/CategoriaFormModal';
 import ConfirmDialog from '../../../shared/components/ConfirmDialog';
 import Toast from '../../../shared/components/Toast';
+import { usePermissions } from '../../../shared/contexts/PermissionContext';
+import StatusSwitch from '../../../shared/components/StatusSwitch';
 
 export default function CategoriasPage() {
+  const { can } = usePermissions();
   const {
     categorias,
     rawCategorias,
@@ -50,7 +53,7 @@ export default function CategoriasPage() {
             Exportar Excel
           </button>
           <button
-            onClick={() => setShowModal(true)}
+            onClick={() => setShowModal(true)} disabled={!can('categorias', 'crear')}
             className="flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:opacity-90 text-sm font-medium transition-colors"
           >
             <Plus className="w-4 h-4" />
@@ -123,7 +126,7 @@ export default function CategoriasPage() {
       </div>
 
       {/* Tabla con Acciones Estandarizadas */}
-      <div className="bg-card rounded-lg border border-border overflow-hidden">
+      <div className="records-table-shell bg-card rounded-lg border border-border overflow-hidden">
         <table className="w-full text-sm text-left">
           <thead className="bg-muted text-muted-foreground font-semibold">
             <tr>
@@ -142,15 +145,7 @@ export default function CategoriasPage() {
                   <td className="px-6 py-4 font-semibold">{categoria.nombre}</td>
                   <td className="px-6 py-4 text-muted-foreground max-w-xs truncate">{categoria.descripcion}</td>
                   <td className="px-6 py-4">
-                    <span
-                      className={`px-2.5 py-1 rounded-full text-xs font-medium ${
-                        categoria.estado === 'Activo'
-                          ? 'bg-success/10 text-success'
-                          : 'bg-destructive/10 text-destructive'
-                      }`}
-                    >
-                      {categoria.estado}
-                    </span>
+                    <StatusSwitch value={categoria.estado} />
                   </td>
                   <td className="px-6 py-4">
                     <div className="flex items-center gap-1">
@@ -162,14 +157,14 @@ export default function CategoriasPage() {
                         <Eye className="w-4 h-4" />
                       </button>
                       <button
-                        onClick={() => setShowModal(true)}
+                        onClick={() => setShowModal(true)} disabled={!can('categorias', 'editar')}
                         className="p-2 hover:bg-muted rounded-lg text-muted-foreground hover:text-foreground"
                         title="Editar"
                       >
                         <Edit className="w-4 h-4" />
                       </button>
                       <button
-                        onClick={() => setDeleteDialog({ isOpen: true, id: categoria.id_categoria, nombre: categoria.nombre })}
+                        onClick={() => setDeleteDialog({ isOpen: true, id: categoria.id_categoria, nombre: categoria.nombre })} disabled={!can('categorias', 'eliminar')}
                         className="p-2 hover:bg-muted rounded-lg text-destructive"
                         title="Eliminar"
                       >

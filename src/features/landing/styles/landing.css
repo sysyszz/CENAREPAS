@@ -1,0 +1,108 @@
+@import url('https://fonts.googleapis.com/css2?family=Dancing+Script:wght@600;700&family=Poppins:wght@400;500;600;700;800&display=swap');
+
+@theme inline {
+  --font-sans: 'Poppins', ui-sans-serif, system-ui, sans-serif;
+  --font-script: 'Dancing Script', cursive;
+  --color-brand: var(--landing-brand);
+  --color-brand-dark: var(--landing-brand-dark);
+  --color-brand-light: var(--landing-brand-light);
+  --color-accent-gold: var(--landing-accent-gold);
+  --animate-fade-left: landing-fade-left 0.6s ease-out both;
+  --animate-fade-right: landing-fade-right 0.6s ease-out both;
+}
+
+@keyframes landing-fade-left {
+  from { opacity: 0; transform: translateX(-32px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+
+@keyframes landing-fade-right {
+  from { opacity: 0; transform: translateX(32px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+
+.landing-page {
+  --background: #ffffff;
+  --foreground: #18223a;
+  --card: #ffffff;
+  --muted: #f3f6fb;
+  --muted-foreground: #64708a;
+  --border: #dfe6f0;
+  --landing-brand: #3158b7;
+  --landing-brand-dark: #1d377f;
+  --landing-brand-light: #5d83df;
+  --landing-accent-gold: #e7b94f;
+  min-height: 100vh;
+  overflow-x: hidden;
+  background: var(--background);
+  color: var(--foreground);
+  font-family: 'Poppins', ui-sans-serif, system-ui, sans-serif;
+}
+
+.landing-page .landing-logo {
+  background: linear-gradient(135deg, #3158b7, #1d377f);
+  color: #ffffff;
+}
+
+.landing-page .landing-logo-icon {
+  display: block;
+  color: #ffffff;
+  stroke: currentColor;
+}
+
+.landing-page .landing-nav-link {
+  color: #4b5563;
+}
+
+.landing-page .landing-nav-link:hover {
+  background-color: #eef2ff;
+  color: #1d377f;
+}
+
+.landing-page #inicio,
+.landing-page #ventajas {
+  background: linear-gradient(135deg, var(--landing-brand-light), var(--landing-brand), var(--landing-brand-dark));
+  color: #ffffff;
+}
+
+.landing-page #inicio h1,
+.landing-page #inicio p,
+.landing-page #inicio span,
+.landing-page #ventajas h2,
+.landing-page #ventajas span {
+  color: inherit;
+}
+
+.landing-page a[href='/admin/login'] {
+  background-color: var(--landing-brand);
+  color: #ffffff;
+}
+
+.landing-page a[href='/admin/login']:hover {
+  background-color: var(--landing-brand-dark);
+}
+
+.landing-page .reveal {
+  opacity: 0;
+  transform: translateY(28px);
+  transition: opacity 0.6s ease-out, transform 0.6s ease-out;
+}
+
+.landing-page .reveal.is-visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .landing-page *,
+  .landing-page *::before,
+  .landing-page *::after {
+    scroll-behavior: auto !important;
+  }
+
+  .landing-page .reveal {
+    opacity: 1;
+    transform: none;
+    transition: none;
+  }
+}

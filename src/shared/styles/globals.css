@@ -25,6 +25,322 @@
   --radius: 0.5rem;
 }
 
+.records-table-shell {
+  width: 100%;
+  max-height: 32rem;
+  overflow-x: auto;
+  overflow-y: auto;
+}
+
+.records-table-shell table {
+  width: 100%;
+  min-width: 760px;
+  table-layout: fixed;
+}
+
+.records-table-shell th,
+.records-table-shell td {
+  height: 3.5rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.modal-form-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1rem;
+}
+
+.form-modal-panel {
+  width: 100%;
+  max-width: 48rem !important;
+  max-height: 90vh;
+  overflow-y: auto;
+  border: 1px solid var(--border);
+  box-shadow: 0 18px 45px rgb(15 23 42 / 0.16);
+}
+
+.form-modal-panel > h2 {
+  margin: 0 0 1.25rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid var(--border);
+  font-size: 1.25rem;
+  font-weight: 600;
+  line-height: 1.5rem;
+}
+
+.form-modal-panel > .flex h2 {
+  font-size: 1.25rem;
+  font-weight: 600;
+  line-height: 1.5rem;
+}
+
+.form-modal-panel > .modal-form-grid {
+  margin-top: 0;
+}
+
+.status-switch {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  min-width: 5.25rem;
+  height: 2rem;
+  padding: 0.2rem 0.55rem 0.2rem 0.25rem;
+  border: 1px solid transparent;
+  border-radius: 999px;
+  cursor: pointer;
+  font-size: 0.75rem;
+  font-weight: 600;
+  transition: background-color 150ms ease, border-color 150ms ease;
+}
+
+.status-switch-thumb {
+  width: 1.35rem;
+  height: 1.35rem;
+  border-radius: 999px;
+  background: #fff;
+  box-shadow: 0 1px 3px rgb(15 23 42 / 0.2);
+  transition: transform 150ms ease;
+}
+
+.status-switch-on {
+  border-color: rgb(34 197 94 / 0.25);
+  background: rgb(34 197 94 / 0.14);
+  color: #15803d;
+}
+
+.status-switch-off {
+  border-color: rgb(100 116 139 / 0.25);
+  background: rgb(100 116 139 / 0.12);
+  color: #64748b;
+}
+
+.status-switch-off .status-switch-thumb {
+  transform: translateX(0);
+}
+
+.status-switch-on .status-switch-thumb {
+  transform: translateX(0.05rem);
+}
+
+.modal-form-grid > div {
+  min-width: 0;
+}
+
+.modal-form-grid > .modal-field-wide {
+  grid-column: 1 / -1;
+}
+
+.order-products-section {
+  padding: 0.9rem;
+  border: 1px solid var(--border);
+  border-radius: 0.7rem;
+  background: color-mix(in srgb, var(--muted) 35%, transparent);
+}
+
+.order-product-row {
+  display: grid;
+  grid-template-columns: minmax(0, 2.2fr) minmax(7rem, 0.8fr) minmax(7rem, 0.8fr) auto;
+  gap: 0.75rem;
+  align-items: end;
+}
+
+.order-product-add {
+  min-width: 2.5rem;
+  min-height: 2.5rem;
+}
+
+.modal-form-grid label {
+  display: block;
+  min-height: 1.25rem;
+  margin-bottom: 0.5rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  line-height: 1.25rem;
+}
+
+.modal-form-grid > .grid {
+  display: contents;
+}
+
+.modal-form-grid > div:has(textarea),
+.modal-form-grid > div:has(.border-dashed),
+.modal-form-grid > .p-4,
+.modal-form-grid > .flex {
+  grid-column: 1 / -1;
+}
+
+.modal-form-grid input,
+.modal-form-grid select {
+  width: 100%;
+  min-height: 2.5rem;
+  height: 2.5rem;
+  box-sizing: border-box;
+}
+
+.modal-form-grid textarea {
+  width: 100%;
+  box-sizing: border-box;
+  min-height: 5rem;
+}
+
+.modal-form-grid > .flex {
+  display: flex;
+  gap: 0.75rem;
+  padding-top: 0.5rem;
+}
+
+.modal-form-grid > .flex button {
+  min-height: 2.5rem;
+}
+
+.role-modal-header {
+  padding-bottom: 1rem;
+  border-bottom: 1px solid var(--border);
+}
+
+.role-form-content {
+  margin-top: 1.25rem;
+}
+
+.modal-field {
+  min-width: 0;
+}
+
+.role-description-field {
+  grid-column: 1 / -1;
+}
+
+.role-permissions-section {
+  grid-column: 1 / -1;
+  padding: 1rem;
+  border: 1px solid var(--border);
+  border-radius: 0.75rem;
+  background: color-mix(in srgb, var(--muted) 42%, transparent);
+}
+
+.role-permissions-count {
+  flex-shrink: 0;
+  padding: 0.35rem 0.6rem;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--primary) 12%, transparent);
+  color: var(--primary);
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.role-permissions-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 0.5rem;
+  max-height: 17rem;
+  overflow-y: auto;
+  padding-right: 0.25rem;
+}
+
+.role-module-permission {
+  min-width: 0;
+  padding: 0.85rem 1rem;
+  border: 1px solid var(--border);
+  border-radius: 0.6rem;
+  background: var(--card);
+}
+
+.role-module-permission h4 {
+  margin: 0 0 0.65rem;
+  font-size: 0.875rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.role-module-actions {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 0.5rem;
+}
+
+.role-action-option {
+  display: flex !important;
+  align-items: center;
+  gap: 0.6rem;
+  min-height: 2.5rem !important;
+  margin: 0 !important;
+  padding: 0.65rem 0.75rem;
+  border: 1px solid transparent;
+  border-radius: 0.6rem;
+  background: var(--muted);
+  cursor: pointer;
+  transition: border-color 150ms ease, background-color 150ms ease;
+}
+
+.role-action-option:hover {
+  border-color: var(--primary);
+  background: color-mix(in srgb, var(--primary) 5%, var(--card));
+}
+
+.role-action-option input {
+  width: 1rem;
+  min-height: 1rem;
+  height: 1rem;
+  flex: 0 0 auto;
+}
+
+.role-action-option span {
+  font-size: 0.8rem;
+  font-weight: 600;
+  text-transform: capitalize;
+}
+
+.role-form-actions {
+  margin-top: 0.25rem;
+}
+
+@media (max-width: 640px) {
+  .modal-form-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .modal-form-grid > div:has(textarea),
+  .modal-form-grid > div:has(.border-dashed),
+  .modal-form-grid > .p-4,
+  .modal-form-grid > .flex {
+    grid-column: auto;
+  }
+
+  .modal-form-grid > .modal-field-wide {
+    grid-column: auto;
+  }
+
+  .order-product-row {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .order-product-row select {
+    grid-column: 1 / -1;
+  }
+
+  .order-product-add {
+    width: 100%;
+  }
+
+  .role-description-field,
+  .role-permissions-section {
+    grid-column: auto;
+  }
+
+  .role-module-actions {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 768px) {
+  .records-table-shell {
+    max-height: 28rem;
+  }
+}
+
 @media (prefers-color-scheme: dark) {
   :root {
     --background: #0a0a0a;
@@ -91,4 +407,4 @@
 }
 .custom-scrollbar::-webkit-scrollbar-thumb:hover {
   background: rgba(255, 255, 255, 0.3);
-}
+}

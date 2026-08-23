@@ -1,4 +1,4 @@
-import { Plus, Search, Edit, Trash2, Lock, Eye, FileDown, FileSpreadsheet, Users, UserCheck } from 'lucide-react';
+import { Plus, Search, Edit, Trash2, Lock, Eye, FileDown, FileSpreadsheet, Users, UserCheck, ShieldCheck, KeyRound } from 'lucide-react';
 import { useUsuarios } from '../hooks/useUsuarios';
 import { mockRoles } from '../../roles/services/rolesService';
 import { usePagination } from '../../../shared/hooks/usePagination';
@@ -8,8 +8,11 @@ import { UsuarioDetailModal } from '../components/UsuarioDetailModal';
 import { UsuarioEditModal } from '../components/UsuarioEditModal';
 import ConfirmDialog from '../../../shared/components/ConfirmDialog';
 import Toast from '../../../shared/components/Toast';
+import { usePermissions } from '../../../shared/contexts/PermissionContext';
+import StatusSwitch from '../../../shared/components/StatusSwitch';
 
 export default function UsuariosPage() {
+  const { can } = usePermissions();
   const {
     usuarios,
     filteredUsuarios,
@@ -43,6 +46,8 @@ export default function UsuariosPage() {
 
   const totalUsuarios = usuarios.length;
   const usuariosActivos = usuarios.filter((u) => u.estado === 'activo').length;
+  const rolesAsignados = new Set(usuarios.map((usuario) => usuario.id_rol)).size;
+  const credencialesConfiguradas = usuarios.filter((usuario) => Boolean(usuario.contrasena_hash)).length;
   const roleNames = Object.fromEntries(mockRoles.map((role) => [role.id_rol, role.nombre]));
 
   return (
@@ -63,7 +68,7 @@ export default function UsuariosPage() {
             Exportar Excel
           </button>
           <button
-            onClick={() => setShowModal(true)}
+            onClick={() => setShowModal(true)} disabled={!can('usuarios', 'crear')}
             className="flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:opacity-90 text-sm font-medium transition-colors"
           >
             <Plus className="w-4 h-4" />
@@ -82,6 +87,14 @@ export default function UsuariosPage() {
             <p className="text-sm text-muted-foreground">Total Usuarios</p>
             <h3 className="text-xl font-bold">{totalUsuarios}</h3>
           </div>
+        </div>
+        <div className="bg-card p-4 rounded-lg border border-border flex items-center gap-3">
+          <div className="p-3 bg-accent/10 rounded-lg text-primary"><ShieldCheck className="w-5 h-5" /></div>
+          <div><p className="text-sm text-muted-foreground">Roles Asignados</p><h3 className="text-xl font-bold">{rolesAsignados}</h3></div>
+        </div>
+        <div className="bg-card p-4 rounded-lg border border-border flex items-center gap-3">
+          <div className="p-3 bg-warning/10 rounded-lg text-warning"><KeyRound className="w-5 h-5" /></div>
+          <div><p className="text-sm text-muted-foreground">Credenciales Configuradas</p><h3 className="text-xl font-bold">{credencialesConfiguradas}</h3></div>
         </div>
         <div className="bg-card p-4 rounded-lg border border-border flex items-center gap-3">
           <div className="p-3 bg-success/10 rounded-lg text-success">
@@ -131,7 +144,7 @@ export default function UsuariosPage() {
         </div>
       </div>
 
-      <div className="bg-card rounded-lg border border-border overflow-hidden">
+      <div className="records-table-shell bg-card rounded-lg border border-border overflow-hidden">
         <table className="w-full">
           <thead className="bg-muted">
             <tr>
@@ -163,13 +176,7 @@ export default function UsuariosPage() {
                     </span>
                   </td>
                   <td className="px-6 py-4">
-                    <span className={`px-2 py-1 rounded text-sm ${
-                      usuario.estado === 'activo'
-                        ? 'bg-success/10 text-success'
-                        : 'bg-muted text-muted-foreground'
-                    }`}>
-                      {usuario.estado}
-                    </span>
+                    <StatusSwitch value={usuario.estado} />
                   </td>
                   <td className="px-6 py-4">{usuario.fecha_creacion}</td>
                   <td className="px-6 py-4">
@@ -182,7 +189,7 @@ export default function UsuariosPage() {
                         <Eye className="w-4 h-4" />
                       </button>
                       <button
-                        onClick={() => handleEdit(usuario)}
+                        onClick={() => handleEdit(usuario)} disabled={!can('usuarios', 'editar')}
                         className="p-2 hover:bg-muted rounded-lg"
                         title="Editar"
                       >
@@ -192,7 +199,7 @@ export default function UsuariosPage() {
                         <Lock className="w-4 h-4" />
                       </button>
                       <button
-                        onClick={() => setDeleteDialog({ isOpen: true, id: usuario.id_usuario, nombre: usuario.nombre })}
+                        onClick={() => setDeleteDialog({ isOpen: true, id: usuario.id_usuario, nombre: usuario.nombre })} disabled={!can('usuarios', 'eliminar')}
                         className="p-2 hover:bg-muted rounded-lg text-destructive"
                         title="Eliminar"
                       >

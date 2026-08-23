@@ -1,10 +1,12 @@
-import { Plus, Search, Eye, Edit, Trash2, FileDown, FileSpreadsheet, Shield, ShieldCheck } from 'lucide-react';
+import { Plus, Search, Eye, Edit, Trash2, FileDown, FileSpreadsheet, Shield, ShieldCheck, KeyRound, ListChecks } from 'lucide-react';
 import { useRoles } from '../hooks/useRoles';
 import { usePagination } from '../../../shared/hooks/usePagination';
 import { PaginationControls } from '../../../shared/components/PaginationControls';
 import { RoleFormModal } from '../components/RoleFormModal';
 import ConfirmDialog from '../../../shared/components/ConfirmDialog';
 import Toast from '../../../shared/components/Toast';
+import { PermissionGate, mockPermisos } from '../../../shared/contexts/PermissionContext';
+import StatusSwitch from '../../../shared/components/StatusSwitch';
 
 export default function RolesPage() {
   const {
@@ -29,6 +31,8 @@ export default function RolesPage() {
 
   const totalRoles = rawRoles.length;
   const rolesActivos = rawRoles.filter((r) => r.estado === 'activo').length;
+  const permisosDisponibles = mockPermisos.length;
+  const rolesConfigurados = rawRoles.filter((role) => role.estado === 'activo').length;
 
   return (
     <div className="space-y-6">
@@ -47,13 +51,13 @@ export default function RolesPage() {
             <FileSpreadsheet className="w-4 h-4" />
             Exportar Excel
           </button>
-          <button
+          <PermissionGate modulo="roles" accion="crear"><button
             onClick={() => setShowModal(true)}
             className="flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:opacity-90 text-sm font-medium transition-colors"
           >
             <Plus className="w-4 h-4" />
             Nuevo Rol
-          </button>
+          </button></PermissionGate>
         </div>
       </div>
 
@@ -67,6 +71,14 @@ export default function RolesPage() {
             <p className="text-sm text-muted-foreground">Total Roles</p>
             <h3 className="text-xl font-bold">{totalRoles}</h3>
           </div>
+        </div>
+        <div className="bg-card p-4 rounded-lg border border-border flex items-center gap-3">
+          <div className="p-3 bg-accent/10 rounded-lg text-primary"><KeyRound className="w-5 h-5" /></div>
+          <div><p className="text-sm text-muted-foreground">Permisos Disponibles</p><h3 className="text-xl font-bold">{permisosDisponibles}</h3></div>
+        </div>
+        <div className="bg-card p-4 rounded-lg border border-border flex items-center gap-3">
+          <div className="p-3 bg-warning/10 rounded-lg text-warning"><ListChecks className="w-5 h-5" /></div>
+          <div><p className="text-sm text-muted-foreground">Roles Configurados</p><h3 className="text-xl font-bold">{rolesConfigurados}</h3></div>
         </div>
         <div className="bg-card p-4 rounded-lg border border-border flex items-center gap-3">
           <div className="p-3 bg-success/10 rounded-lg text-success">
@@ -103,7 +115,7 @@ export default function RolesPage() {
       </div>
 
       {/* Tabla con acciones estandarizadas */}
-      <div className="bg-card rounded-lg border border-border overflow-hidden">
+      <div className="records-table-shell bg-card rounded-lg border border-border overflow-hidden">
         <table className="w-full text-sm text-left">
           <thead className="bg-muted text-muted-foreground font-semibold">
             <tr>
@@ -123,40 +135,32 @@ export default function RolesPage() {
                   <td className="px-6 py-4 font-semibold">{rol.nombre}</td>
                   <td className="px-6 py-4 text-muted-foreground max-w-xs truncate">{rol.descripcion}</td>
                   <td className="px-6 py-4">
-                    <span
-                      className={`px-2.5 py-1 rounded-full text-xs font-medium ${
-                        rol.estado === 'activo'
-                          ? 'bg-success/10 text-success'
-                          : 'bg-destructive/10 text-destructive'
-                      }`}
-                    >
-                      {rol.estado}
-                    </span>
+                    <StatusSwitch value={rol.estado} />
                   </td>
                   <td className="px-6 py-4">{rol.fecha_creacion}</td>
                   <td className="px-6 py-4">
                     <div className="flex items-center gap-1">
-                      <button
+                      <PermissionGate modulo="roles" accion="ver"><button
                         onClick={() => setDetailModal({ isOpen: true, data: rol })}
                         className="p-2 hover:bg-muted rounded-lg text-muted-foreground hover:text-foreground"
                         title="Ver detalle"
                       >
                         <Eye className="w-4 h-4" />
-                      </button>
-                      <button
+                      </button></PermissionGate>
+                      <PermissionGate modulo="roles" accion="editar"><button
                         onClick={() => setShowModal(true)}
                         className="p-2 hover:bg-muted rounded-lg text-muted-foreground hover:text-foreground"
                         title="Editar rol"
                       >
                         <Edit className="w-4 h-4" />
-                      </button>
-                      <button
+                      </button></PermissionGate>
+                      <PermissionGate modulo="roles" accion="eliminar"><button
                         onClick={() => setDeleteDialog({ isOpen: true, id: rol.id_rol, nombre: rol.nombre })}
                         className="p-2 hover:bg-muted rounded-lg text-destructive"
                         title="Eliminar rol"
                       >
                         <Trash2 className="w-4 h-4" />
-                      </button>
+                      </button></PermissionGate>
                     </div>
                   </td>
                 </tr>

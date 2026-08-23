@@ -1,12 +1,17 @@
+import { X } from 'lucide-react';
+
 export function ClienteFormModal({ open, onClose }) {
   if (!open) return null;
 
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-      <div className="bg-card p-6 rounded-lg w-full max-w-md">
-        <h2 className="mb-4 text-lg font-semibold">Nuevo Cliente</h2>
-        <div className="space-y-4">
-          <div>
+      <div className="form-modal-panel bg-card p-6 rounded-lg">
+        <div className="flex items-start justify-between gap-4">
+          <h2>Nuevo Cliente</h2>
+          <button onClick={onClose} className="p-2 -mr-2 -mt-2 rounded-lg hover:bg-muted text-muted-foreground" aria-label="Cerrar formulario"><X className="w-5 h-5" /></button>
+        </div>
+        <div className="modal-form-grid">
+          <div className="modal-field-wide">
             <label className="block mb-2 text-sm font-medium">Nombre</label>
             <input
               type="text"
@@ -27,7 +32,7 @@ export function ClienteFormModal({ open, onClose }) {
               placeholder="+1 234-5678"
             />
           </div>
-          <div>
+          <div className="modal-field-wide">
             <label className="block mb-2 text-sm font-medium">Correo</label>
             <input
               type="email"
@@ -35,7 +40,7 @@ export function ClienteFormModal({ open, onClose }) {
               maxLength={150}
             />
           </div>
-          <div>
+          <div className="modal-field-wide">
             <label className="block mb-2 text-sm font-medium">Dirección</label>
             <textarea
               rows={2}
@@ -43,7 +48,7 @@ export function ClienteFormModal({ open, onClose }) {
               maxLength={255}
             />
           </div>
-          <div>
+          <div className="modal-field-wide">
             <label className="block mb-2 text-sm font-medium">Estado</label>
             <select defaultValue="activo" className="w-full px-4 py-2 border border-input bg-input-background rounded-lg text-sm">
               <option value="activo">Activo</option>

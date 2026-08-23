@@ -5,8 +5,11 @@ import { PaginationControls } from '../../../shared/components/PaginationControl
 import { ProduccionFormModal } from '../components/ProduccionFormModal';
 import ConfirmDialog from '../../../shared/components/ConfirmDialog';
 import Toast from '../../../shared/components/Toast';
+import { usePermissions } from '../../../shared/contexts/PermissionContext';
+import StatusSwitch from '../../../shared/components/StatusSwitch';
 
 export default function ProduccionPage() {
+  const { can } = usePermissions();
   const {
     lotes,
     rawLotes,
@@ -50,7 +53,7 @@ export default function ProduccionPage() {
             Exportar Excel
           </button>
           <button
-            onClick={() => setShowModal(true)}
+            onClick={() => setShowModal(true)} disabled={!can('produccion', 'crear')}
             className="flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:opacity-90 text-sm font-medium transition-colors"
           >
             <Plus className="w-4 h-4" />
@@ -125,7 +128,7 @@ export default function ProduccionPage() {
       </div>
 
       {/* Tabla Estandarizada */}
-      <div className="bg-card rounded-lg border border-border overflow-hidden">
+      <div className="records-table-shell bg-card rounded-lg border border-border overflow-hidden">
         <table className="w-full text-sm text-left">
           <thead className="bg-muted text-muted-foreground font-semibold">
             <tr>
@@ -145,19 +148,7 @@ export default function ProduccionPage() {
                 <tr key={lote.id_lote} className="hover:bg-muted/50 transition-colors">
                   <td className="px-6 py-4 font-mono font-medium">{lote.id_lote}</td><td className="px-6 py-4">{lote.id_ficha}</td><td className="px-6 py-4">{lote.id_usuario_responsable}</td><td className="px-6 py-4">{lote.cantidad_producida}</td><td className="px-6 py-4 text-muted-foreground">{lote.fecha_produccion}</td>
                   <td className="px-6 py-4">
-                    <span
-                      className={`px-2.5 py-1 rounded-full text-xs font-medium ${
-                        lote.estado === 'Finalizado'
-                          ? 'bg-success/10 text-success'
-                          : lote.estado === 'En Proceso'
-                          ? 'bg-warning/10 text-warning'
-                          : lote.estado === 'Programado'
-                          ? 'bg-primary/10 text-primary'
-                          : 'bg-destructive/10 text-destructive'
-                      }`}
-                    >
-                      {lote.estado}
-                    </span>
+                    <StatusSwitch value={lote.estado} />
                   </td>
                   <td className="px-6 py-4">
                     <div className="flex items-center gap-1">
@@ -169,7 +160,7 @@ export default function ProduccionPage() {
                         <Eye className="w-4 h-4" />
                       </button>
                       <button
-                        onClick={() => setShowModal(true)}
+                        onClick={() => setShowModal(true)} disabled={!can('produccion', 'editar')}
                         className="p-2 hover:bg-muted rounded-lg text-muted-foreground hover:text-foreground"
                         title="Editar"
                       >
@@ -177,7 +168,7 @@ export default function ProduccionPage() {
                       </button>
                       {lote.estado !== 'Anulado' && (
                         <button
-                          onClick={() => setDeleteDialog({ isOpen: true, id: lote.id_lote, nombre: lote.id_lote })}
+                          onClick={() => setDeleteDialog({ isOpen: true, id: lote.id_lote, nombre: lote.id_lote })} disabled={!can('produccion', 'eliminar')}
                           className="p-2 hover:bg-muted rounded-lg text-destructive"
                           title="Anular Lote"
                         >

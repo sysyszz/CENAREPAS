@@ -17,7 +17,7 @@ export function useDashboard() {
     // Carga placeholder de datos
     setIsLoading(true);
     getDashboardData().then(res => {
-      // Mantenemos la estructura vacía/por defecto lista para backend
+      setData(res);
       setIsLoading(false);
     });
   }, []);

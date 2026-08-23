@@ -5,8 +5,11 @@ import { PaginationControls } from '../../../shared/components/PaginationControl
 import { FichaTecnicaFormModal } from '../components/FichaTecnicaFormModal';
 import ConfirmDialog from '../../../shared/components/ConfirmDialog';
 import Toast from '../../../shared/components/Toast';
+import { usePermissions } from '../../../shared/contexts/PermissionContext';
+import StatusSwitch from '../../../shared/components/StatusSwitch';
 
 export default function FichasTecnicasPage() {
+  const { can } = usePermissions();
   const {
     fichas,
     rawFichas,
@@ -48,7 +51,7 @@ export default function FichasTecnicasPage() {
             Exportar Excel
           </button>
           <button
-            onClick={() => setShowModal(true)}
+            onClick={() => setShowModal(true)} disabled={!can('fichas-tecnicas', 'crear')}
             className="flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:opacity-90 text-sm font-medium transition-colors"
           >
             <Plus className="w-4 h-4" />
@@ -121,7 +124,7 @@ export default function FichasTecnicasPage() {
       </div>
 
       {/* Tabla Estandarizada */}
-      <div className="bg-card rounded-lg border border-border overflow-hidden">
+      <div className="records-table-shell bg-card rounded-lg border border-border overflow-hidden">
         <table className="w-full text-sm text-left">
           <thead className="bg-muted text-muted-foreground font-semibold">
             <tr>
@@ -140,15 +143,7 @@ export default function FichasTecnicasPage() {
                 <tr key={ficha.id_ficha} className="hover:bg-muted/50 transition-colors">
                   <td className="px-6 py-4 font-mono font-medium">{ficha.id_ficha}</td><td className="px-6 py-4 font-semibold">{ficha.nombre}</td><td className="px-6 py-4">{ficha.tiempo_estimado_minutos}</td><td className="px-6 py-4">{ficha.rendimiento_lote}</td><td className="px-6 py-4 text-muted-foreground max-w-xs truncate">{ficha.descripcion}</td>
                   <td className="px-6 py-4">
-                    <span
-                      className={`px-2.5 py-1 rounded-full text-xs font-medium ${
-                        ficha.estado === 'Vigente'
-                          ? 'bg-success/10 text-success'
-                          : 'bg-warning/10 text-warning'
-                      }`}
-                    >
-                      {ficha.estado}
-                    </span>
+                    <StatusSwitch value={ficha.estado} />
                   </td>
                   <td className="px-6 py-4">
                     <div className="flex items-center gap-1">
@@ -160,14 +155,14 @@ export default function FichasTecnicasPage() {
                         <Eye className="w-4 h-4" />
                       </button>
                       <button
-                        onClick={() => setShowModal(true)}
+                        onClick={() => setShowModal(true)} disabled={!can('fichas-tecnicas', 'editar')}
                         className="p-2 hover:bg-muted rounded-lg text-muted-foreground hover:text-foreground"
                         title="Editar"
                       >
                         <Edit className="w-4 h-4" />
                       </button>
                       <button
-                        onClick={() => setDeleteDialog({ isOpen: true, id: ficha.id_ficha, nombre: ficha.nombre })}
+                        onClick={() => setDeleteDialog({ isOpen: true, id: ficha.id_ficha, nombre: ficha.nombre })} disabled={!can('fichas-tecnicas', 'eliminar')}
                         className="p-2 hover:bg-muted rounded-lg text-destructive"
                         title="Eliminar"
                       >

@@ -1,4 +1,5 @@
 // components/Navbar.jsx
+import logoIcon from '../../../assets/logo-icon.png';
 import { useNavigateTo } from '../hooks/useNavigateTo';
 
 const NAV = ['Inicio', 'Nosotros', 'Productos', 'Ventajas', 'Contacto'];
@@ -27,18 +28,17 @@ export const Navbar = () => {
       }}>
         {/* Logo */}
         <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexShrink: 0 }}>
-          <div style={{
-            width: 46,
-            height: 46,
-            borderRadius: '50%',
-            background: 'linear-gradient(135deg, #F59E0B, #EF6C00)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            fontSize: 22,
-            flexShrink: 0,
-            boxShadow: '0 2px 8px rgba(245,158,11,0.4)',
-          }}>🫓</div>
+          <img
+            src={logoIcon}
+            alt="CENAREPAS"
+            style={{
+              width: 46,
+              height: 46,
+              objectFit: 'contain',
+              flexShrink: 0,
+              display: 'block',
+            }}
+          />
           <div style={{ lineHeight: 1.15 }}>
             <div style={{
               fontWeight: 700,
