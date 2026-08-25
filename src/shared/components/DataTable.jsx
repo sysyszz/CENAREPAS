@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { usePagination } from "../hooks/usePagination";
 import { PaginationControls } from "./PaginationControls";
+import SearchBar from "./SearchBar";
 import {
   Table,
   TableBody,
@@ -10,7 +11,6 @@ import {
   TableRow,
 } from "../ui/table";
 import { Button } from "../ui/button";
-import { Input } from "../ui/input";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -26,7 +26,6 @@ import {
   DialogTitle,
 } from "../ui/dialog";
 import {
-  Search,
   Plus,
   MoreVertical,
   Edit,
@@ -69,19 +68,13 @@ export function DataTable({
       {/* Header */}
       <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
         <div className="flex-1 flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
-          <div className="relative flex-1 max-w-sm">
-            <Search
-              className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4"
-              style={{ color: "#64748B" }}
-            />
-            <Input
-              placeholder={searchPlaceholder}
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-10"
-              style={{ backgroundColor: "#FFFFFF", borderColor: "#E2E8F0" }}
-            />
-          </div>
+          <SearchBar
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            placeholder={searchPlaceholder}
+            wrapperClassName="flex-1 max-w-sm"
+            inputClassName="bg-white border-slate-200"
+          />
           {filters}
         </div>
         {onAdd && (

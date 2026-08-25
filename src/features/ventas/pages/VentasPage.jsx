@@ -1,8 +1,9 @@
 import { useState } from 'react';
-import { Plus, Search, Eye, XCircle, FileDown, FileSpreadsheet } from 'lucide-react';
+import { Plus, Eye, XCircle, FileDown, FileSpreadsheet } from 'lucide-react';
 import { useVentas } from '../hooks/useVentas';
 import { usePagination } from '../../../shared/hooks/usePagination';
-import { PaginationControls } from '../../../shared/components/PaginationControls';
+import { PaginationControls } from '@/shared/components/PaginationControls';
+import SearchBar from '@/shared/components/SearchBar';
 import { VentaFormModal } from '../components/VentaFormModal';
 import ConfirmDialog from '../../../shared/components/ConfirmDialog';
 import Toast from '../../../shared/components/Toast';
@@ -113,16 +114,12 @@ export default function VentasPage() {
 
       <div className="bg-card p-4 rounded-lg border border-border">
         <div className="flex gap-4">
-          <div className="flex-1 relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
-            <input
-              type="search"
-              placeholder="Buscar venta..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-10 pr-4 py-2 border border-input bg-input-background rounded-lg focus:outline-none focus:ring-2 focus:ring-ring"
-            />
-          </div>
+          <SearchBar
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            placeholder="Buscar venta..."
+            wrapperClassName="flex-1"
+          />
           <input
             type="date"
             className="px-4 py-2 border border-input bg-input-background rounded-lg focus:outline-none focus:ring-2 focus:ring-ring"

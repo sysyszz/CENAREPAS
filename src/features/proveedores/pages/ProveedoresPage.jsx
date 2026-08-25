@@ -1,7 +1,8 @@
-import { Plus, Search, Eye, Edit, Trash2, FileDown, FileSpreadsheet, Truck, CheckCircle } from 'lucide-react';
+import { Plus, Eye, Edit, Trash2, FileDown, FileSpreadsheet, Truck, CheckCircle } from 'lucide-react';
 import { useProveedores } from '../hooks/useProveedores';
 import { usePagination } from '../../../shared/hooks/usePagination';
-import { PaginationControls } from '../../../shared/components/PaginationControls';
+import { PaginationControls } from '@/shared/components/PaginationControls';
+import SearchBar from '@/shared/components/SearchBar';
 import { ProveedorFormModal } from '../components/ProveedorFormModal';
 import { ProveedorDetailModal } from '../components/ProveedorDetailModal';
 import { ProveedorEditModal } from '../components/ProveedorEditModal';
@@ -95,16 +96,12 @@ export default function ProveedoresPage() {
 
       {/* Filtros y Búsqueda */}
       <div className="bg-card p-4 rounded-lg border border-border flex flex-col sm:flex-row gap-4">
-        <div className="flex-1 relative">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-          <input
-            type="search"
-            placeholder="Buscar por nombre, NIT o correo..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full pl-10 pr-4 py-2 border border-input bg-input-background rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-ring"
-          />
-        </div>
+        <SearchBar
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+          placeholder="Buscar por nombre, NIT o correo..."
+          wrapperClassName="flex-1"
+        />
         <select
           value={filterEstado}
           onChange={(e) => setFilterEstado(e.target.value)}
