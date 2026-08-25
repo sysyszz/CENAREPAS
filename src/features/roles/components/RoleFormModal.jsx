@@ -1,33 +1,54 @@
 import { useState } from 'react';
-import { X } from 'lucide-react';
+import FormModal from '../../../shared/components/FormModal';
 import { mockPermisos, usePermissions } from '../../../shared/contexts/PermissionContext';
 
 export function RoleFormModal({ open, onClose }) {
   const { updateRolePermissions } = usePermissions();
   const [selectedPermissions, setSelectedPermissions] = useState([]);
-  if (!open) return null;
   const permissionsByModule = mockPermisos.reduce((modules, permission) => {
     if (!modules[permission.modulo]) modules[permission.modulo] = [];
     modules[permission.modulo].push(permission);
     return modules;
   }, {});
 
+  const handleSubmit = () => {
+    updateRolePermissions(1, selectedPermissions);
+    onClose();
+  };
+
   return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-      <div className="form-modal-panel bg-card p-6 rounded-lg">
-        <div className="role-modal-header">
-          <div>
-            <p className="text-xs font-semibold uppercase tracking-wider text-primary">Configuración</p>
-            <div className="flex items-start justify-between gap-4"><h2 className="mt-1 text-xl font-semibold">Nuevo rol</h2><button onClick={onClose} className="p-2 -mr-2 -mt-2 rounded-lg hover:bg-muted text-muted-foreground" aria-label="Cerrar formulario"><X className="w-5 h-5" /></button></div>
-            <p className="mt-1 text-sm text-muted-foreground">Define la identidad y el alcance de acceso del rol.</p>
-          </div>
+    <FormModal
+      open={open}
+      title="Nuevo rol"
+      onClose={onClose}
+      onSubmit={handleSubmit}
+      submitLabel="Guardar"
+      cancelLabel="Cancelar"
+      maxWidth="max-w-3xl"
+      contentClassName="role-form-content"
+      footer={(
+        <div className="flex gap-2 pt-4 role-form-actions">
+          <button onClick={onClose} className="flex-1 px-4 py-2 border border-border rounded-lg hover:bg-muted">
+            Cancelar
+          </button>
+          <button onClick={handleSubmit} className="flex-1 px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:opacity-90">
+            Guardar
+          </button>
         </div>
-        <div className="modal-form-grid role-form-content">
-          <div className="modal-field modal-field-wide">
-            <label>Nombre del rol</label>
-            <input type="text" maxLength={50} required placeholder="Ej. Supervisor de planta" className="w-full px-4 py-2 border border-input bg-input-background rounded-lg focus:outline-none focus:ring-2 focus:ring-ring" />
-          </div>
-          <div className="modal-field modal-field-wide">
+      )}
+    >
+      <div className="role-modal-header">
+        <div>
+          <p className="text-xs font-semibold uppercase tracking-wider text-primary">Configuración</p>
+          <p className="mt-1 text-sm text-muted-foreground">Define la identidad y el alcance de acceso del rol.</p>
+        </div>
+      </div>
+      <div className="modal-form-grid role-form-content">
+        <div className="modal-field modal-field-wide">
+          <label>Nombre del rol</label>
+          <input type="text" maxLength={50} required placeholder="Ej. Supervisor de planta" className="w-full px-4 py-2 border border-input bg-input-background rounded-lg focus:outline-none focus:ring-2 focus:ring-ring" />
+        </div>
+        <div className="modal-field modal-field-wide">
             <label>Estado</label>
             <select defaultValue="activo" className="w-full px-4 py-2 border border-input bg-input-background rounded-lg focus:outline-none focus:ring-2 focus:ring-ring">
               <option value="activo">Activo</option>
@@ -62,16 +83,7 @@ export function RoleFormModal({ open, onClose }) {
               ))}
             </div>
           </section>
-          <div className="flex gap-2 pt-4 role-form-actions">
-            <button onClick={onClose} className="flex-1 px-4 py-2 border border-border rounded-lg hover:bg-muted">
-              Cancelar
-            </button>
-            <button onClick={() => { updateRolePermissions(1, selectedPermissions); onClose(); }} className="flex-1 px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:opacity-90">
-              Guardar
-            </button>
-          </div>
         </div>
-      </div>
-    </div>
+    </FormModal>
   );
 }

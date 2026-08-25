@@ -1,5 +1,3 @@
-// components/LoadingButton.jsx
-
 export const LoadingButton = ({
   isLoading,
   onClick,

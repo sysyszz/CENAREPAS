@@ -1,14 +1,18 @@
 import { useState } from 'react';
-import { Plus, Eye, XCircle, FileDown, FileSpreadsheet } from 'lucide-react';
+import { Plus, Eye, XCircle, FileDown, FileSpreadsheet, DollarSign, Calculator, TrendingUp, ShoppingBag } from 'lucide-react';
 import { useVentas } from '../hooks/useVentas';
 import { usePagination } from '../../../shared/hooks/usePagination';
-import { PaginationControls } from '@/shared/components/PaginationControls';
-import SearchBar from '@/shared/components/SearchBar';
+import { PaginationControls } from '../../../shared/components/PaginationControls';
 import { VentaFormModal } from '../components/VentaFormModal';
 import ConfirmDialog from '../../../shared/components/ConfirmDialog';
 import Toast from '../../../shared/components/Toast';
 import { usePermissions } from '../../../shared/contexts/PermissionContext';
 import StatusSwitch from '../../../shared/components/StatusSwitch';
+import RecordsFilterToolbar from '../../../shared/components/RecordsFilterToolbar';
+import RowActions from '../../../shared/components/RowActions';
+import RecordsTable from '../../../shared/components/RecordsTable';
+import StatCard from '../../../shared/components/StatCard';
+import StatsGrid from '../../../shared/components/StatsGrid';
 
 export default function VentasPage() {
   const { can } = usePermissions();
@@ -57,69 +61,21 @@ export default function VentasPage() {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <div className="bg-card p-4 rounded-lg border border-border">
-          <div className="flex items-center gap-3">
-            <div className="p-2 bg-success/10 rounded-lg">
-              <svg className="w-5 h-5 text-success" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
-            </div>
-            <div>
-              <p className="text-sm text-muted-foreground">Ventas Hoy</p>
-              <h3>$77.00</h3>
-            </div>
-          </div>
-        </div>
-        <div className="bg-card p-4 rounded-lg border border-border">
-          <div className="flex items-center gap-3">
-            <div className="p-2 bg-primary/10 rounded-lg">
-              <svg className="w-5 h-5 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
-              </svg>
-            </div>
-            <div>
-              <p className="text-sm text-muted-foreground">Total Ventas</p>
-              <h3>2 ventas</h3>
-            </div>
-          </div>
-        </div>
-        <div className="bg-card p-4 rounded-lg border border-border">
-          <div className="flex items-center gap-3">
-            <div className="p-2 bg-accent/10 rounded-lg">
-              <svg className="w-5 h-5 text-accent" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
-              </svg>
-            </div>
-            <div>
-              <p className="text-sm text-muted-foreground">Promedio</p>
-              <h3>$38.50</h3>
-            </div>
-          </div>
-        </div>
-        <div className="bg-card p-4 rounded-lg border border-border">
-          <div className="flex items-center gap-3">
-            <div className="p-2 bg-warning/10 rounded-lg">
-              <svg className="w-5 h-5 text-warning" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
-              </svg>
-            </div>
-            <div>
-              <p className="text-sm text-muted-foreground">Productos Vendidos</p>
-              <h3>45 unidades</h3>
-            </div>
-          </div>
-        </div>
-      </div>
+      <StatsGrid className="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <StatCard variant="compact" label="Ventas Hoy" value="$77.00" icon={DollarSign} iconColor="hsl(var(--success))" iconBackground="hsl(var(--success) / 0.1)" />
+        <StatCard variant="compact" label="Total Ventas" value="2 ventas" icon={Calculator} iconColor="hsl(var(--primary))" iconBackground="hsl(var(--primary) / 0.1)" />
+        <StatCard variant="compact" label="Promedio" value="$38.50" icon={TrendingUp} iconColor="hsl(var(--accent))" iconBackground="hsl(var(--accent) / 0.1)" />
+        <StatCard variant="compact" label="Productos Vendidos" value="45 unidades" icon={ShoppingBag} iconColor="hsl(var(--warning))" iconBackground="hsl(var(--warning) / 0.1)" />
+      </StatsGrid>
 
-      <div className="bg-card p-4 rounded-lg border border-border">
-        <div className="flex gap-4">
-          <SearchBar
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            placeholder="Buscar venta..."
-            wrapperClassName="flex-1"
-          />
+      <RecordsFilterToolbar
+        searchQuery={searchTerm}
+        onSearchChange={setSearchTerm}
+        searchPlaceholder="Buscar venta..."
+        className="flex-row gap-4"
+        searchIconClassName="w-5 h-5"
+        searchInputClassName="text-base"
+      >
           <input
             type="date"
             className="px-4 py-2 border border-input bg-input-background rounded-lg focus:outline-none focus:ring-2 focus:ring-ring"
@@ -129,45 +85,39 @@ export default function VentasPage() {
             <option>Completada</option>
             <option>Anulada</option>
           </select>
-        </div>
-      </div>
+      </RecordsFilterToolbar>
 
-      <div className="records-table-shell bg-card rounded-lg border border-border overflow-hidden">
-        <table className="w-full">
-          <thead className="bg-muted">
-            <tr>
-              <th className="text-left px-6 py-3">ID</th><th className="text-left px-6 py-3">Sede ID</th><th className="text-left px-6 py-3">Cliente ID</th><th className="text-left px-6 py-3">Usuario ID</th><th className="text-left px-6 py-3">Fecha Venta</th><th className="text-left px-6 py-3">Valor Total</th>
-              <th className="text-left px-6 py-3">Estado</th>
-              <th className="text-left px-6 py-3">Acciones</th>
-            </tr>
-          </thead>
-          <tbody>
-            {pagination.paginatedData.map((venta) => (
-              <tr key={venta.id_venta} className="border-b border-border hover:bg-muted/50">
+      <RecordsTable
+        columns={[
+          { key: 'id_venta', label: 'ID' },
+          { key: 'id_sede', label: 'Sede ID' },
+          { key: 'id_cliente', label: 'Cliente ID' },
+          { key: 'id_usuario', label: 'Usuario ID' },
+          { key: 'fecha_venta', label: 'Fecha Venta' },
+          { key: 'valor_total', label: 'Valor Total' },
+          { key: 'estado', label: 'Estado' },
+          { key: 'acciones', label: 'Acciones' },
+        ]}
+        data={pagination.paginatedData}
+        rowKey={(venta) => venta.id_venta}
+        tableClassName="w-full"
+        headerClassName="bg-muted"
+        bodyClassName=""
+        renderRow={(venta) => (
+          <>
                 <td className="px-6 py-4">{venta.id_venta}</td><td className="px-6 py-4">{venta.id_sede}</td><td className="px-6 py-4">{venta.id_cliente}</td><td className="px-6 py-4">{venta.id_usuario}</td><td className="px-6 py-4">{venta.fecha_venta}</td><td className="px-6 py-4">{venta.valor_total}</td>
                 <td className="px-6 py-4">
                   <StatusSwitch value={venta.estado} activeValue="completada" inactiveValue="anulada" />
                 </td>
                 <td className="px-6 py-4">
-                  <div className="flex items-center gap-2">
-                    <button className="p-2 hover:bg-muted rounded-lg">
-                      <Eye className="w-4 h-4" />
-                    </button>
-                    {venta.estado !== 'Anulada' && (
-                      <button
-                        onClick={() => setDeleteDialog({ isOpen: true, id: venta.id_venta, nombre: venta.id_venta })} disabled={!can('ventas', 'eliminar')}
-                        className="p-2 hover:bg-muted rounded-lg text-destructive"
-                      >
-                        <XCircle className="w-4 h-4" />
-                      </button>
-                    )}
-                  </div>
+                  <RowActions className="flex items-center gap-2" actions={[
+                    { key: 'view', icon: Eye, title: 'Ver detalle', className: 'p-2 hover:bg-muted rounded-lg' },
+                    { key: 'cancel', icon: XCircle, title: 'Anular venta', onClick: () => setDeleteDialog({ isOpen: true, id: venta.id_venta, nombre: venta.id_venta }), disabled: !can('ventas', 'eliminar'), hidden: venta.estado === 'Anulada', className: 'p-2 hover:bg-muted rounded-lg text-destructive' },
+                  ]} />
                 </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+          </>
+        )}
+      />
 
       <PaginationControls {...pagination} />
 

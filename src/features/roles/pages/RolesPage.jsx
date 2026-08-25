@@ -1,15 +1,21 @@
-import { Plus, Eye, Edit, Trash2, FileDown, FileSpreadsheet, ShieldCheck, KeyRound, ListChecks } from 'lucide-react';
+import { Plus, Eye, Edit, Trash2, FileDown, FileSpreadsheet, Shield, ShieldCheck, KeyRound, ListChecks } from 'lucide-react';
 import { useRoles } from '../hooks/useRoles';
 import { usePagination } from '../../../shared/hooks/usePagination';
-import { PaginationControls } from '@/shared/components/PaginationControls';
-import SearchBar from '@/shared/components/SearchBar';
+import { PaginationControls } from '../../../shared/components/PaginationControls';
 import { RoleFormModal } from '../components/RoleFormModal';
 import ConfirmDialog from '../../../shared/components/ConfirmDialog';
 import Toast from '../../../shared/components/Toast';
-import { PermissionGate, mockPermisos } from '../../../shared/contexts/PermissionContext';
+import { PermissionGate, mockPermisos, usePermissions } from '../../../shared/contexts/PermissionContext';
 import StatusSwitch from '../../../shared/components/StatusSwitch';
+import RecordsFilterToolbar from '../../../shared/components/RecordsFilterToolbar';
+import RowActions from '../../../shared/components/RowActions';
+import RecordsTable from '../../../shared/components/RecordsTable';
+import DetailModal from '../../../shared/components/DetailModal';
+import StatCard from '../../../shared/components/StatCard';
+import StatsGrid from '../../../shared/components/StatsGrid';
 
 export default function RolesPage() {
+  const { can } = usePermissions();
   const {
     roles,
     rawRoles,
@@ -63,43 +69,19 @@ export default function RolesPage() {
       </div>
 
       {/* Tarjetas de consolidado / métricas */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
-        <div className="bg-card p-4 rounded-lg border border-border flex items-center gap-3">
-          <div className="p-3 bg-primary/10 rounded-lg text-primary">
-            <Shield className="w-5 h-5" />
-          </div>
-          <div>
-            <p className="text-sm text-muted-foreground">Total Roles</p>
-            <h3 className="text-xl font-bold">{totalRoles}</h3>
-          </div>
-        </div>
-        <div className="bg-card p-4 rounded-lg border border-border flex items-center gap-3">
-          <div className="p-3 bg-accent/10 rounded-lg text-primary"><KeyRound className="w-5 h-5" /></div>
-          <div><p className="text-sm text-muted-foreground">Permisos Disponibles</p><h3 className="text-xl font-bold">{permisosDisponibles}</h3></div>
-        </div>
-        <div className="bg-card p-4 rounded-lg border border-border flex items-center gap-3">
-          <div className="p-3 bg-warning/10 rounded-lg text-warning"><ListChecks className="w-5 h-5" /></div>
-          <div><p className="text-sm text-muted-foreground">Roles Configurados</p><h3 className="text-xl font-bold">{rolesConfigurados}</h3></div>
-        </div>
-        <div className="bg-card p-4 rounded-lg border border-border flex items-center gap-3">
-          <div className="p-3 bg-success/10 rounded-lg text-success">
-            <ShieldCheck className="w-5 h-5" />
-          </div>
-          <div>
-            <p className="text-sm text-muted-foreground">Roles Activos</p>
-            <h3 className="text-xl font-bold">{rolesActivos}</h3>
-          </div>
-        </div>
-      </div>
+      <StatsGrid className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
+        <StatCard variant="compact" label="Total Roles" value={totalRoles} icon={Shield} iconColor="hsl(var(--primary))" iconBackground="hsl(var(--primary) / 0.1)" />
+        <StatCard variant="compact" label="Permisos Disponibles" value={permisosDisponibles} icon={KeyRound} iconColor="hsl(var(--primary))" iconBackground="hsl(var(--accent) / 0.1)" />
+        <StatCard variant="compact" label="Roles Configurados" value={rolesConfigurados} icon={ListChecks} iconColor="hsl(var(--warning))" iconBackground="hsl(var(--warning) / 0.1)" />
+        <StatCard variant="compact" label="Roles Activos" value={rolesActivos} icon={ShieldCheck} iconColor="hsl(var(--success))" iconBackground="hsl(var(--success) / 0.1)" />
+      </StatsGrid>
 
       {/* Barra de búsqueda y filtros */}
-      <div className="bg-card p-4 rounded-lg border border-border flex flex-col sm:flex-row gap-4">
-        <SearchBar
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-          placeholder="Buscar por nombre o descripción..."
-          wrapperClassName="flex-1"
-        />
+      <RecordsFilterToolbar
+        searchQuery={searchQuery}
+        onSearchChange={setSearchQuery}
+        searchPlaceholder="Buscar por nombre o descripción..."
+      >
         <select
           value={estadoFilter}
           onChange={(e) => setEstadoFilter(e.target.value)}
@@ -109,25 +91,23 @@ export default function RolesPage() {
           <option value="activo">Activo</option>
           <option value="inactivo">Inactivo</option>
         </select>
-      </div>
+      </RecordsFilterToolbar>
 
       {/* Tabla con acciones estandarizadas */}
-      <div className="records-table-shell bg-card rounded-lg border border-border overflow-hidden">
-        <table className="w-full text-sm text-left">
-          <thead className="bg-muted text-muted-foreground font-semibold">
-            <tr>
-              <th className="px-6 py-3">ID</th>
-              <th className="px-6 py-3">Nombre del Rol</th>
-              <th className="px-6 py-3">Descripción</th>
-              <th className="px-6 py-3">Estado</th>
-              <th className="px-6 py-3">Fecha de Creación</th>
-              <th className="px-6 py-3">Acciones</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-border">
-            {roles.length > 0 ? (
-              pagination.paginatedData.map((rol) => (
-                <tr key={rol.id_rol} className="hover:bg-muted/50 transition-colors">
+      <RecordsTable
+        columns={[
+          { key: 'id_rol', label: 'ID' },
+          { key: 'nombre', label: 'Nombre del Rol' },
+          { key: 'descripcion', label: 'Descripción' },
+          { key: 'estado', label: 'Estado' },
+          { key: 'fecha_creacion', label: 'Fecha de Creación' },
+          { key: 'acciones', label: 'Acciones' },
+        ]}
+        data={pagination.paginatedData}
+        rowKey={(rol) => rol.id_rol}
+        emptyMessage="No se encontraron roles que coincidan con la búsqueda."
+        renderRow={(rol) => (
+          <>
                   <td className="px-6 py-4 font-mono font-medium">{rol.id_rol}</td>
                   <td className="px-6 py-4 font-semibold">{rol.nombre}</td>
                   <td className="px-6 py-4 text-muted-foreground max-w-xs truncate">{rol.descripcion}</td>
@@ -136,68 +116,22 @@ export default function RolesPage() {
                   </td>
                   <td className="px-6 py-4">{rol.fecha_creacion}</td>
                   <td className="px-6 py-4">
-                    <div className="flex items-center gap-1">
-                      <PermissionGate modulo="roles" accion="ver"><button
-                        onClick={() => setDetailModal({ isOpen: true, data: rol })}
-                        className="p-2 hover:bg-muted rounded-lg text-muted-foreground hover:text-foreground"
-                        title="Ver detalle"
-                      >
-                        <Eye className="w-4 h-4" />
-                      </button></PermissionGate>
-                      <PermissionGate modulo="roles" accion="editar"><button
-                        onClick={() => setShowModal(true)}
-                        className="p-2 hover:bg-muted rounded-lg text-muted-foreground hover:text-foreground"
-                        title="Editar rol"
-                      >
-                        <Edit className="w-4 h-4" />
-                      </button></PermissionGate>
-                      <PermissionGate modulo="roles" accion="eliminar"><button
-                        onClick={() => setDeleteDialog({ isOpen: true, id: rol.id_rol, nombre: rol.nombre })}
-                        className="p-2 hover:bg-muted rounded-lg text-destructive"
-                        title="Eliminar rol"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </button></PermissionGate>
-                    </div>
+                    <RowActions actions={[
+                      { key: 'view', icon: Eye, title: 'Ver detalle', onClick: () => setDetailModal({ isOpen: true, data: rol }), permission: can('roles', 'ver') },
+                      { key: 'edit', icon: Edit, title: 'Editar rol', onClick: () => setShowModal(true), permission: can('roles', 'editar') },
+                      { key: 'delete', icon: Trash2, title: 'Eliminar rol', onClick: () => setDeleteDialog({ isOpen: true, id: rol.id_rol, nombre: rol.nombre }), permission: can('roles', 'eliminar'), className: 'p-2 hover:bg-muted rounded-lg text-destructive' },
+                    ]} />
                   </td>
-                </tr>
-              ))
-            ) : (
-              <tr>
-                <td colSpan={6} className="px-6 py-8 text-center text-muted-foreground">
-                  No se encontraron roles que coincidan con la búsqueda.
-                </td>
-              </tr>
-            )}
-          </tbody>
-        </table>
-      </div>
+          </>
+        )}
+      />
 
       <PaginationControls {...pagination} />
 
       {/* Modal de Detalle */}
-      {detailModal.isOpen && detailModal.data && (
-        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-          <div className="bg-card p-6 rounded-lg max-w-md w-full border border-border space-y-4">
-            <h3 className="text-lg font-bold">Detalle del Rol</h3>
-            <div className="space-y-2 text-sm">
-              <p><strong>ID:</strong> {detailModal.data.id_rol}</p>
-              <p><strong>Nombre:</strong> {detailModal.data.nombre}</p>
-              <p><strong>Descripción:</strong> {detailModal.data.descripcion}</p>
-              <p><strong>Estado:</strong> {detailModal.data.estado}</p>
-              <p><strong>Fecha de Creación:</strong> {detailModal.data.fecha_creacion}</p>
-            </div>
-            <div className="flex justify-end pt-4">
-              <button
-                onClick={() => setDetailModal({ isOpen: false, data: null })}
-                className="px-4 py-2 bg-primary text-primary-foreground rounded-lg text-sm font-medium"
-              >
-                Cerrar
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      <DetailModal open={detailModal.isOpen && Boolean(detailModal.data)} title="Detalle del Rol" onClose={() => setDetailModal({ isOpen: false, data: null })} className="border border-border space-y-4" contentClassName="space-y-2 text-sm">
+        {detailModal.data && <><p><strong>ID:</strong> {detailModal.data.id_rol}</p><p><strong>Nombre:</strong> {detailModal.data.nombre}</p><p><strong>Descripción:</strong> {detailModal.data.descripcion}</p><p><strong>Estado:</strong> {detailModal.data.estado}</p><p><strong>Fecha de Creación:</strong> {detailModal.data.fecha_creacion}</p></>}
+      </DetailModal>
 
       <RoleFormModal open={showModal} onClose={() => setShowModal(false)} />
 

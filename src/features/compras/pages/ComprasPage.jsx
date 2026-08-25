@@ -1,13 +1,18 @@
 import { Plus, Eye, Edit, XCircle, FileDown, FileSpreadsheet, ShoppingCart, CheckCircle, Clock, DollarSign } from 'lucide-react';
 import { useCompras } from '../hooks/useCompras';
 import { usePagination } from '../../../shared/hooks/usePagination';
-import { PaginationControls } from '@/shared/components/PaginationControls';
-import SearchBar from '@/shared/components/SearchBar';
+import { PaginationControls } from '../../../shared/components/PaginationControls';
+import RecordsFilterToolbar from '../../../shared/components/RecordsFilterToolbar';
 import { CompraFormModal } from '../components/CompraFormModal';
 import ConfirmDialog from '../../../shared/components/ConfirmDialog';
 import Toast from '../../../shared/components/Toast';
 import { usePermissions } from '../../../shared/contexts/PermissionContext';
 import StatusSwitch from '../../../shared/components/StatusSwitch';
+import RowActions from '../../../shared/components/RowActions';
+import RecordsTable from '../../../shared/components/RecordsTable';
+import DetailModal from '../../../shared/components/DetailModal';
+import StatsGrid from '../../../shared/components/StatsGrid';
+import StatCard from '../../../shared/components/StatCard';
 
 export default function ComprasPage() {
   const { can } = usePermissions();
@@ -64,53 +69,19 @@ export default function ComprasPage() {
       </div>
 
       {/* Tarjetas de Consolidado */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
-        <div className="bg-card p-4 rounded-lg border border-border flex items-center gap-3">
-          <div className="p-3 bg-primary/10 rounded-lg text-primary">
-            <ShoppingCart className="w-5 h-5" />
-          </div>
-          <div>
-            <p className="text-sm text-muted-foreground">Total Compras</p>
-            <h3 className="text-xl font-bold">{totalCompras}</h3>
-          </div>
-        </div>
-        <div className="bg-card p-4 rounded-lg border border-border flex items-center gap-3">
-          <div className="p-3 bg-success/10 rounded-lg text-success">
-            <CheckCircle className="w-5 h-5" />
-          </div>
-          <div>
-            <p className="text-sm text-muted-foreground">Recibidas</p>
-            <h3 className="text-xl font-bold">{recibidas}</h3>
-          </div>
-        </div>
-        <div className="bg-card p-4 rounded-lg border border-border flex items-center gap-3">
-          <div className="p-3 bg-warning/10 rounded-lg text-warning">
-            <Clock className="w-5 h-5" />
-          </div>
-          <div>
-            <p className="text-sm text-muted-foreground">Pendientes</p>
-            <h3 className="text-xl font-bold">{pendientes}</h3>
-          </div>
-        </div>
-        <div className="bg-card p-4 rounded-lg border border-border flex items-center gap-3">
-          <div className="p-3 bg-accent/10 rounded-lg text-primary">
-            <DollarSign className="w-5 h-5" />
-          </div>
-          <div>
-            <p className="text-sm text-muted-foreground">Total Invertido</p>
-            <h3 className="text-xl font-bold">${totalInvertido.toLocaleString('es-CO')}</h3>
-          </div>
-        </div>
-      </div>
+      <StatsGrid className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
+        <StatCard variant="compact" label="Total Compras" value={totalCompras} icon={ShoppingCart} iconColor="hsl(var(--primary))" iconBackground="hsl(var(--primary) / 0.1)" />
+        <StatCard variant="compact" label="Recibidas" value={recibidas} icon={CheckCircle} iconColor="hsl(var(--success))" iconBackground="hsl(var(--success) / 0.1)" />
+        <StatCard variant="compact" label="Pendientes" value={pendientes} icon={Clock} iconColor="hsl(var(--warning))" iconBackground="hsl(var(--warning) / 0.1)" />
+        <StatCard variant="compact" label="Total Invertido" value={`$${totalInvertido.toLocaleString('es-CO')}`} icon={DollarSign} iconColor="hsl(var(--primary))" iconBackground="hsl(var(--accent) / 0.1)" />
+      </StatsGrid>
 
       {/* Filtros y Búsqueda */}
-      <div className="bg-card p-4 rounded-lg border border-border flex flex-col sm:flex-row gap-4">
-        <SearchBar
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-          placeholder="Buscar por código, proveedor o insumo..."
-          wrapperClassName="flex-1"
-        />
+      <RecordsFilterToolbar
+        searchQuery={searchQuery}
+        onSearchChange={setSearchQuery}
+        searchPlaceholder="Buscar por código, proveedor o insumo..."
+      >
         <select
           value={estadoFilter}
           onChange={(e) => setEstadoFilter(e.target.value)}
@@ -121,86 +92,54 @@ export default function ComprasPage() {
           <option value="Pendiente">Pendiente</option>
           <option value="Anulada">Anulada</option>
         </select>
-      </div>
+      </RecordsFilterToolbar>
 
       {/* Tabla Estandarizada */}
-      <div className="records-table-shell bg-card rounded-lg border border-border overflow-hidden">
-        <table className="w-full text-sm text-left">
-          <thead className="bg-muted text-muted-foreground font-semibold">
-            <tr>
-              <th className="px-6 py-3">ID</th><th className="px-6 py-3">Proveedor ID</th><th className="px-6 py-3">Usuario ID</th><th className="px-6 py-3">Fecha Compra</th><th className="px-6 py-3">Valor Total</th>
-              <th className="px-6 py-3">Estado</th>
-              <th className="px-6 py-3">Acciones</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-border">
-            {compras.length > 0 ? (
-              pagination.paginatedData.map((compra) => (
-                <tr key={compra.id_compra} className="hover:bg-muted/50 transition-colors">
+      <RecordsTable
+        columns={[
+          { key: 'id_compra', label: 'ID' },
+          { key: 'id_proveedor', label: 'Proveedor ID' },
+          { key: 'id_usuario', label: 'Usuario ID' },
+          { key: 'fecha_compra', label: 'Fecha Compra' },
+          { key: 'valor_total', label: 'Valor Total' },
+          { key: 'estado', label: 'Estado' },
+          { key: 'acciones', label: 'Acciones' },
+        ]}
+        data={pagination.paginatedData}
+        rowKey={(compra) => compra.id_compra}
+        emptyMessage="No se encontraron compras."
+        renderRow={(compra) => (
+          <>
                   <td className="px-6 py-4 font-mono font-medium">{compra.id_compra}</td><td className="px-6 py-4">{compra.id_proveedor}</td><td className="px-6 py-4">{compra.id_usuario}</td><td className="px-6 py-4">{compra.fecha_compra}</td><td className="px-6 py-4 font-semibold">{compra.valor_total}</td>
                   <td className="px-6 py-4">
                     <StatusSwitch value={compra.estado} />
                   </td>
                   <td className="px-6 py-4">
-                    <div className="flex items-center gap-1">
-                      <button
-                        onClick={() => setDetailModal({ isOpen: true, data: compra })}
-                        className="p-2 hover:bg-muted rounded-lg text-muted-foreground hover:text-foreground"
-                        title="Ver detalle"
-                      >
-                        <Eye className="w-4 h-4" />
-                      </button>
-                      <button
-                        onClick={() => setShowModal(true)} disabled={!can('compras', 'editar')}
-                        className="p-2 hover:bg-muted rounded-lg text-muted-foreground hover:text-foreground"
-                        title="Editar"
-                      >
-                        <Edit className="w-4 h-4" />
-                      </button>
-                      {compra.estado !== 'Anulada' && (
-                        <button
-                          onClick={() => setDeleteDialog({ isOpen: true, id: compra.id_compra, nombre: compra.id_compra })} disabled={!can('compras', 'eliminar')}
-                          className="p-2 hover:bg-muted rounded-lg text-destructive"
-                          title="Anular compra"
-                        >
-                          <XCircle className="w-4 h-4" />
-                        </button>
-                      )}
-                    </div>
+                    <RowActions actions={[
+                      { key: 'view', icon: Eye, title: 'Ver detalle', onClick: () => setDetailModal({ isOpen: true, data: compra }) },
+                      { key: 'edit', icon: Edit, title: 'Editar', onClick: () => setShowModal(true), disabled: !can('compras', 'editar') },
+                      { key: 'cancel', icon: XCircle, title: 'Anular compra', onClick: () => setDeleteDialog({ isOpen: true, id: compra.id_compra, nombre: compra.id_compra }), disabled: !can('compras', 'eliminar'), hidden: compra.estado === 'Anulada', className: 'p-2 hover:bg-muted rounded-lg text-destructive' },
+                    ]} />
                   </td>
-                </tr>
-              ))
-            ) : (
-              <tr>
-                <td colSpan={7} className="px-6 py-8 text-center text-muted-foreground">
-                  No se encontraron compras.
-                </td>
-              </tr>
-            )}
-          </tbody>
-        </table>
-      </div>
+          </>
+        )}
+      />
 
       {/* Modal de Detalle */}
-      {detailModal.isOpen && detailModal.data && (
-        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-          <div className="bg-card p-6 rounded-lg max-w-md w-full border border-border space-y-4">
-            <h3 className="text-lg font-bold">Detalle de la Compra</h3>
-            <div className="space-y-2 text-sm">
-              <p><strong>ID:</strong> {detailModal.data.id_compra}</p><p><strong>Proveedor ID:</strong> {detailModal.data.id_proveedor}</p><p><strong>Usuario ID:</strong> {detailModal.data.id_usuario}</p><p><strong>Fecha:</strong> {detailModal.data.fecha_compra}</p><p><strong>Valor Total:</strong> {detailModal.data.valor_total}</p><p><strong>Medio de Pago:</strong> {detailModal.data.medio_pago}</p><p><strong>Comprobante:</strong> {detailModal.data.comprobante_url}</p><p><strong>Fecha Registro:</strong> {detailModal.data.fecha_registro}</p>
-              <p><strong>Estado:</strong> {detailModal.data.estado}</p>
-            </div>
-            <div className="flex justify-end pt-4">
-              <button
-                onClick={() => setDetailModal({ isOpen: false, data: null })}
-                className="px-4 py-2 bg-primary text-primary-foreground rounded-lg text-sm font-medium"
-              >
-                Cerrar
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      <DetailModal
+        open={detailModal.isOpen && Boolean(detailModal.data)}
+        title="Detalle de la Compra"
+        onClose={() => setDetailModal({ isOpen: false, data: null })}
+        className="border border-border space-y-4"
+        contentClassName="space-y-2 text-sm"
+      >
+        {detailModal.data && (
+          <>
+            <p><strong>ID:</strong> {detailModal.data.id_compra}</p><p><strong>Proveedor ID:</strong> {detailModal.data.id_proveedor}</p><p><strong>Usuario ID:</strong> {detailModal.data.id_usuario}</p><p><strong>Fecha:</strong> {detailModal.data.fecha_compra}</p><p><strong>Valor Total:</strong> {detailModal.data.valor_total}</p><p><strong>Medio de Pago:</strong> {detailModal.data.medio_pago}</p><p><strong>Comprobante:</strong> {detailModal.data.comprobante_url}</p><p><strong>Fecha Registro:</strong> {detailModal.data.fecha_registro}</p>
+            <p><strong>Estado:</strong> {detailModal.data.estado}</p>
+          </>
+        )}
+      </DetailModal>
 
       <PaginationControls {...pagination} />
 

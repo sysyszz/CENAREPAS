@@ -1,13 +1,18 @@
 import { Plus, Eye, Edit, Trash2, FileDown, FileSpreadsheet, Box, CheckCircle, AlertTriangle, DollarSign } from 'lucide-react';
 import { useProductos } from '../hooks/useProductos';
 import { usePagination } from '../../../shared/hooks/usePagination';
-import { PaginationControls } from '@/shared/components/PaginationControls';
-import SearchBar from '@/shared/components/SearchBar';
+import { PaginationControls } from '../../../shared/components/PaginationControls';
 import { ProductoFormModal } from '../components/ProductoFormModal';
 import ConfirmDialog from '../../../shared/components/ConfirmDialog';
 import Toast from '../../../shared/components/Toast';
 import { usePermissions } from '../../../shared/contexts/PermissionContext';
 import StatusSwitch from '../../../shared/components/StatusSwitch';
+import RecordsFilterToolbar from '../../../shared/components/RecordsFilterToolbar';
+import RowActions from '../../../shared/components/RowActions';
+import RecordsTable from '../../../shared/components/RecordsTable';
+import DetailModal from '../../../shared/components/DetailModal';
+import StatCard from '../../../shared/components/StatCard';
+import StatsGrid from '../../../shared/components/StatsGrid';
 
 export default function ProductosPage() {
   const { can } = usePermissions();
@@ -66,53 +71,19 @@ export default function ProductosPage() {
       </div>
 
       {/* Tarjetas de Consolidado */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
-        <div className="bg-card p-4 rounded-lg border border-border flex items-center gap-3">
-          <div className="p-3 bg-primary/10 rounded-lg text-primary">
-            <Box className="w-5 h-5" />
-          </div>
-          <div>
-            <p className="text-sm text-muted-foreground">Total Productos</p>
-            <h3 className="text-xl font-bold">{totalProductos}</h3>
-          </div>
-        </div>
-        <div className="bg-card p-4 rounded-lg border border-border flex items-center gap-3">
-          <div className="p-3 bg-success/10 rounded-lg text-success">
-            <CheckCircle className="w-5 h-5" />
-          </div>
-          <div>
-            <p className="text-sm text-muted-foreground">Disponibles</p>
-            <h3 className="text-xl font-bold">{disponibles}</h3>
-          </div>
-        </div>
-        <div className="bg-card p-4 rounded-lg border border-border flex items-center gap-3">
-          <div className="p-3 bg-warning/10 rounded-lg text-warning">
-            <AlertTriangle className="w-5 h-5" />
-          </div>
-          <div>
-            <p className="text-sm text-muted-foreground">Bajo Stock</p>
-            <h3 className="text-xl font-bold">{bajoStock}</h3>
-          </div>
-        </div>
-        <div className="bg-card p-4 rounded-lg border border-border flex items-center gap-3">
-          <div className="p-3 bg-accent/10 rounded-lg text-primary">
-            <DollarSign className="w-5 h-5" />
-          </div>
-          <div>
-            <p className="text-sm text-muted-foreground">Valor Inventario</p>
-            <h3 className="text-xl font-bold">${valorInventario.toLocaleString('es-CO')}</h3>
-          </div>
-        </div>
-      </div>
+      <StatsGrid className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
+        <StatCard variant="compact" label="Total Productos" value={totalProductos} icon={Box} iconColor="hsl(var(--primary))" iconBackground="hsl(var(--primary) / 0.1)" />
+        <StatCard variant="compact" label="Disponibles" value={disponibles} icon={CheckCircle} iconColor="hsl(var(--success))" iconBackground="hsl(var(--success) / 0.1)" />
+        <StatCard variant="compact" label="Bajo Stock" value={bajoStock} icon={AlertTriangle} iconColor="hsl(var(--warning))" iconBackground="hsl(var(--warning) / 0.1)" />
+        <StatCard variant="compact" label="Valor Inventario" value={`$${valorInventario.toLocaleString('es-CO')}`} icon={DollarSign} iconColor="hsl(var(--primary))" iconBackground="hsl(var(--accent) / 0.1)" />
+      </StatsGrid>
 
       {/* Filtros y Búsqueda */}
-      <div className="bg-card p-4 rounded-lg border border-border flex flex-col sm:flex-row gap-4">
-        <SearchBar
-          value={searchTerm}
-          onChange={(e) => setSearchQuery ? setSearchQuery(e.target.value) : setSearchTerm(e.target.value)}
-          placeholder="Buscar por código o producto..."
-          wrapperClassName="flex-1"
-        />
+      <RecordsFilterToolbar
+        searchQuery={searchTerm}
+        onSearchChange={setSearchTerm}
+        searchPlaceholder="Buscar por código o producto..."
+      >
         <select
           value={filterCategoria}
           onChange={(e) => setFilterCategoria(e.target.value)}
@@ -134,27 +105,25 @@ export default function ProductosPage() {
           <option value="Disponible">Disponible</option>
           <option value="Bajo Stock">Bajo Stock</option>
         </select>
-      </div>
+      </RecordsFilterToolbar>
 
       {/* Tabla Estandarizada */}
-      <div className="records-table-shell bg-card rounded-lg border border-border overflow-hidden">
-        <table className="w-full text-sm text-left">
-          <thead className="bg-muted text-muted-foreground font-semibold">
-            <tr>
-              <th className="px-6 py-3">ID</th>
-              <th className="px-6 py-3">Producto</th>
-              <th className="px-6 py-3">Categoría</th>
-              <th className="px-6 py-3">Descripción</th>
-              <th className="px-6 py-3">Precio</th>
-              <th className="px-6 py-3">Stock</th>
-              <th className="px-6 py-3">Estado</th>
-              <th className="px-6 py-3">Acciones</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-border">
-            {filteredProductos.length > 0 ? (
-              pagination.paginatedData.map((producto) => (
-                <tr key={producto.id_producto} className="hover:bg-muted/50 transition-colors">
+      <RecordsTable
+        columns={[
+          { key: 'id_producto', label: 'ID' },
+          { key: 'nombre', label: 'Producto' },
+          { key: 'id_categoria', label: 'Categoría' },
+          { key: 'descripcion', label: 'Descripción' },
+          { key: 'precio_venta', label: 'Precio' },
+          { key: 'stock_actual', label: 'Stock' },
+          { key: 'estado', label: 'Estado' },
+          { key: 'acciones', label: 'Acciones' },
+        ]}
+        data={pagination.paginatedData}
+        rowKey={(producto) => producto.id_producto}
+        emptyMessage="No se encontraron productos."
+        renderRow={(producto) => (
+          <>
                   <td className="px-6 py-4 font-mono font-medium">{producto.id_producto}</td>
                   <td className="px-6 py-4 font-semibold">{producto.nombre}</td>
                   <td className="px-6 py-4 text-muted-foreground">{producto.id_categoria}</td>
@@ -165,71 +134,22 @@ export default function ProductosPage() {
                     <StatusSwitch value={producto.estado} />
                   </td>
                   <td className="px-6 py-4">
-                    <div className="flex items-center gap-1">
-                      <button
-                        onClick={() => setDetailModal({ isOpen: true, data: producto })}
-                        className="p-2 hover:bg-muted rounded-lg text-muted-foreground hover:text-foreground"
-                        title="Ver detalle"
-                      >
-                        <Eye className="w-4 h-4" />
-                      </button>
-                      <button
-                        onClick={() => setShowModal(true)} disabled={!can('productos', 'editar')}
-                        className="p-2 hover:bg-muted rounded-lg text-muted-foreground hover:text-foreground"
-                        title="Editar"
-                      >
-                        <Edit className="w-4 h-4" />
-                      </button>
-                      <button
-                        onClick={() => setDeleteDialog({ isOpen: true, id: producto.id_producto, nombre: producto.nombre })} disabled={!can('productos', 'eliminar')}
-                        className="p-2 hover:bg-muted rounded-lg text-destructive"
-                        title="Eliminar"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </button>
-                    </div>
+                    <RowActions actions={[
+                      { key: 'view', icon: Eye, title: 'Ver detalle', onClick: () => setDetailModal({ isOpen: true, data: producto }) },
+                      { key: 'edit', icon: Edit, title: 'Editar', onClick: () => setShowModal(true), disabled: !can('productos', 'editar') },
+                      { key: 'delete', icon: Trash2, title: 'Eliminar', onClick: () => setDeleteDialog({ isOpen: true, id: producto.id_producto, nombre: producto.nombre }), disabled: !can('productos', 'eliminar'), className: 'p-2 hover:bg-muted rounded-lg text-destructive' },
+                    ]} />
                   </td>
-                </tr>
-              ))
-            ) : (
-              <tr>
-                <td colSpan={8} className="px-6 py-8 text-center text-muted-foreground">
-                  No se encontraron productos.
-                </td>
-              </tr>
-            )}
-          </tbody>
-        </table>
-      </div>
+          </>
+        )}
+      />
 
       <PaginationControls {...pagination} />
 
       {/* Modal de Detalle */}
-      {detailModal.isOpen && detailModal.data && (
-        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-          <div className="bg-card p-6 rounded-lg max-w-md w-full border border-border space-y-4">
-            <h3 className="text-lg font-bold">Detalle del Producto</h3>
-            <div className="space-y-2 text-sm">
-              <p><strong>ID:</strong> {detailModal.data.id_producto}</p>
-              <p><strong>Nombre:</strong> {detailModal.data.nombre}</p>
-              <p><strong>Categoría ID:</strong> {detailModal.data.id_categoria}</p>
-              <p><strong>Descripción:</strong> {detailModal.data.descripcion}</p>
-              <p><strong>Precio de Venta:</strong> {detailModal.data.precio_venta}</p>
-              <p><strong>Stock Actual:</strong> {detailModal.data.stock_actual}</p>
-              <p><strong>Stock Mínimo:</strong> {detailModal.data.stock_minimo}</p>
-              <p><strong>Estado:</strong> {detailModal.data.estado}</p>
-            </div>
-            <div className="flex justify-end pt-4">
-              <button
-                onClick={() => setDetailModal({ isOpen: false, data: null })}
-                className="px-4 py-2 bg-primary text-primary-foreground rounded-lg text-sm font-medium"
-              >
-                Cerrar
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      <DetailModal open={detailModal.isOpen && Boolean(detailModal.data)} title="Detalle del Producto" onClose={() => setDetailModal({ isOpen: false, data: null })} className="border border-border space-y-4" contentClassName="space-y-2 text-sm">
+        {detailModal.data && <><p><strong>ID:</strong> {detailModal.data.id_producto}</p><p><strong>Nombre:</strong> {detailModal.data.nombre}</p><p><strong>Categoría ID:</strong> {detailModal.data.id_categoria}</p><p><strong>Descripción:</strong> {detailModal.data.descripcion}</p><p><strong>Precio de Venta:</strong> {detailModal.data.precio_venta}</p><p><strong>Stock Actual:</strong> {detailModal.data.stock_actual}</p><p><strong>Stock Mínimo:</strong> {detailModal.data.stock_minimo}</p><p><strong>Estado:</strong> {detailModal.data.estado}</p></>}
+      </DetailModal>
 
       <ProductoFormModal open={showModal} onClose={() => setShowModal(false)} />
 

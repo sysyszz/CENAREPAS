@@ -1,13 +1,18 @@
-import { Plus, Eye, Edit, Trash2, FileDown, FileSpreadsheet, Users, UserCheck, DollarSign, ShoppingBag } from 'lucide-react';
+import { Plus, Eye, Edit, Trash2, FileDown, FileSpreadsheet, UserCircle, CheckCircle, ShoppingBag, DollarSign } from 'lucide-react';
 import { useClientes } from '../hooks/useClientes';
 import { usePagination } from '../../../shared/hooks/usePagination';
-import { PaginationControls } from '@/shared/components/PaginationControls';
-import SearchBar from '@/shared/components/SearchBar';
+import { PaginationControls } from '../../../shared/components/PaginationControls';
+import RecordsFilterToolbar from '../../../shared/components/RecordsFilterToolbar';
 import { ClienteFormModal } from '../components/ClienteFormModal';
 import ConfirmDialog from '../../../shared/components/ConfirmDialog';
 import Toast from '../../../shared/components/Toast';
 import { usePermissions } from '../../../shared/contexts/PermissionContext';
 import StatusSwitch from '../../../shared/components/StatusSwitch';
+import RowActions from '../../../shared/components/RowActions';
+import RecordsTable from '../../../shared/components/RecordsTable';
+import DetailModal from '../../../shared/components/DetailModal';
+import StatCard from '../../../shared/components/StatCard';
+import StatsGrid from '../../../shared/components/StatsGrid';
 
 export default function ClientesPage() {
   const { can } = usePermissions();
@@ -64,53 +69,19 @@ export default function ClientesPage() {
       </div>
 
       {/* Tarjetas de Consolidado */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
-        <div className="bg-card p-4 rounded-lg border border-border flex items-center gap-3">
-          <div className="p-3 bg-primary/10 rounded-lg text-primary">
-            <UserCircle className="w-5 h-5" />
-          </div>
-          <div>
-            <p className="text-sm text-muted-foreground">Total Clientes</p>
-            <h3 className="text-xl font-bold">{totalClientes}</h3>
-          </div>
-        </div>
-        <div className="bg-card p-4 rounded-lg border border-border flex items-center gap-3">
-          <div className="p-3 bg-success/10 rounded-lg text-success">
-            <CheckCircle className="w-5 h-5" />
-          </div>
-          <div>
-            <p className="text-sm text-muted-foreground">Clientes Activos</p>
-            <h3 className="text-xl font-bold">{activos}</h3>
-          </div>
-        </div>
-        <div className="bg-card p-4 rounded-lg border border-border flex items-center gap-3">
-          <div className="p-3 bg-accent/10 rounded-lg text-primary">
-            <ShoppingBag className="w-5 h-5" />
-          </div>
-          <div>
-            <p className="text-sm text-muted-foreground">Pedidos Históricos</p>
-            <h3 className="text-xl font-bold">{totalPedidosHistorico}</h3>
-          </div>
-        </div>
-        <div className="bg-card p-4 rounded-lg border border-border flex items-center gap-3">
-          <div className="p-3 bg-warning/10 rounded-lg text-warning">
-            <DollarSign className="w-5 h-5" />
-          </div>
-          <div>
-            <p className="text-sm text-muted-foreground">Facturación Total</p>
-            <h3 className="text-xl font-bold">${totalFacturadoHistorico.toLocaleString('es-CO')}</h3>
-          </div>
-        </div>
-      </div>
+      <StatsGrid className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
+        <StatCard variant="compact" label="Total Clientes" value={totalClientes} icon={UserCircle} iconColor="hsl(var(--primary))" iconBackground="hsl(var(--primary) / 0.1)" />
+        <StatCard variant="compact" label="Clientes Activos" value={activos} icon={CheckCircle} iconColor="hsl(var(--success))" iconBackground="hsl(var(--success) / 0.1)" />
+        <StatCard variant="compact" label="Pedidos Históricos" value={totalPedidosHistorico} icon={ShoppingBag} iconColor="hsl(var(--primary))" iconBackground="hsl(var(--accent) / 0.1)" />
+        <StatCard variant="compact" label="Facturación Total" value={`$${totalFacturadoHistorico.toLocaleString('es-CO')}`} icon={DollarSign} iconColor="hsl(var(--warning))" iconBackground="hsl(var(--warning) / 0.1)" />
+      </StatsGrid>
 
       {/* Filtros y Búsqueda */}
-      <div className="bg-card p-4 rounded-lg border border-border flex flex-col sm:flex-row gap-4">
-        <SearchBar
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-          placeholder="Buscar por código, nombre, NIT o ciudad..."
-          wrapperClassName="flex-1"
-        />
+      <RecordsFilterToolbar
+        searchQuery={searchQuery}
+        onSearchChange={setSearchQuery}
+        searchPlaceholder="Buscar por código, nombre, NIT o ciudad..."
+      >
         <select
           value={estadoFilter}
           onChange={(e) => setEstadoFilter(e.target.value)}
@@ -120,27 +91,25 @@ export default function ClientesPage() {
           <option value="Activo">Activo</option>
           <option value="Inactivo">Inactivo</option>
         </select>
-      </div>
+      </RecordsFilterToolbar>
 
       {/* Tabla Estandarizada */}
-      <div className="records-table-shell bg-card rounded-lg border border-border overflow-hidden">
-        <table className="w-full text-sm text-left">
-          <thead className="bg-muted text-muted-foreground font-semibold">
-            <tr>
-              <th className="px-6 py-3">ID</th>
-              <th className="px-6 py-3">Cliente / Razón Social</th>
-              <th className="px-6 py-3">Documento</th>
-              <th className="px-6 py-3">Teléfono</th>
-              <th className="px-6 py-3">Correo</th>
-              <th className="px-6 py-3">Dirección</th>
-              <th className="px-6 py-3">Estado</th>
-              <th className="px-6 py-3">Acciones</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-border">
-            {clientes.length > 0 ? (
-              pagination.paginatedData.map((cliente) => (
-                <tr key={cliente.id_cliente} className="hover:bg-muted/50 transition-colors">
+      <RecordsTable
+        columns={[
+          { key: 'id_cliente', label: 'ID' },
+          { key: 'nombre', label: 'Cliente / Razón Social' },
+          { key: 'documento', label: 'Documento' },
+          { key: 'telefono', label: 'Teléfono' },
+          { key: 'correo', label: 'Correo' },
+          { key: 'direccion', label: 'Dirección' },
+          { key: 'estado', label: 'Estado' },
+          { key: 'acciones', label: 'Acciones' },
+        ]}
+        data={pagination.paginatedData}
+        rowKey={(cliente) => cliente.id_cliente}
+        emptyMessage="No se encontraron clientes."
+        renderRow={(cliente) => (
+          <>
                   <td className="px-6 py-4 font-mono font-medium">{cliente.id_cliente}</td>
                   <td className="px-6 py-4 font-semibold">{cliente.nombre}</td>
                   <td className="px-6 py-4 text-muted-foreground">{cliente.documento}</td>
@@ -151,71 +120,39 @@ export default function ClientesPage() {
                     <StatusSwitch value={cliente.estado} />
                   </td>
                   <td className="px-6 py-4">
-                    <div className="flex items-center gap-1">
-                      <button
-                        onClick={() => setDetailModal({ isOpen: true, data: cliente })}
-                        className="p-2 hover:bg-muted rounded-lg text-muted-foreground hover:text-foreground"
-                        title="Ver detalle"
-                      >
-                        <Eye className="w-4 h-4" />
-                      </button>
-                      <button
-                        onClick={() => setShowModal(true)} disabled={!can('clientes', 'editar')}
-                        className="p-2 hover:bg-muted rounded-lg text-muted-foreground hover:text-foreground"
-                        title="Editar"
-                      >
-                        <Edit className="w-4 h-4" />
-                      </button>
-                      <button
-                        onClick={() => setDeleteDialog({ isOpen: true, id: cliente.id_cliente, nombre: cliente.nombre })} disabled={!can('clientes', 'eliminar')}
-                        className="p-2 hover:bg-muted rounded-lg text-destructive"
-                        title="Eliminar"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </button>
-                    </div>
+                    <RowActions actions={[
+                      { key: 'view', icon: Eye, title: 'Ver detalle', onClick: () => setDetailModal({ isOpen: true, data: cliente }) },
+                      { key: 'edit', icon: Edit, title: 'Editar', onClick: () => setShowModal(true), disabled: !can('clientes', 'editar') },
+                      { key: 'delete', icon: Trash2, title: 'Eliminar', onClick: () => setDeleteDialog({ isOpen: true, id: cliente.id_cliente, nombre: cliente.nombre }), disabled: !can('clientes', 'eliminar'), className: 'p-2 hover:bg-muted rounded-lg text-destructive' },
+                    ]} />
                   </td>
-                </tr>
-              ))
-            ) : (
-              <tr>
-                <td colSpan={8} className="px-6 py-8 text-center text-muted-foreground">
-                  No se encontraron clientes.
-                </td>
-              </tr>
-            )}
-          </tbody>
-        </table>
-      </div>
+          </>
+        )}
+      />
 
       <PaginationControls {...pagination} />
 
       {/* Modal de Detalle */}
-      {detailModal.isOpen && detailModal.data && (
-        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-          <div className="bg-card p-6 rounded-lg max-w-md w-full border border-border space-y-4">
-            <h3 className="text-lg font-bold">Detalle del Cliente</h3>
-            <div className="space-y-2 text-sm">
-              <p><strong>ID:</strong> {detailModal.data.id_cliente}</p>
-              <p><strong>Cliente:</strong> {detailModal.data.nombre}</p>
-              <p><strong>Documento:</strong> {detailModal.data.documento}</p>
-              <p><strong>Teléfono:</strong> {detailModal.data.telefono}</p>
-              <p><strong>Correo:</strong> {detailModal.data.correo}</p>
-              <p><strong>Dirección:</strong> {detailModal.data.direccion}</p>
-              <p><strong>Fecha de Creación:</strong> {detailModal.data.fecha_creacion}</p>
-              <p><strong>Estado:</strong> {detailModal.data.estado}</p>
-            </div>
-            <div className="flex justify-end pt-4">
-              <button
-                onClick={() => setDetailModal({ isOpen: false, data: null })}
-                className="px-4 py-2 bg-primary text-primary-foreground rounded-lg text-sm font-medium"
-              >
-                Cerrar
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      <DetailModal
+        open={detailModal.isOpen && Boolean(detailModal.data)}
+        title="Detalle del Cliente"
+        onClose={() => setDetailModal({ isOpen: false, data: null })}
+        className="border border-border space-y-4"
+        contentClassName="space-y-2 text-sm"
+      >
+        {detailModal.data && (
+          <>
+            <p><strong>ID:</strong> {detailModal.data.id_cliente}</p>
+            <p><strong>Cliente:</strong> {detailModal.data.nombre}</p>
+            <p><strong>Documento:</strong> {detailModal.data.documento}</p>
+            <p><strong>Teléfono:</strong> {detailModal.data.telefono}</p>
+            <p><strong>Correo:</strong> {detailModal.data.correo}</p>
+            <p><strong>Dirección:</strong> {detailModal.data.direccion}</p>
+            <p><strong>Fecha de Creación:</strong> {detailModal.data.fecha_creacion}</p>
+            <p><strong>Estado:</strong> {detailModal.data.estado}</p>
+          </>
+        )}
+      </DetailModal>
 
       <ClienteFormModal open={showModal} onClose={() => setShowModal(false)} />
 

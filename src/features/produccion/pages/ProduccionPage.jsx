@@ -1,13 +1,18 @@
 import { Plus, Eye, Edit, XCircle, FileDown, FileSpreadsheet, Factory, CheckCircle, Clock, Calendar } from 'lucide-react';
 import { useProduccion } from '../hooks/useProduccion';
 import { usePagination } from '../../../shared/hooks/usePagination';
-import { PaginationControls } from '@/shared/components/PaginationControls';
-import SearchBar from '@/shared/components/SearchBar';
+import { PaginationControls } from '../../../shared/components/PaginationControls';
 import { ProduccionFormModal } from '../components/ProduccionFormModal';
 import ConfirmDialog from '../../../shared/components/ConfirmDialog';
 import Toast from '../../../shared/components/Toast';
 import { usePermissions } from '../../../shared/contexts/PermissionContext';
 import StatusSwitch from '../../../shared/components/StatusSwitch';
+import RecordsFilterToolbar from '../../../shared/components/RecordsFilterToolbar';
+import RowActions from '../../../shared/components/RowActions';
+import RecordsTable from '../../../shared/components/RecordsTable';
+import DetailModal from '../../../shared/components/DetailModal';
+import StatCard from '../../../shared/components/StatCard';
+import StatsGrid from '../../../shared/components/StatsGrid';
 
 export default function ProduccionPage() {
   const { can } = usePermissions();
@@ -64,53 +69,19 @@ export default function ProduccionPage() {
       </div>
 
       {/* Tarjetas de Consolidado */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
-        <div className="bg-card p-4 rounded-lg border border-border flex items-center gap-3">
-          <div className="p-3 bg-primary/10 rounded-lg text-primary">
-            <Factory className="w-5 h-5" />
-          </div>
-          <div>
-            <p className="text-sm text-muted-foreground">Total Lotes</p>
-            <h3 className="text-xl font-bold">{totalLotes}</h3>
-          </div>
-        </div>
-        <div className="bg-card p-4 rounded-lg border border-border flex items-center gap-3">
-          <div className="p-3 bg-success/10 rounded-lg text-success">
-            <CheckCircle className="w-5 h-5" />
-          </div>
-          <div>
-            <p className="text-sm text-muted-foreground">Finalizados</p>
-            <h3 className="text-xl font-bold">{finalizados}</h3>
-          </div>
-        </div>
-        <div className="bg-card p-4 rounded-lg border border-border flex items-center gap-3">
-          <div className="p-3 bg-warning/10 rounded-lg text-warning">
-            <Clock className="w-5 h-5" />
-          </div>
-          <div>
-            <p className="text-sm text-muted-foreground">En Proceso</p>
-            <h3 className="text-xl font-bold">{enProceso}</h3>
-          </div>
-        </div>
-        <div className="bg-card p-4 rounded-lg border border-border flex items-center gap-3">
-          <div className="p-3 bg-accent/10 rounded-lg text-primary">
-            <Calendar className="w-5 h-5" />
-          </div>
-          <div>
-            <p className="text-sm text-muted-foreground">Programados</p>
-            <h3 className="text-xl font-bold">{programados}</h3>
-          </div>
-        </div>
-      </div>
+      <StatsGrid className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
+        <StatCard variant="compact" label="Total Lotes" value={totalLotes} icon={Factory} iconColor="hsl(var(--primary))" iconBackground="hsl(var(--primary) / 0.1)" />
+        <StatCard variant="compact" label="Finalizados" value={finalizados} icon={CheckCircle} iconColor="hsl(var(--success))" iconBackground="hsl(var(--success) / 0.1)" />
+        <StatCard variant="compact" label="En Proceso" value={enProceso} icon={Clock} iconColor="hsl(var(--warning))" iconBackground="hsl(var(--warning) / 0.1)" />
+        <StatCard variant="compact" label="Programados" value={programados} icon={Calendar} iconColor="hsl(var(--primary))" iconBackground="hsl(var(--accent) / 0.1)" />
+      </StatsGrid>
 
       {/* Filtros y Búsqueda */}
-      <div className="bg-card p-4 rounded-lg border border-border flex flex-col sm:flex-row gap-4">
-        <SearchBar
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-          placeholder="Buscar por ID de lote, ficha o usuario responsable..."
-          wrapperClassName="flex-1"
-        />
+      <RecordsFilterToolbar
+        searchQuery={searchQuery}
+        onSearchChange={setSearchQuery}
+        searchPlaceholder="Buscar por ID de lote, ficha o usuario responsable..."
+      >
         <select
           value={estadoFilter}
           onChange={(e) => setEstadoFilter(e.target.value)}
@@ -122,91 +93,44 @@ export default function ProduccionPage() {
           <option value="Programado">Programado</option>
           <option value="Anulado">Anulado</option>
         </select>
-      </div>
+      </RecordsFilterToolbar>
 
       {/* Tabla Estandarizada */}
-      <div className="records-table-shell bg-card rounded-lg border border-border overflow-hidden">
-        <table className="w-full text-sm text-left">
-          <thead className="bg-muted text-muted-foreground font-semibold">
-            <tr>
-              <th className="px-6 py-3">Código Lote</th>
-              <th className="px-6 py-3">Producto</th>
-              <th className="px-6 py-3">Cantidad Prog.</th>
-              <th className="px-6 py-3">Obtenida</th>
-              <th className="px-6 py-3">Fecha</th>
-              <th className="px-6 py-3">Usuario Responsable</th>
-              <th className="px-6 py-3">Estado</th>
-              <th className="px-6 py-3">Acciones</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-border">
-            {lotes.length > 0 ? (
-              pagination.paginatedData.map((lote) => (
-                <tr key={lote.id_lote} className="hover:bg-muted/50 transition-colors">
+      <RecordsTable
+        columns={[
+          { key: 'id_lote', label: 'Código Lote' },
+          { key: 'id_ficha', label: 'Producto' },
+          { key: 'cantidad_programada', label: 'Cantidad Prog.' },
+          { key: 'cantidad_producida', label: 'Obtenida' },
+          { key: 'fecha_produccion', label: 'Fecha' },
+          { key: 'id_usuario_responsable', label: 'Usuario Responsable' },
+          { key: 'estado', label: 'Estado' },
+          { key: 'acciones', label: 'Acciones' },
+        ]}
+        data={pagination.paginatedData}
+        rowKey={(lote) => lote.id_lote}
+        emptyMessage="No se encontraron lotes de producción."
+        renderRow={(lote) => (
+          <>
                   <td className="px-6 py-4 font-mono font-medium">{lote.id_lote}</td><td className="px-6 py-4">{lote.id_ficha}</td><td className="px-6 py-4">{lote.id_usuario_responsable}</td><td className="px-6 py-4">{lote.cantidad_producida}</td><td className="px-6 py-4 text-muted-foreground">{lote.fecha_produccion}</td>
                   <td className="px-6 py-4">
                     <StatusSwitch value={lote.estado} />
                   </td>
                   <td className="px-6 py-4">
-                    <div className="flex items-center gap-1">
-                      <button
-                        onClick={() => setDetailModal({ isOpen: true, data: lote })}
-                        className="p-2 hover:bg-muted rounded-lg text-muted-foreground hover:text-foreground"
-                        title="Ver detalle"
-                      >
-                        <Eye className="w-4 h-4" />
-                      </button>
-                      <button
-                        onClick={() => setShowModal(true)} disabled={!can('produccion', 'editar')}
-                        className="p-2 hover:bg-muted rounded-lg text-muted-foreground hover:text-foreground"
-                        title="Editar"
-                      >
-                        <Edit className="w-4 h-4" />
-                      </button>
-                      {lote.estado !== 'Anulado' && (
-                        <button
-                          onClick={() => setDeleteDialog({ isOpen: true, id: lote.id_lote, nombre: lote.id_lote })} disabled={!can('produccion', 'eliminar')}
-                          className="p-2 hover:bg-muted rounded-lg text-destructive"
-                          title="Anular Lote"
-                        >
-                          <XCircle className="w-4 h-4" />
-                        </button>
-                      )}
-                    </div>
+                    <RowActions actions={[
+                      { key: 'view', icon: Eye, title: 'Ver detalle', onClick: () => setDetailModal({ isOpen: true, data: lote }) },
+                      { key: 'edit', icon: Edit, title: 'Editar', onClick: () => setShowModal(true), disabled: !can('produccion', 'editar') },
+                      { key: 'cancel', icon: XCircle, title: 'Anular Lote', onClick: () => setDeleteDialog({ isOpen: true, id: lote.id_lote, nombre: lote.id_lote }), disabled: !can('produccion', 'eliminar'), hidden: lote.estado === 'Anulado', className: 'p-2 hover:bg-muted rounded-lg text-destructive' },
+                    ]} />
                   </td>
-                </tr>
-              ))
-            ) : (
-              <tr>
-                <td colSpan={8} className="px-6 py-8 text-center text-muted-foreground">
-                  No se encontraron lotes de producción.
-                </td>
-              </tr>
-            )}
-          </tbody>
-        </table>
-      </div>
+          </>
+        )}
+      />
 
       {/* Modal de Detalle */}
-      {detailModal.isOpen && detailModal.data && (
-        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-          <div className="bg-card p-6 rounded-lg max-w-md w-full border border-border space-y-4">
-            <h3 className="text-lg font-bold">Detalle del Lote de Producción</h3>
-            <div className="space-y-2 text-sm">
-              <p><strong>ID:</strong> {detailModal.data.id_lote}</p><p><strong>Ficha ID:</strong> {detailModal.data.id_ficha}</p><p><strong>Usuario Responsable ID:</strong> {detailModal.data.id_usuario_responsable}</p><p><strong>Fecha:</strong> {detailModal.data.fecha_produccion}</p><p><strong>Cantidad:</strong> {detailModal.data.cantidad_producida}</p><p><strong>Observaciones:</strong> {detailModal.data.observaciones}</p>
-              <p><strong>Estado:</strong> {detailModal.data.estado}</p>
-            </div>
-            <div className="flex justify-end pt-4">
-              <button
-                onClick={() => setDetailModal({ isOpen: false, data: null })}
-                className="px-4 py-2 bg-primary text-primary-foreground rounded-lg text-sm font-medium"
-              >
-                Cerrar
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      <DetailModal open={detailModal.isOpen && Boolean(detailModal.data)} title="Detalle del Lote de Producción" onClose={() => setDetailModal({ isOpen: false, data: null })} className="border border-border space-y-4" contentClassName="space-y-2 text-sm">
+        {detailModal.data && <><p><strong>ID:</strong> {detailModal.data.id_lote}</p><p><strong>Ficha ID:</strong> {detailModal.data.id_ficha}</p><p><strong>Usuario Responsable ID:</strong> {detailModal.data.id_usuario_responsable}</p><p><strong>Fecha:</strong> {detailModal.data.fecha_produccion}</p><p><strong>Cantidad:</strong> {detailModal.data.cantidad_producida}</p><p><strong>Observaciones:</strong> {detailModal.data.observaciones}</p><p><strong>Estado:</strong> {detailModal.data.estado}</p></>}
+      </DetailModal>
 
       <PaginationControls {...pagination} />
 

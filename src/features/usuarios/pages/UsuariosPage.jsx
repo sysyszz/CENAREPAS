@@ -2,8 +2,7 @@ import { Plus, Edit, Trash2, Lock, Eye, FileDown, FileSpreadsheet, Users, UserCh
 import { useUsuarios } from '../hooks/useUsuarios';
 import { mockRoles } from '../../roles/services/rolesService';
 import { usePagination } from '../../../shared/hooks/usePagination';
-import { PaginationControls } from '@/shared/components/PaginationControls';
-import SearchBar from '@/shared/components/SearchBar';
+import { PaginationControls } from '../../../shared/components/PaginationControls';
 import { UsuarioFormModal } from '../components/UsuarioFormModal';
 import { UsuarioDetailModal } from '../components/UsuarioDetailModal';
 import { UsuarioEditModal } from '../components/UsuarioEditModal';
@@ -11,6 +10,11 @@ import ConfirmDialog from '../../../shared/components/ConfirmDialog';
 import Toast from '../../../shared/components/Toast';
 import { usePermissions } from '../../../shared/contexts/PermissionContext';
 import StatusSwitch from '../../../shared/components/StatusSwitch';
+import RecordsFilterToolbar from '../../../shared/components/RecordsFilterToolbar';
+import RowActions from '../../../shared/components/RowActions';
+import RecordsTable from '../../../shared/components/RecordsTable';
+import StatCard from '../../../shared/components/StatCard';
+import StatsGrid from '../../../shared/components/StatsGrid';
 
 export default function UsuariosPage() {
   const { can } = usePermissions();
@@ -79,44 +83,22 @@ export default function UsuariosPage() {
       </div>
 
       {/* Tarjetas de Consolidado */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
-        <div className="bg-card p-4 rounded-lg border border-border flex items-center gap-3">
-          <div className="p-3 bg-primary/10 rounded-lg text-primary">
-            <Users className="w-5 h-5" />
-          </div>
-          <div>
-            <p className="text-sm text-muted-foreground">Total Usuarios</p>
-            <h3 className="text-xl font-bold">{totalUsuarios}</h3>
-          </div>
-        </div>
-        <div className="bg-card p-4 rounded-lg border border-border flex items-center gap-3">
-          <div className="p-3 bg-accent/10 rounded-lg text-primary"><ShieldCheck className="w-5 h-5" /></div>
-          <div><p className="text-sm text-muted-foreground">Roles Asignados</p><h3 className="text-xl font-bold">{rolesAsignados}</h3></div>
-        </div>
-        <div className="bg-card p-4 rounded-lg border border-border flex items-center gap-3">
-          <div className="p-3 bg-warning/10 rounded-lg text-warning"><KeyRound className="w-5 h-5" /></div>
-          <div><p className="text-sm text-muted-foreground">Credenciales Configuradas</p><h3 className="text-xl font-bold">{credencialesConfiguradas}</h3></div>
-        </div>
-        <div className="bg-card p-4 rounded-lg border border-border flex items-center gap-3">
-          <div className="p-3 bg-success/10 rounded-lg text-success">
-            <UserCheck className="w-5 h-5" />
-          </div>
-          <div>
-            <p className="text-sm text-muted-foreground">Usuarios Activos</p>
-            <h3 className="text-xl font-bold">{usuariosActivos}</h3>
-          </div>
-        </div>
-      </div>
+      <StatsGrid className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
+        <StatCard variant="compact" label="Total Usuarios" value={totalUsuarios} icon={Users} iconColor="hsl(var(--primary))" iconBackground="hsl(var(--primary) / 0.1)" />
+        <StatCard variant="compact" label="Roles Asignados" value={rolesAsignados} icon={ShieldCheck} iconColor="hsl(var(--primary))" iconBackground="hsl(var(--accent) / 0.1)" />
+        <StatCard variant="compact" label="Credenciales Configuradas" value={credencialesConfiguradas} icon={KeyRound} iconColor="hsl(var(--warning))" iconBackground="hsl(var(--warning) / 0.1)" />
+        <StatCard variant="compact" label="Usuarios Activos" value={usuariosActivos} icon={UserCheck} iconColor="hsl(var(--success))" iconBackground="hsl(var(--success) / 0.1)" />
+      </StatsGrid>
 
 
-      <div className="bg-card p-4 rounded-lg border border-border">
-        <div className="flex gap-4">
-          <SearchBar
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            placeholder="Buscar usuario..."
-            wrapperClassName="flex-1"
-          />
+      <RecordsFilterToolbar
+        searchQuery={searchTerm}
+        onSearchChange={setSearchTerm}
+        searchPlaceholder="Buscar usuario..."
+        className="flex-row gap-4"
+        searchIconClassName="w-5 h-5"
+        searchInputClassName="text-base"
+      >
           <select
             value={filterRol}
             onChange={(e) => setFilterRol(e.target.value)}
@@ -138,32 +120,26 @@ export default function UsuariosPage() {
             <option value="activo">Activo</option>
             <option value="inactivo">Inactivo</option>
           </select>
-        </div>
-      </div>
+      </RecordsFilterToolbar>
 
-      <div className="records-table-shell bg-card rounded-lg border border-border overflow-hidden">
-        <table className="w-full">
-          <thead className="bg-muted">
-            <tr>
-              <th className="text-left px-6 py-3">ID</th>
-              <th className="text-left px-6 py-3">Nombre</th>
-              <th className="text-left px-6 py-3">Correo</th>
-              <th className="text-left px-6 py-3">Rol</th>
-              <th className="text-left px-6 py-3">Estado</th>
-              <th className="text-left px-6 py-3">Fecha de Creación</th>
-              <th className="text-left px-6 py-3">Acciones</th>
-            </tr>
-          </thead>
-          <tbody>
-            {filteredUsuarios.length === 0 ? (
-              <tr>
-                <td colSpan={6} className="px-6 py-8 text-center text-muted-foreground">
-                  No se encontraron usuarios
-                </td>
-              </tr>
-            ) : (
-              pagination.paginatedData.map((usuario) => (
-                <tr key={usuario.id_usuario} className="border-b border-border hover:bg-muted/50">
+      <RecordsTable
+        columns={[
+          { key: 'id_usuario', label: 'ID' },
+          { key: 'nombre', label: 'Nombre' },
+          { key: 'correo', label: 'Correo' },
+          { key: 'rol', label: 'Rol' },
+          { key: 'estado', label: 'Estado' },
+          { key: 'fecha_creacion', label: 'Fecha de Creación' },
+          { key: 'acciones', label: 'Acciones' },
+        ]}
+        data={pagination.paginatedData}
+        rowKey={(usuario) => usuario.id_usuario}
+        tableClassName="w-full"
+        headerClassName="bg-muted"
+        bodyClassName=""
+        emptyMessage="No se encontraron usuarios"
+        renderRow={(usuario) => (
+          <>
                   <td className="px-6 py-4">{usuario.id_usuario}</td>
                   <td className="px-6 py-4">{usuario.nombre}</td>
                   <td className="px-6 py-4 text-muted-foreground">{usuario.correo}</td>
@@ -177,39 +153,16 @@ export default function UsuariosPage() {
                   </td>
                   <td className="px-6 py-4">{usuario.fecha_creacion}</td>
                   <td className="px-6 py-4">
-                    <div className="flex items-center gap-2">
-                      <button
-                        onClick={() => handleViewDetail(usuario)}
-                        className="p-2 hover:bg-muted rounded-lg"
-                        title="Ver detalle"
-                      >
-                        <Eye className="w-4 h-4" />
-                      </button>
-                      <button
-                        onClick={() => handleEdit(usuario)} disabled={!can('usuarios', 'editar')}
-                        className="p-2 hover:bg-muted rounded-lg"
-                        title="Editar"
-                      >
-                        <Edit className="w-4 h-4" />
-                      </button>
-                      <button className="p-2 hover:bg-muted rounded-lg" title="Cambiar contraseña">
-                        <Lock className="w-4 h-4" />
-                      </button>
-                      <button
-                        onClick={() => setDeleteDialog({ isOpen: true, id: usuario.id_usuario, nombre: usuario.nombre })} disabled={!can('usuarios', 'eliminar')}
-                        className="p-2 hover:bg-muted rounded-lg text-destructive"
-                        title="Eliminar"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </button>
-                    </div>
+                    <RowActions className="flex items-center gap-2" actions={[
+                      { key: 'view', icon: Eye, title: 'Ver detalle', onClick: () => handleViewDetail(usuario), className: 'p-2 hover:bg-muted rounded-lg' },
+                      { key: 'edit', icon: Edit, title: 'Editar', onClick: () => handleEdit(usuario), disabled: !can('usuarios', 'editar'), className: 'p-2 hover:bg-muted rounded-lg' },
+                      { key: 'password', icon: Lock, title: 'Cambiar contraseña', className: 'p-2 hover:bg-muted rounded-lg' },
+                      { key: 'delete', icon: Trash2, title: 'Eliminar', onClick: () => setDeleteDialog({ isOpen: true, id: usuario.id_usuario, nombre: usuario.nombre }), disabled: !can('usuarios', 'eliminar'), className: 'p-2 hover:bg-muted rounded-lg text-destructive' },
+                    ]} />
                   </td>
-                </tr>
-              ))
-            )}
-          </tbody>
-        </table>
-      </div>
+          </>
+        )}
+      />
 
       <PaginationControls {...pagination} />
 

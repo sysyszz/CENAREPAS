@@ -1,13 +1,18 @@
 import { Plus, Eye, Edit, Trash2, FileDown, FileSpreadsheet, BookOpen, CheckCircle, FileText, Clock } from 'lucide-react';
 import { useFichasTecnicas } from '../hooks/useFichasTecnicas';
 import { usePagination } from '../../../shared/hooks/usePagination';
-import { PaginationControls } from '@/shared/components/PaginationControls';
-import SearchBar from '@/shared/components/SearchBar';
+import { PaginationControls } from '../../../shared/components/PaginationControls';
+import RecordsFilterToolbar from '../../../shared/components/RecordsFilterToolbar';
 import { FichaTecnicaFormModal } from '../components/FichaTecnicaFormModal';
 import ConfirmDialog from '../../../shared/components/ConfirmDialog';
 import Toast from '../../../shared/components/Toast';
 import { usePermissions } from '../../../shared/contexts/PermissionContext';
 import StatusSwitch from '../../../shared/components/StatusSwitch';
+import RowActions from '../../../shared/components/RowActions';
+import RecordsTable from '../../../shared/components/RecordsTable';
+import DetailModal from '../../../shared/components/DetailModal';
+import StatsGrid from '../../../shared/components/StatsGrid';
+import StatCard from '../../../shared/components/StatCard';
 
 export default function FichasTecnicasPage() {
   const { can } = usePermissions();
@@ -62,53 +67,19 @@ export default function FichasTecnicasPage() {
       </div>
 
       {/* Tarjetas de Consolidado */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
-        <div className="bg-card p-4 rounded-lg border border-border flex items-center gap-3">
-          <div className="p-3 bg-primary/10 rounded-lg text-primary">
-            <BookOpen className="w-5 h-5" />
-          </div>
-          <div>
-            <p className="text-sm text-muted-foreground">Total Recetas</p>
-            <h3 className="text-xl font-bold">{totalFichas}</h3>
-          </div>
-        </div>
-        <div className="bg-card p-4 rounded-lg border border-border flex items-center gap-3">
-          <div className="p-3 bg-success/10 rounded-lg text-success">
-            <CheckCircle className="w-5 h-5" />
-          </div>
-          <div>
-            <p className="text-sm text-muted-foreground">Fichas Vigentes</p>
-            <h3 className="text-xl font-bold">{vigentes}</h3>
-          </div>
-        </div>
-        <div className="bg-card p-4 rounded-lg border border-border flex items-center gap-3">
-          <div className="p-3 bg-accent/10 rounded-lg text-primary">
-            <FileText className="w-5 h-5" />
-          </div>
-          <div>
-            <p className="text-sm text-muted-foreground">Versión Actual</p>
-            <h3 className="text-xl font-bold">v3.0 Max</h3>
-          </div>
-        </div>
-        <div className="bg-card p-4 rounded-lg border border-border flex items-center gap-3">
-          <div className="p-3 bg-warning/10 rounded-lg text-warning">
-            <Clock className="w-5 h-5" />
-          </div>
-          <div>
-            <p className="text-sm text-muted-foreground">Última Revisión</p>
-            <h3 className="text-xl font-bold">Hace 15 días</h3>
-          </div>
-        </div>
-      </div>
+      <StatsGrid className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
+        <StatCard variant="compact" label="Total Recetas" value={totalFichas} icon={BookOpen} iconColor="hsl(var(--primary))" iconBackground="hsl(var(--primary) / 0.1)" />
+        <StatCard variant="compact" label="Fichas Vigentes" value={vigentes} icon={CheckCircle} iconColor="hsl(var(--success))" iconBackground="hsl(var(--success) / 0.1)" />
+        <StatCard variant="compact" label="Versión Actual" value="v3.0 Max" icon={FileText} iconColor="hsl(var(--primary))" iconBackground="hsl(var(--accent) / 0.1)" />
+        <StatCard variant="compact" label="Última Revisión" value="Hace 15 días" icon={Clock} iconColor="hsl(var(--warning))" iconBackground="hsl(var(--warning) / 0.1)" />
+      </StatsGrid>
 
       {/* Filtros y Búsqueda */}
-      <div className="bg-card p-4 rounded-lg border border-border flex flex-col sm:flex-row gap-4">
-        <SearchBar
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-          placeholder="Buscar por código, producto o insumos..."
-          wrapperClassName="flex-1"
-        />
+      <RecordsFilterToolbar
+        searchQuery={searchQuery}
+        onSearchChange={setSearchQuery}
+        searchPlaceholder="Buscar por código, producto o insumos..."
+      >
         <select
           value={estadoFilter}
           onChange={(e) => setEstadoFilter(e.target.value)}
@@ -118,88 +89,43 @@ export default function FichasTecnicasPage() {
           <option value="Vigente">Vigente</option>
           <option value="En Revisión">En Revisión</option>
         </select>
-      </div>
+      </RecordsFilterToolbar>
 
       {/* Tabla Estandarizada */}
-      <div className="records-table-shell bg-card rounded-lg border border-border overflow-hidden">
-        <table className="w-full text-sm text-left">
-          <thead className="bg-muted text-muted-foreground font-semibold">
-            <tr>
-              <th className="px-6 py-3">Código</th>
-              <th className="px-6 py-3">Producto Estándar</th>
-              <th className="px-6 py-3">Versión</th>
-              <th className="px-6 py-3">Rendimiento Esperado</th>
-              <th className="px-6 py-3">Insumos Clave</th>
-              <th className="px-6 py-3">Estado</th>
-              <th className="px-6 py-3">Acciones</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-border">
-            {fichas.length > 0 ? (
-              pagination.paginatedData.map((ficha) => (
-                <tr key={ficha.id_ficha} className="hover:bg-muted/50 transition-colors">
+      <RecordsTable
+        columns={[
+          { key: 'id_ficha', label: 'Código' },
+          { key: 'nombre', label: 'Producto Estándar' },
+          { key: 'tiempo', label: 'Versión' },
+          { key: 'rendimiento', label: 'Rendimiento Esperado' },
+          { key: 'insumos', label: 'Insumos Clave' },
+          { key: 'estado', label: 'Estado' },
+          { key: 'acciones', label: 'Acciones' },
+        ]}
+        data={pagination.paginatedData}
+        rowKey={(ficha) => ficha.id_ficha}
+        emptyMessage="No se encontraron fichas técnicas."
+        renderRow={(ficha) => (
+          <>
                   <td className="px-6 py-4 font-mono font-medium">{ficha.id_ficha}</td><td className="px-6 py-4 font-semibold">{ficha.nombre}</td><td className="px-6 py-4">{ficha.tiempo_estimado_minutos}</td><td className="px-6 py-4">{ficha.rendimiento_lote}</td><td className="px-6 py-4 text-muted-foreground max-w-xs truncate">{ficha.descripcion}</td>
                   <td className="px-6 py-4">
                     <StatusSwitch value={ficha.estado} />
                   </td>
                   <td className="px-6 py-4">
-                    <div className="flex items-center gap-1">
-                      <button
-                        onClick={() => setDetailModal({ isOpen: true, data: ficha })}
-                        className="p-2 hover:bg-muted rounded-lg text-muted-foreground hover:text-foreground"
-                        title="Ver detalle"
-                      >
-                        <Eye className="w-4 h-4" />
-                      </button>
-                      <button
-                        onClick={() => setShowModal(true)} disabled={!can('fichas-tecnicas', 'editar')}
-                        className="p-2 hover:bg-muted rounded-lg text-muted-foreground hover:text-foreground"
-                        title="Editar"
-                      >
-                        <Edit className="w-4 h-4" />
-                      </button>
-                      <button
-                        onClick={() => setDeleteDialog({ isOpen: true, id: ficha.id_ficha, nombre: ficha.nombre })} disabled={!can('fichas-tecnicas', 'eliminar')}
-                        className="p-2 hover:bg-muted rounded-lg text-destructive"
-                        title="Eliminar"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </button>
-                    </div>
+                    <RowActions actions={[
+                      { key: 'view', icon: Eye, title: 'Ver detalle', onClick: () => setDetailModal({ isOpen: true, data: ficha }) },
+                      { key: 'edit', icon: Edit, title: 'Editar', onClick: () => setShowModal(true), disabled: !can('fichas-tecnicas', 'editar') },
+                      { key: 'delete', icon: Trash2, title: 'Eliminar', onClick: () => setDeleteDialog({ isOpen: true, id: ficha.id_ficha, nombre: ficha.nombre }), disabled: !can('fichas-tecnicas', 'eliminar'), className: 'p-2 hover:bg-muted rounded-lg text-destructive' },
+                    ]} />
                   </td>
-                </tr>
-              ))
-            ) : (
-              <tr>
-                <td colSpan={7} className="px-6 py-8 text-center text-muted-foreground">
-                  No se encontraron fichas técnicas.
-                </td>
-              </tr>
-            )}
-          </tbody>
-        </table>
-      </div>
+          </>
+        )}
+      />
 
       {/* Modal de Detalle */}
-      {detailModal.isOpen && detailModal.data && (
-        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-          <div className="bg-card p-6 rounded-lg max-w-md w-full border border-border space-y-4">
-            <h3 className="text-lg font-bold">Detalle de Ficha Técnica</h3>
-            <div className="space-y-2 text-sm">
-              <p><strong>ID:</strong> {detailModal.data.id_ficha}</p><p><strong>Nombre:</strong> {detailModal.data.nombre}</p><p><strong>Descripción:</strong> {detailModal.data.descripcion}</p><p><strong>Instrucciones:</strong> {detailModal.data.instrucciones_preparacion}</p><p><strong>Tiempo:</strong> {detailModal.data.tiempo_estimado_minutos}</p><p><strong>Rendimiento:</strong> {detailModal.data.rendimiento_lote}</p>
-              <p><strong>Estado:</strong> {detailModal.data.estado}</p>
-            </div>
-            <div className="flex justify-end pt-4">
-              <button
-                onClick={() => setDetailModal({ isOpen: false, data: null })}
-                className="px-4 py-2 bg-primary text-primary-foreground rounded-lg text-sm font-medium"
-              >
-                Cerrar
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      <DetailModal open={detailModal.isOpen && Boolean(detailModal.data)} title="Detalle de Ficha Técnica" onClose={() => setDetailModal({ isOpen: false, data: null })} className="border border-border space-y-4" contentClassName="space-y-2 text-sm">
+        {detailModal.data && <><p><strong>ID:</strong> {detailModal.data.id_ficha}</p><p><strong>Nombre:</strong> {detailModal.data.nombre}</p><p><strong>Descripción:</strong> {detailModal.data.descripcion}</p><p><strong>Instrucciones:</strong> {detailModal.data.instrucciones_preparacion}</p><p><strong>Tiempo:</strong> {detailModal.data.tiempo_estimado_minutos}</p><p><strong>Rendimiento:</strong> {detailModal.data.rendimiento_lote}</p><p><strong>Estado:</strong> {detailModal.data.estado}</p></>}
+      </DetailModal>
 
       <PaginationControls {...pagination} />
 

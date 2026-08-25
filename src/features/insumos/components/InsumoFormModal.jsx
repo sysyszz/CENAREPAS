@@ -1,33 +1,28 @@
-import { X } from 'lucide-react';
+import FormModal from '../../../shared/components/FormModal';
 
 export function InsumoFormModal({ open, onClose }) {
-  if (!open) return null;
-
   return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-      <div className="form-modal-panel bg-card p-6 rounded-lg">
-        <div className="flex items-start justify-between gap-4"><h2>Nuevo Insumo</h2><button onClick={onClose} className="p-2 -mr-2 -mt-2 rounded-lg hover:bg-muted text-muted-foreground" aria-label="Cerrar formulario"><X className="w-5 h-5" /></button></div>
-        <div className="modal-form-grid">
-          <div className="modal-field-wide">
-            <label className="block mb-2">Nombre del Insumo</label>
-            <input type="text" maxLength={100} required className="w-full px-4 py-2 border border-input bg-input-background rounded-lg focus:outline-none focus:ring-2 focus:ring-ring" />
-          </div>
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="block mb-2">Stock Inicial</label>
-              <input type="number" min="0" className="w-full px-4 py-2 border border-input bg-input-background rounded-lg focus:outline-none focus:ring-2 focus:ring-ring" />
-            </div>
-            <div>
-              <label className="block mb-2">Unidad</label>
-              <select className="w-full px-4 py-2 border border-input bg-input-background rounded-lg focus:outline-none focus:ring-2 focus:ring-ring">
-                <option>kg</option><option>g</option><option>l</option><option>ml</option><option>unidad</option>
-              </select>
-            </div>
-          </div>
-          <div>
-            <label className="block mb-2">Fecha de Vencimiento</label>
-            <input type="date" className="w-full px-4 py-2 border border-input bg-input-background rounded-lg focus:outline-none focus:ring-2 focus:ring-ring" />
-          </div>
+    <FormModal open={open} title="Nuevo Insumo" onClose={onClose} onSubmit={onClose} submitLabel="Guardar" cancelLabel="Cancelar">
+      <div className="modal-field-wide">
+        <label className="block mb-2">Nombre del Insumo</label>
+        <input type="text" maxLength={100} required className="w-full px-4 py-2 border border-input bg-input-background rounded-lg focus:outline-none focus:ring-2 focus:ring-ring" />
+      </div>
+      <div className="grid grid-cols-2 gap-4">
+        <div>
+          <label className="block mb-2">Stock Inicial</label>
+          <input type="number" min="0" className="w-full px-4 py-2 border border-input bg-input-background rounded-lg focus:outline-none focus:ring-2 focus:ring-ring" />
+        </div>
+        <div>
+          <label className="block mb-2">Unidad</label>
+          <select className="w-full px-4 py-2 border border-input bg-input-background rounded-lg focus:outline-none focus:ring-2 focus:ring-ring">
+            <option>kg</option><option>g</option><option>l</option><option>ml</option><option>unidad</option>
+          </select>
+        </div>
+      </div>
+      <div>
+        <label className="block mb-2">Fecha de Vencimiento</label>
+        <input type="date" className="w-full px-4 py-2 border border-input bg-input-background rounded-lg focus:outline-none focus:ring-2 focus:ring-ring" />
+      </div>
           <div>
             <label className="block mb-2">Stock Mínimo (Alerta)</label>
             <input type="number" min="0" className="w-full px-4 py-2 border border-input bg-input-background rounded-lg focus:outline-none focus:ring-2 focus:ring-ring" />
@@ -42,8 +37,6 @@ export function InsumoFormModal({ open, onClose }) {
               Guardar
             </button>
           </div>
-        </div>
-      </div>
-    </div>
+    </FormModal>
   );
 }
