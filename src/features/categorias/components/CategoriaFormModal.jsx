@@ -36,3 +36,4 @@ export function CategoriaFormModal({ open, onClose }) {
     </div>
   );
 }
+//trabajo 
