@@ -1,5 +1,5 @@
 // proveedoresService.js - Servicio para la gestión de proveedores en Masarepas
-export const mockProveedores = [
+export let mockProveedores = [
   {
     id_proveedor: 1,
     nombre: "Agrícola del Valle S.A.",
@@ -46,7 +46,25 @@ export const getProveedores = async () => {
   return [...mockProveedores];
 };
 
-export const createProveedor = async (proveedor) => ({ id_proveedor: Date.now(), ...proveedor });
-export const updateProveedor = async (id_proveedor, proveedor) => ({ id_proveedor, ...proveedor });
-export const deleteProveedor = async (id_proveedor) => true;
+export const createProveedor = async (proveedor) => {
+  const newObj = {
+    id_proveedor: Date.now(),
+    fecha_creacion: new Date().toISOString(),
+    estado: 'activo',
+    ...proveedor,
+  };
+  mockProveedores = [newObj, ...mockProveedores];
+  return newObj;
+};
+
+export const updateProveedor = async (id_proveedor, proveedor) => {
+  mockProveedores = mockProveedores.map((p) => (p.id_proveedor === id_proveedor ? { ...p, ...proveedor } : p));
+  return { id_proveedor, ...proveedor };
+};
+
+export const deleteProveedor = async (id_proveedor) => {
+  mockProveedores = mockProveedores.filter((p) => p.id_proveedor !== id_proveedor);
+  return true;
+};
+
 

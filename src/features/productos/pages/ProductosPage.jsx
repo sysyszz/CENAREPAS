@@ -1,10 +1,14 @@
-import { Plus, Search, Eye, Edit, Trash2, FileDown, FileSpreadsheet, Box, CheckCircle, AlertTriangle, DollarSign } from 'lucide-react';
+import { useState, useMemo } from 'react';
+import { Box, CheckCircle, AlertTriangle, DollarSign } from 'lucide-react';
 import { useProductos } from '../hooks/useProductos';
-import { usePagination } from '../../../shared/hooks/usePagination';
-import { PaginationControls } from '../../../shared/components/PaginationControls';
+import { DataTable } from '../../../shared/components/DataTable';
+import { RowActions } from '../../../shared/components/RowActions';
+import { MetricCard } from '../../../shared/components/MetricCard';
 import { ProductoFormModal } from '../components/ProductoFormModal';
 import ConfirmDialog from '../../../shared/components/ConfirmDialog';
 import Toast from '../../../shared/components/Toast';
+import DetailModal from '../../../shared/components/DetailModal';
+import PageHeader from '../../../shared/components/PageHeader';
 import { usePermissions } from '../../../shared/contexts/PermissionContext';
 import StatusSwitch from '../../../shared/components/StatusSwitch';
 
@@ -24,217 +28,171 @@ export default function ProductosPage() {
     deleteDialog,
     setDeleteDialog,
     isDeleting,
+    isSaving,
     toast,
     setToast,
     productos,
     filteredProductos,
+    handleSave,
     handleDelete,
   } = useProductos();
-  const pagination = usePagination(filteredProductos);
+
+  const [selectedProducto, setSelectedProducto] = useState(null);
 
   const totalProductos = productos.length;
-  const disponibles = productos.filter((p) => p.estado === 'Disponible').length;
-  const bajoStock = productos.filter((p) => p.estado === 'Bajo Stock').length;
+  const disponibles = productos.filter((p) => String(p.estado).toLowerCase() === 'disponible' || String(p.estado).toLowerCase() === 'activo').length;
+  const bajoStock = productos.filter((p) => String(p.estado).toLowerCase() === 'bajo stock' || p.stock_actual <= p.stock_minimo).length;
   const valorInventario = productos.reduce((acc, p) => acc + (p.precio_venta * p.stock_actual), 0);
+
+  const columns = useMemo(
+    () => [
+      {
+        key: 'id_producto',
+        label: 'ID',
+        render: (value) => <span className="font-mono font-medium">{value}</span>,
+      },
+      {
+        key: 'nombre',
+        label: 'Producto',
+        render: (value) => <span className="font-semibold">{value}</span>,
+      },
+      {
+        key: 'id_categoria',
+        label: 'Categoría ID',
+        render: (value) => <span className="text-muted-foreground">{value}</span>,
+      },
+      {
+        key: 'descripcion',
+        label: 'Descripción',
+        render: (value) => <span className="text-muted-foreground">{value}</span>,
+      },
+      {
+        key: 'precio_venta',
+        label: 'Precio',
+        render: (value) => (
+          <span className="font-medium">
+            ${Number(value || 0).toLocaleString('es-CO')}
+          </span>
+        ),
+      },
+      {
+        key: 'stock_actual',
+        label: 'Stock',
+        render: (value) => <span className="font-semibold">{value}</span>,
+      },
+      {
+        key: 'estado',
+        label: 'Estado',
+        render: (value) => <StatusSwitch value={value} />,
+      },
+      {
+        key: 'acciones',
+        label: 'Acciones',
+        render: (_, producto) => (
+          <RowActions
+            onView={() => setDetailModal({ isOpen: true, data: producto })}
+            onEdit={() => {
+              setSelectedProducto(producto);
+              setShowModal(true);
+            }}
+            editDisabled={!can('productos', 'editar')}
+            onDelete={() =>
+              setDeleteDialog({
+                isOpen: true,
+                id: producto.id_producto,
+                nombre: producto.nombre,
+              })
+            }
+            deleteDisabled={!can('productos', 'eliminar')}
+          />
+        ),
+      },
+    ],
+    [can, setDetailModal, setShowModal, setDeleteDialog]
+  );
 
   return (
     <div className="space-y-6">
-      {/* Header con exportación */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-bold">Productos Terminados</h1>
-          <p className="text-muted-foreground">Catálogo y stock de arepas y derivados de Masarepas</p>
-        </div>
-        <div className="flex items-center gap-2">
-          <button className="flex items-center gap-2 px-4 py-2 border border-border rounded-lg hover:bg-muted text-sm font-medium transition-colors">
-            <FileDown className="w-4 h-4" />
-            Exportar PDF
-          </button>
-          <button className="flex items-center gap-2 px-4 py-2 border border-border rounded-lg hover:bg-muted text-sm font-medium transition-colors">
-            <FileSpreadsheet className="w-4 h-4" />
-            Exportar Excel
-          </button>
-          <button
-            onClick={() => setShowModal(true)} disabled={!can('productos', 'crear')}
-            className="flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:opacity-90 text-sm font-medium transition-colors"
-          >
-            <Plus className="w-4 h-4" />
-            Nuevo Producto
-          </button>
-        </div>
-      </div>
+      <PageHeader
+        title="Productos Terminados"
+        subtitle="Catálogo y stock de arepas y derivados de Masarepas"
+        addLabel="Nuevo Producto"
+        addDisabled={!can('productos', 'crear')}
+        onAdd={() => {
+          setSelectedProducto(null);
+          setShowModal(true);
+        }}
+      />
 
       {/* Tarjetas de Consolidado */}
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
-        <div className="bg-card p-4 rounded-lg border border-border flex items-center gap-3">
-          <div className="p-3 bg-primary/10 rounded-lg text-primary">
-            <Box className="w-5 h-5" />
-          </div>
-          <div>
-            <p className="text-sm text-muted-foreground">Total Productos</p>
-            <h3 className="text-xl font-bold">{totalProductos}</h3>
-          </div>
-        </div>
-        <div className="bg-card p-4 rounded-lg border border-border flex items-center gap-3">
-          <div className="p-3 bg-success/10 rounded-lg text-success">
-            <CheckCircle className="w-5 h-5" />
-          </div>
-          <div>
-            <p className="text-sm text-muted-foreground">Disponibles</p>
-            <h3 className="text-xl font-bold">{disponibles}</h3>
-          </div>
-        </div>
-        <div className="bg-card p-4 rounded-lg border border-border flex items-center gap-3">
-          <div className="p-3 bg-warning/10 rounded-lg text-warning">
-            <AlertTriangle className="w-5 h-5" />
-          </div>
-          <div>
-            <p className="text-sm text-muted-foreground">Bajo Stock</p>
-            <h3 className="text-xl font-bold">{bajoStock}</h3>
-          </div>
-        </div>
-        <div className="bg-card p-4 rounded-lg border border-border flex items-center gap-3">
-          <div className="p-3 bg-accent/10 rounded-lg text-primary">
-            <DollarSign className="w-5 h-5" />
-          </div>
-          <div>
-            <p className="text-sm text-muted-foreground">Valor Inventario</p>
-            <h3 className="text-xl font-bold">${valorInventario.toLocaleString('es-CO')}</h3>
-          </div>
-        </div>
+        <MetricCard title="Total Productos" value={totalProductos} icon={Box} variant="primary" />
+        <MetricCard title="Disponibles" value={disponibles} icon={CheckCircle} variant="success" />
+        <MetricCard title="Bajo Stock" value={bajoStock} icon={AlertTriangle} variant="warning" />
+        <MetricCard title="Valor Inventario" value={`$${valorInventario.toLocaleString('es-CO')}`} icon={DollarSign} variant="accent" />
       </div>
 
-      {/* Filtros y Búsqueda */}
-      <div className="bg-card p-4 rounded-lg border border-border flex flex-col sm:flex-row gap-4">
-        <div className="flex-1 relative">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-          <input
-            type="search"
-            placeholder="Buscar por código o producto..."
-            value={searchTerm}
-            onChange={(e) => setSearchQuery ? setSearchQuery(e.target.value) : setSearchTerm(e.target.value)}
-            className="w-full pl-10 pr-4 py-2 border border-input bg-input-background rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-ring"
-          />
-        </div>
-        <select
-          value={filterCategoria}
-          onChange={(e) => setFilterCategoria(e.target.value)}
-          className="px-4 py-2 border border-input bg-input-background rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-ring"
-        >
-          <option value="Todas las categorías">Todas las categorías</option>
-          <option value="Arepas Dulces">Arepas Dulces</option>
-          <option value="Arepas Blancas">Arepas Blancas</option>
-          <option value="Arepas Rellenas">Arepas Rellenas</option>
-          <option value="Arepas Especiales">Arepas Especiales</option>
-          <option value="Derivados de Maíz">Derivados de Maíz</option>
-        </select>
-        <select
-          value={filterEstado}
-          onChange={(e) => setFilterEstado(e.target.value)}
-          className="px-4 py-2 border border-input bg-input-background rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-ring"
-        >
-          <option value="Todos los estados">Todos los estados</option>
-          <option value="Disponible">Disponible</option>
-          <option value="Bajo Stock">Bajo Stock</option>
-        </select>
-      </div>
 
-      {/* Tabla Estandarizada */}
-      <div className="records-table-shell bg-card rounded-lg border border-border overflow-hidden">
-        <table className="w-full text-sm text-left">
-          <thead className="bg-muted text-muted-foreground font-semibold">
-            <tr>
-              <th className="px-6 py-3">ID</th>
-              <th className="px-6 py-3">Producto</th>
-              <th className="px-6 py-3">Categoría</th>
-              <th className="px-6 py-3">Descripción</th>
-              <th className="px-6 py-3">Precio</th>
-              <th className="px-6 py-3">Stock</th>
-              <th className="px-6 py-3">Estado</th>
-              <th className="px-6 py-3">Acciones</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-border">
-            {filteredProductos.length > 0 ? (
-              pagination.paginatedData.map((producto) => (
-                <tr key={producto.id_producto} className="hover:bg-muted/50 transition-colors">
-                  <td className="px-6 py-4 font-mono font-medium">{producto.id_producto}</td>
-                  <td className="px-6 py-4 font-semibold">{producto.nombre}</td>
-                  <td className="px-6 py-4 text-muted-foreground">{producto.id_categoria}</td>
-                  <td className="px-6 py-4 text-muted-foreground">{producto.descripcion}</td>
-                  <td className="px-6 py-4 font-medium">{producto.precio_venta}</td>
-                  <td className="px-6 py-4 font-semibold">{producto.stock_actual}</td>
-                  <td className="px-6 py-4">
-                    <StatusSwitch value={producto.estado} />
-                  </td>
-                  <td className="px-6 py-4">
-                    <div className="flex items-center gap-1">
-                      <button
-                        onClick={() => setDetailModal({ isOpen: true, data: producto })}
-                        className="p-2 hover:bg-muted rounded-lg text-muted-foreground hover:text-foreground"
-                        title="Ver detalle"
-                      >
-                        <Eye className="w-4 h-4" />
-                      </button>
-                      <button
-                        onClick={() => setShowModal(true)} disabled={!can('productos', 'editar')}
-                        className="p-2 hover:bg-muted rounded-lg text-muted-foreground hover:text-foreground"
-                        title="Editar"
-                      >
-                        <Edit className="w-4 h-4" />
-                      </button>
-                      <button
-                        onClick={() => setDeleteDialog({ isOpen: true, id: producto.id_producto, nombre: producto.nombre })} disabled={!can('productos', 'eliminar')}
-                        className="p-2 hover:bg-muted rounded-lg text-destructive"
-                        title="Eliminar"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </button>
-                    </div>
-                  </td>
-                </tr>
-              ))
-            ) : (
-              <tr>
-                <td colSpan={8} className="px-6 py-8 text-center text-muted-foreground">
-                  No se encontraron productos.
-                </td>
-              </tr>
-            )}
-          </tbody>
-        </table>
-      </div>
+      {/* Tabla con DataTable */}
+      <DataTable
+        columns={columns}
+        data={filteredProductos}
+        searchPlaceholder="Buscar por código o producto..."
+        searchValue={searchTerm}
+        onSearchChange={setSearchTerm}
+        filters={
+          <>
+            <select
+              value={filterCategoria}
+              onChange={(e) => setFilterCategoria(e.target.value)}
+              className="px-4 py-2 border border-input bg-input-background rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+            >
+              <option value="Todas las categorías">Todas las categorías</option>
+              <option value="1">Arepas Dulces</option>
+              <option value="2">Arepas Blancas</option>
+              <option value="3">Arepas Rellenas</option>
+              <option value="4">Arepas Especiales</option>
+              <option value="5">Derivados de Maíz</option>
+            </select>
+            <select
+              value={filterEstado}
+              onChange={(e) => setFilterEstado(e.target.value)}
+              className="px-4 py-2 border border-input bg-input-background rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+            >
+              <option value="Todos los estados">Todos los estados</option>
+              <option value="activo">Activo / Disponible</option>
+              <option value="inactivo">Inactivo / Bajo Stock</option>
+            </select>
+          </>
+        }
+      />
 
-      <PaginationControls {...pagination} />
+      <DetailModal
+        isOpen={detailModal.isOpen}
+        onClose={() => setDetailModal({ isOpen: false, data: null })}
+        title="Detalle del Producto"
+        fields={detailModal.data ? [
+          { label: 'ID', value: detailModal.data.id_producto },
+          { label: 'Nombre', value: detailModal.data.nombre },
+          { label: 'Categoría ID', value: detailModal.data.id_categoria },
+          { label: 'Descripción', value: detailModal.data.descripcion || 'N/A' },
+          { label: 'Precio de Venta', value: `$${Number(detailModal.data.precio_venta || 0).toLocaleString('es-CO')}` },
+          { label: 'Stock Actual', value: detailModal.data.stock_actual },
+          { label: 'Stock Mínimo', value: detailModal.data.stock_minimo },
+          { label: 'Estado', value: detailModal.data.estado },
+        ] : []}
+      />
 
-      {/* Modal de Detalle */}
-      {detailModal.isOpen && detailModal.data && (
-        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-          <div className="bg-card p-6 rounded-lg max-w-md w-full border border-border space-y-4">
-            <h3 className="text-lg font-bold">Detalle del Producto</h3>
-            <div className="space-y-2 text-sm">
-              <p><strong>ID:</strong> {detailModal.data.id_producto}</p>
-              <p><strong>Nombre:</strong> {detailModal.data.nombre}</p>
-              <p><strong>Categoría ID:</strong> {detailModal.data.id_categoria}</p>
-              <p><strong>Descripción:</strong> {detailModal.data.descripcion}</p>
-              <p><strong>Precio de Venta:</strong> {detailModal.data.precio_venta}</p>
-              <p><strong>Stock Actual:</strong> {detailModal.data.stock_actual}</p>
-              <p><strong>Stock Mínimo:</strong> {detailModal.data.stock_minimo}</p>
-              <p><strong>Estado:</strong> {detailModal.data.estado}</p>
-            </div>
-            <div className="flex justify-end pt-4">
-              <button
-                onClick={() => setDetailModal({ isOpen: false, data: null })}
-                className="px-4 py-2 bg-primary text-primary-foreground rounded-lg text-sm font-medium"
-              >
-                Cerrar
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      <ProductoFormModal open={showModal} onClose={() => setShowModal(false)} />
+      <ProductoFormModal
+        open={showModal}
+        producto={selectedProducto}
+        onSave={handleSave}
+        isLoading={isSaving}
+        onClose={() => {
+          setShowModal(false);
+          setSelectedProducto(null);
+        }}
+      />
 
       <ConfirmDialog
         isOpen={deleteDialog.isOpen}
@@ -255,4 +213,5 @@ export default function ProductosPage() {
     </div>
   );
 }
+
 

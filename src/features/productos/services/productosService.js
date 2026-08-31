@@ -1,5 +1,5 @@
 // productosService.js - Servicio para la gestión de productos en Masarepas
-export const mockProductos = [
+export let mockProductos = [
   {
     id_producto: 1,
     nombre: "Arepa de Chócolo con Queso",
@@ -76,7 +76,24 @@ export const getProductos = async () => {
   return [...mockProductos];
 };
 
-export const createProducto = async (producto) => ({ id_producto: Date.now(), ...producto });
-export const updateProducto = async (id_producto, producto) => ({ id_producto, ...producto });
-export const deleteProducto = async (id_producto) => true;
+export const createProducto = async (producto) => {
+  const newObj = {
+    id_producto: Date.now(),
+    estado: 'activo',
+    ...producto,
+  };
+  mockProductos = [newObj, ...mockProductos];
+  return newObj;
+};
+
+export const updateProducto = async (id_producto, producto) => {
+  mockProductos = mockProductos.map((p) => (p.id_producto === id_producto ? { ...p, ...producto } : p));
+  return { id_producto, ...producto };
+};
+
+export const deleteProducto = async (id_producto) => {
+  mockProductos = mockProductos.filter((p) => p.id_producto !== id_producto);
+  return true;
+};
+
 

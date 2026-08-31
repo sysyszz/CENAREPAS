@@ -1,16 +1,20 @@
-import { Plus, Search, Eye, Edit, Trash2, FileDown, FileSpreadsheet, Shield, ShieldCheck, KeyRound, ListChecks } from 'lucide-react';
+import { useState, useMemo } from 'react';
+import { Shield, ShieldCheck, KeyRound, ListChecks } from 'lucide-react';
 import { useRoles } from '../hooks/useRoles';
-import { usePagination } from '../../../shared/hooks/usePagination';
-import { PaginationControls } from '../../../shared/components/PaginationControls';
+import { DataTable } from '../../../shared/components/DataTable';
+import { RowActions } from '../../../shared/components/RowActions';
+import { MetricCard } from '../../../shared/components/MetricCard';
 import { RoleFormModal } from '../components/RoleFormModal';
 import ConfirmDialog from '../../../shared/components/ConfirmDialog';
 import Toast from '../../../shared/components/Toast';
-import { PermissionGate, mockPermisos } from '../../../shared/contexts/PermissionContext';
+import DetailModal from '../../../shared/components/DetailModal';
+import PageHeader from '../../../shared/components/PageHeader';
+import { usePermissions, mockPermisos } from '../../../shared/contexts/PermissionContext';
 import StatusSwitch from '../../../shared/components/StatusSwitch';
 
 export default function RolesPage() {
+  const { can } = usePermissions();
   const {
-    roles,
     rawRoles,
     searchQuery,
     setSearchQuery,
@@ -23,186 +27,156 @@ export default function RolesPage() {
     deleteDialog,
     setDeleteDialog,
     isDeleting,
+    isSaving,
     toast,
     setToast,
+    handleSave,
     handleDelete,
   } = useRoles();
-  const pagination = usePagination(roles);
+
+  const [selectedRole, setSelectedRole] = useState(null);
 
   const totalRoles = rawRoles.length;
-  const rolesActivos = rawRoles.filter((r) => r.estado === 'activo').length;
+  const rolesActivos = rawRoles.filter((r) => String(r.estado).toLowerCase() === 'activo').length;
   const permisosDisponibles = mockPermisos.length;
-  const rolesConfigurados = rawRoles.filter((role) => role.estado === 'activo').length;
+  const rolesConfigurados = rawRoles.filter((role) => String(role.estado).toLowerCase() === 'activo').length;
+
+  const filteredData = useMemo(() => {
+    return rawRoles.filter((r) => {
+      const q = searchQuery.toLowerCase().trim();
+      const matchesSearch =
+        !q ||
+        r.nombre.toLowerCase().includes(q) ||
+        (r.descripcion || '').toLowerCase().includes(q);
+
+      const isTodosEstado = estadoFilter === 'Todos' || estadoFilter === 'Todos los estados';
+      const matchesEstado =
+        isTodosEstado || String(r.estado).toLowerCase() === estadoFilter.toLowerCase();
+
+      return matchesSearch && matchesEstado;
+    });
+  }, [rawRoles, searchQuery, estadoFilter]);
+
+  const columns = useMemo(
+    () => [
+      {
+        key: 'id_rol',
+        label: 'ID',
+        render: (value) => <span className="font-mono font-medium">{value}</span>,
+      },
+      {
+        key: 'nombre',
+        label: 'Nombre del Rol',
+        render: (value) => <span className="font-semibold">{value}</span>,
+      },
+      {
+        key: 'descripcion',
+        label: 'Descripción',
+        render: (value) => (
+          <span className="text-muted-foreground max-w-xs truncate block" title={value}>
+            {value}
+          </span>
+        ),
+      },
+      {
+        key: 'estado',
+        label: 'Estado',
+        render: (value) => <StatusSwitch value={value} />,
+      },
+      {
+        key: 'fecha_creacion',
+        label: 'Fecha de Creación',
+        render: (value) => <span className="text-muted-foreground">{value}</span>,
+      },
+      {
+        key: 'acciones',
+        label: 'Acciones',
+        render: (_, rol) => (
+          <RowActions
+            onView={() => setDetailModal({ isOpen: true, data: rol })}
+            onEdit={() => {
+              setSelectedRole(rol);
+              setShowModal(true);
+            }}
+            editDisabled={!can('roles', 'editar')}
+            onDelete={() =>
+              setDeleteDialog({
+                isOpen: true,
+                id: rol.id_rol,
+                nombre: rol.nombre,
+              })
+            }
+            deleteDisabled={!can('roles', 'eliminar')}
+          />
+        ),
+      },
+    ],
+    [can, setDetailModal, setShowModal, setDeleteDialog]
+  );
 
   return (
     <div className="space-y-6">
-      {/* Header con exportación y botón de nuevo */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-bold">Roles y Permisos</h1>
-          <p className="text-muted-foreground">Gestión de roles y niveles de acceso en Masarepas</p>
-        </div>
-        <div className="flex items-center gap-2">
-          <button className="flex items-center gap-2 px-4 py-2 border border-border rounded-lg hover:bg-muted text-sm font-medium transition-colors">
-            <FileDown className="w-4 h-4" />
-            Exportar PDF
-          </button>
-          <button className="flex items-center gap-2 px-4 py-2 border border-border rounded-lg hover:bg-muted text-sm font-medium transition-colors">
-            <FileSpreadsheet className="w-4 h-4" />
-            Exportar Excel
-          </button>
-          <PermissionGate modulo="roles" accion="crear"><button
-            onClick={() => setShowModal(true)}
-            className="flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:opacity-90 text-sm font-medium transition-colors"
-          >
-            <Plus className="w-4 h-4" />
-            Nuevo Rol
-          </button></PermissionGate>
-        </div>
-      </div>
+      <PageHeader
+        title="Roles y Permisos"
+        subtitle="Gestión de roles y niveles de acceso en Masarepas"
+        addLabel="Nuevo Rol"
+        addDisabled={!can('roles', 'crear')}
+        onAdd={() => {
+          setSelectedRole(null);
+          setShowModal(true);
+        }}
+      />
 
       {/* Tarjetas de consolidado / métricas */}
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
-        <div className="bg-card p-4 rounded-lg border border-border flex items-center gap-3">
-          <div className="p-3 bg-primary/10 rounded-lg text-primary">
-            <Shield className="w-5 h-5" />
-          </div>
-          <div>
-            <p className="text-sm text-muted-foreground">Total Roles</p>
-            <h3 className="text-xl font-bold">{totalRoles}</h3>
-          </div>
-        </div>
-        <div className="bg-card p-4 rounded-lg border border-border flex items-center gap-3">
-          <div className="p-3 bg-accent/10 rounded-lg text-primary"><KeyRound className="w-5 h-5" /></div>
-          <div><p className="text-sm text-muted-foreground">Permisos Disponibles</p><h3 className="text-xl font-bold">{permisosDisponibles}</h3></div>
-        </div>
-        <div className="bg-card p-4 rounded-lg border border-border flex items-center gap-3">
-          <div className="p-3 bg-warning/10 rounded-lg text-warning"><ListChecks className="w-5 h-5" /></div>
-          <div><p className="text-sm text-muted-foreground">Roles Configurados</p><h3 className="text-xl font-bold">{rolesConfigurados}</h3></div>
-        </div>
-        <div className="bg-card p-4 rounded-lg border border-border flex items-center gap-3">
-          <div className="p-3 bg-success/10 rounded-lg text-success">
-            <ShieldCheck className="w-5 h-5" />
-          </div>
-          <div>
-            <p className="text-sm text-muted-foreground">Roles Activos</p>
-            <h3 className="text-xl font-bold">{rolesActivos}</h3>
-          </div>
-        </div>
+        <MetricCard title="Total Roles" value={totalRoles} icon={Shield} variant="primary" />
+        <MetricCard title="Permisos Disponibles" value={permisosDisponibles} icon={KeyRound} variant="accent" />
+        <MetricCard title="Roles Configurados" value={rolesConfigurados} icon={ListChecks} variant="warning" />
+        <MetricCard title="Roles Activos" value={rolesActivos} icon={ShieldCheck} variant="success" />
       </div>
 
-      {/* Barra de búsqueda y filtros */}
-      <div className="bg-card p-4 rounded-lg border border-border flex flex-col sm:flex-row gap-4">
-        <div className="flex-1 relative">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-          <input
-            type="search"
-            placeholder="Buscar por nombre o descripción..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full pl-10 pr-4 py-2 border border-input bg-input-background rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-ring"
-          />
-        </div>
-        <select
-          value={estadoFilter}
-          onChange={(e) => setEstadoFilter(e.target.value)}
-          className="px-4 py-2 border border-input bg-input-background rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-ring"
-        >
-          <option value="Todos">Todos los estados</option>
-          <option value="activo">Activo</option>
-          <option value="inactivo">Inactivo</option>
-        </select>
-      </div>
 
-      {/* Tabla con acciones estandarizadas */}
-      <div className="records-table-shell bg-card rounded-lg border border-border overflow-hidden">
-        <table className="w-full text-sm text-left">
-          <thead className="bg-muted text-muted-foreground font-semibold">
-            <tr>
-              <th className="px-6 py-3">ID</th>
-              <th className="px-6 py-3">Nombre del Rol</th>
-              <th className="px-6 py-3">Descripción</th>
-              <th className="px-6 py-3">Estado</th>
-              <th className="px-6 py-3">Fecha de Creación</th>
-              <th className="px-6 py-3">Acciones</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-border">
-            {roles.length > 0 ? (
-              pagination.paginatedData.map((rol) => (
-                <tr key={rol.id_rol} className="hover:bg-muted/50 transition-colors">
-                  <td className="px-6 py-4 font-mono font-medium">{rol.id_rol}</td>
-                  <td className="px-6 py-4 font-semibold">{rol.nombre}</td>
-                  <td className="px-6 py-4 text-muted-foreground max-w-xs truncate">{rol.descripcion}</td>
-                  <td className="px-6 py-4">
-                    <StatusSwitch value={rol.estado} />
-                  </td>
-                  <td className="px-6 py-4">{rol.fecha_creacion}</td>
-                  <td className="px-6 py-4">
-                    <div className="flex items-center gap-1">
-                      <PermissionGate modulo="roles" accion="ver"><button
-                        onClick={() => setDetailModal({ isOpen: true, data: rol })}
-                        className="p-2 hover:bg-muted rounded-lg text-muted-foreground hover:text-foreground"
-                        title="Ver detalle"
-                      >
-                        <Eye className="w-4 h-4" />
-                      </button></PermissionGate>
-                      <PermissionGate modulo="roles" accion="editar"><button
-                        onClick={() => setShowModal(true)}
-                        className="p-2 hover:bg-muted rounded-lg text-muted-foreground hover:text-foreground"
-                        title="Editar rol"
-                      >
-                        <Edit className="w-4 h-4" />
-                      </button></PermissionGate>
-                      <PermissionGate modulo="roles" accion="eliminar"><button
-                        onClick={() => setDeleteDialog({ isOpen: true, id: rol.id_rol, nombre: rol.nombre })}
-                        className="p-2 hover:bg-muted rounded-lg text-destructive"
-                        title="Eliminar rol"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </button></PermissionGate>
-                    </div>
-                  </td>
-                </tr>
-              ))
-            ) : (
-              <tr>
-                <td colSpan={6} className="px-6 py-8 text-center text-muted-foreground">
-                  No se encontraron roles que coincidan con la búsqueda.
-                </td>
-              </tr>
-            )}
-          </tbody>
-        </table>
-      </div>
+      {/* Tabla con DataTable */}
+      <DataTable
+        columns={columns}
+        data={filteredData}
+        searchPlaceholder="Buscar por nombre o descripción..."
+        filters={
+          <select
+            value={estadoFilter}
+            onChange={(e) => setEstadoFilter(e.target.value)}
+            className="px-4 py-2 border border-input bg-input-background rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+          >
+            <option value="Todos">Todos los estados</option>
+            <option value="activo">Activo</option>
+            <option value="inactivo">Inactivo</option>
+          </select>
+        }
+      />
 
-      <PaginationControls {...pagination} />
+      <DetailModal
+        isOpen={detailModal.isOpen}
+        onClose={() => setDetailModal({ isOpen: false, data: null })}
+        title="Detalle del Rol"
+        fields={detailModal.data ? [
+          { label: 'ID', value: detailModal.data.id_rol },
+          { label: 'Nombre', value: detailModal.data.nombre },
+          { label: 'Descripción', value: detailModal.data.descripcion || 'N/A' },
+          { label: 'Estado', value: detailModal.data.estado },
+          { label: 'Fecha de Creación', value: detailModal.data.fecha_creacion },
+        ] : []}
+      />
 
-      {/* Modal de Detalle */}
-      {detailModal.isOpen && detailModal.data && (
-        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-          <div className="bg-card p-6 rounded-lg max-w-md w-full border border-border space-y-4">
-            <h3 className="text-lg font-bold">Detalle del Rol</h3>
-            <div className="space-y-2 text-sm">
-              <p><strong>ID:</strong> {detailModal.data.id_rol}</p>
-              <p><strong>Nombre:</strong> {detailModal.data.nombre}</p>
-              <p><strong>Descripción:</strong> {detailModal.data.descripcion}</p>
-              <p><strong>Estado:</strong> {detailModal.data.estado}</p>
-              <p><strong>Fecha de Creación:</strong> {detailModal.data.fecha_creacion}</p>
-            </div>
-            <div className="flex justify-end pt-4">
-              <button
-                onClick={() => setDetailModal({ isOpen: false, data: null })}
-                className="px-4 py-2 bg-primary text-primary-foreground rounded-lg text-sm font-medium"
-              >
-                Cerrar
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      <RoleFormModal open={showModal} onClose={() => setShowModal(false)} />
+      <RoleFormModal
+        open={showModal}
+        role={selectedRole}
+        onSave={handleSave}
+        isLoading={isSaving}
+        onClose={() => {
+          setShowModal(false);
+          setSelectedRole(null);
+        }}
+      />
 
       <ConfirmDialog
         isOpen={deleteDialog.isOpen}
@@ -223,4 +197,5 @@ export default function RolesPage() {
     </div>
   );
 }
+
 

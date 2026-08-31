@@ -1,17 +1,20 @@
-import { Plus, Search, Eye, Edit, Trash2, FileDown, FileSpreadsheet, ClipboardList, CheckCircle, Truck, DollarSign } from 'lucide-react';
+import { useState, useMemo } from 'react';
+import { ClipboardList, CheckCircle, Truck, DollarSign } from 'lucide-react';
 import { usePedidos } from '../hooks/usePedidos';
-import { usePagination } from '../../../shared/hooks/usePagination';
-import { PaginationControls } from '../../../shared/components/PaginationControls';
+import { DataTable } from '../../../shared/components/DataTable';
+import { RowActions } from '../../../shared/components/RowActions';
 import { PedidoFormModal } from '../components/PedidoFormModal';
 import ConfirmDialog from '../../../shared/components/ConfirmDialog';
 import Toast from '../../../shared/components/Toast';
+import DetailModal from '../../../shared/components/DetailModal';
+import PageHeader from '../../../shared/components/PageHeader';
+import { MetricCard } from '../../../shared/components/MetricCard';
 import { usePermissions } from '../../../shared/contexts/PermissionContext';
 import StatusSwitch from '../../../shared/components/StatusSwitch';
 
 export default function PedidosPage() {
   const { can } = usePermissions();
   const {
-    pedidos,
     rawPedidos,
     searchQuery,
     setSearchQuery,
@@ -24,188 +27,178 @@ export default function PedidosPage() {
     deleteDialog,
     setDeleteDialog,
     isDeleting,
+    isSaving,
     toast,
     setToast,
+    handleSave,
     handleDelete,
   } = usePedidos();
-  const pagination = usePagination(pedidos);
+
+  const [selectedPedido, setSelectedPedido] = useState(null);
 
   const totalPedidos = rawPedidos.length;
-  const entregados = rawPedidos.filter((p) => p.estado === 'Entregado').length;
-  const enCamino = rawPedidos.filter((p) => p.estado === 'En Camino').length;
-  const totalFacturado = rawPedidos.reduce((acc, p) => acc + (p.totalNum || 0), 0);
+  const entregados = rawPedidos.filter((p) => String(p.estado).toLowerCase() === 'entregado').length;
+  const enCamino = rawPedidos.filter((p) => String(p.estado).toLowerCase() === 'en camino' || String(p.estado).toLowerCase() === 'pendiente').length;
+  const totalFacturado = rawPedidos.reduce((acc, p) => acc + (p.totalNum || p.valor_total || 0), 0);
+
+  const filteredData = useMemo(() => {
+    return rawPedidos.filter((p) => {
+      const q = searchQuery.toLowerCase().trim();
+      const matchesSearch =
+        !q ||
+        String(p.id_pedido).toLowerCase().includes(q) ||
+        String(p.id_cliente).toLowerCase().includes(q) ||
+        (p.observaciones || '').toLowerCase().includes(q);
+
+      const isTodosEstado = estadoFilter === 'Todos' || estadoFilter === 'Todos los estados';
+      const matchesEstado =
+        isTodosEstado || String(p.estado).toLowerCase() === estadoFilter.toLowerCase();
+
+      return matchesSearch && matchesEstado;
+    });
+  }, [rawPedidos, searchQuery, estadoFilter]);
+
+  const columns = useMemo(
+    () => [
+      {
+        key: 'id_pedido',
+        label: 'ID',
+        render: (value) => <span className="font-mono font-medium">{value}</span>,
+      },
+      {
+        key: 'id_cliente',
+        label: 'Cliente ID',
+        render: (value) => <span>{value}</span>,
+      },
+      {
+        key: 'id_sede',
+        label: 'Sede ID',
+        render: (value) => <span>{value}</span>,
+      },
+      {
+        key: 'id_usuario',
+        label: 'Usuario ID',
+        render: (value) => <span>{value}</span>,
+      },
+      {
+        key: 'fecha_pedido',
+        label: 'Fecha Pedido',
+        render: (value) => <span className="text-muted-foreground">{value}</span>,
+      },
+      {
+        key: 'fecha_entrega',
+        label: 'Fecha Entrega',
+        render: (value) => <span className="text-muted-foreground">{value}</span>,
+      },
+      {
+        key: 'valor_total',
+        label: 'Valor Total',
+        render: (value) => (
+          <span className="font-semibold">
+            ${Number(value || 0).toLocaleString('es-CO')}
+          </span>
+        ),
+      },
+      {
+        key: 'estado',
+        label: 'Estado',
+        render: (value) => <StatusSwitch value={value} />,
+      },
+      {
+        key: 'acciones',
+        label: 'Acciones',
+        render: (_, pedido) => (
+          <RowActions
+            onView={() => setDetailModal({ isOpen: true, data: pedido })}
+            onEdit={() => {
+              setSelectedPedido(pedido);
+              setShowModal(true);
+            }}
+            editDisabled={!can('pedidos', 'editar')}
+            onDelete={() =>
+              setDeleteDialog({
+                isOpen: true,
+                id: pedido.id_pedido,
+                nombre: `Pedido #${pedido.id_pedido}`,
+              })
+            }
+            deleteDisabled={!can('pedidos', 'eliminar')}
+          />
+        ),
+      },
+    ],
+    [can, setDetailModal, setShowModal, setDeleteDialog]
+  );
 
   return (
     <div className="space-y-6">
-      {/* Header con exportación */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-bold">Pedidos de Clientes</h1>
-          <p className="text-muted-foreground">Despachos y pedidos para cadenas, supermercados y distribución de Masarepas</p>
-        </div>
-        <div className="flex items-center gap-2">
-          <button className="flex items-center gap-2 px-4 py-2 border border-border rounded-lg hover:bg-muted text-sm font-medium transition-colors">
-            <FileDown className="w-4 h-4" />
-            Exportar PDF
-          </button>
-          <button className="flex items-center gap-2 px-4 py-2 border border-border rounded-lg hover:bg-muted text-sm font-medium transition-colors">
-            <FileSpreadsheet className="w-4 h-4" />
-            Exportar Excel
-          </button>
-          <button
-            onClick={() => setShowModal(true)} disabled={!can('pedidos', 'crear')}
-            className="flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:opacity-90 text-sm font-medium transition-colors"
-          >
-            <Plus className="w-4 h-4" />
-            Nuevo Pedido
-          </button>
-        </div>
-      </div>
+      <PageHeader
+        title="Pedidos de Clientes"
+        subtitle="Despachos y pedidos para cadenas, supermercados y distribución de Masarepas"
+        addLabel="Nuevo Pedido"
+        addDisabled={!can('pedidos', 'crear')}
+        onAdd={() => {
+          setSelectedPedido(null);
+          setShowModal(true);
+        }}
+      />
 
       {/* Tarjetas de Consolidado */}
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
-        <div className="bg-card p-4 rounded-lg border border-border flex items-center gap-3">
-          <div className="p-3 bg-primary/10 rounded-lg text-primary">
-            <ClipboardList className="w-5 h-5" />
-          </div>
-          <div>
-            <p className="text-sm text-muted-foreground">Total Pedidos</p>
-            <h3 className="text-xl font-bold">{totalPedidos}</h3>
-          </div>
-        </div>
-        <div className="bg-card p-4 rounded-lg border border-border flex items-center gap-3">
-          <div className="p-3 bg-success/10 rounded-lg text-success">
-            <CheckCircle className="w-5 h-5" />
-          </div>
-          <div>
-            <p className="text-sm text-muted-foreground">Entregados</p>
-            <h3 className="text-xl font-bold">{entregados}</h3>
-          </div>
-        </div>
-        <div className="bg-card p-4 rounded-lg border border-border flex items-center gap-3">
-          <div className="p-3 bg-warning/10 rounded-lg text-warning">
-            <Truck className="w-5 h-5" />
-          </div>
-          <div>
-            <p className="text-sm text-muted-foreground">En Camino</p>
-            <h3 className="text-xl font-bold">{enCamino}</h3>
-          </div>
-        </div>
-        <div className="bg-card p-4 rounded-lg border border-border flex items-center gap-3">
-          <div className="p-3 bg-accent/10 rounded-lg text-primary">
-            <DollarSign className="w-5 h-5" />
-          </div>
-          <div>
-            <p className="text-sm text-muted-foreground">Valor Facturado</p>
-            <h3 className="text-xl font-bold">${totalFacturado.toLocaleString('es-CO')}</h3>
-          </div>
-        </div>
+        <MetricCard title="Total Pedidos" value={totalPedidos} icon={ClipboardList} variant="primary" />
+        <MetricCard title="Entregados" value={entregados} icon={CheckCircle} variant="success" />
+        <MetricCard title="En Camino" value={enCamino} icon={Truck} variant="warning" />
+        <MetricCard title="Valor Facturado" value={`$${totalFacturado.toLocaleString('es-CO')}`} icon={DollarSign} variant="accent" />
       </div>
 
-      {/* Filtros y Búsqueda */}
-      <div className="bg-card p-4 rounded-lg border border-border flex flex-col sm:flex-row gap-4">
-        <div className="flex-1 relative">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-          <input
-            type="search"
-            placeholder="Buscar por número, cliente o resumen de productos..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full pl-10 pr-4 py-2 border border-input bg-input-background rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-ring"
-          />
-        </div>
-        <select
-          value={estadoFilter}
-          onChange={(e) => setEstadoFilter(e.target.value)}
-          className="px-4 py-2 border border-input bg-input-background rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-ring"
-        >
-          <option value="Todos">Todos los estados</option>
-          <option value="Entregado">Entregado</option>
-          <option value="En Camino">En Camino</option>
-          <option value="Pendiente">Pendiente</option>
-        </select>
-      </div>
+      {/* Tabla con DataTable */}
+      <DataTable
+        columns={columns}
+        data={filteredData}
+        searchPlaceholder="Buscar por número, cliente o observaciones..."
+        filters={
+          <select
+            value={estadoFilter}
+            onChange={(e) => setEstadoFilter(e.target.value)}
+            className="px-4 py-2 border border-input bg-input-background rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+          >
+            <option value="Todos">Todos los estados</option>
+            <option value="Entregado">Entregado</option>
+            <option value="En Camino">En Camino</option>
+            <option value="Pendiente">Pendiente</option>
+            <option value="Cancelado">Cancelado</option>
+          </select>
+        }
+      />
 
-      {/* Tabla Estandarizada */}
-      <div className="records-table-shell bg-card rounded-lg border border-border overflow-hidden">
-        <table className="w-full text-sm text-left">
-          <thead className="bg-muted text-muted-foreground font-semibold">
-            <tr>
-              <th className="px-6 py-3">ID</th><th className="px-6 py-3">Cliente ID</th><th className="px-6 py-3">Sede ID</th><th className="px-6 py-3">Usuario ID</th><th className="px-6 py-3">Fecha Pedido</th><th className="px-6 py-3">Fecha Entrega</th><th className="px-6 py-3">Valor Total</th>
-              <th className="px-6 py-3">Estado</th>
-              <th className="px-6 py-3">Acciones</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-border">
-            {pedidos.length > 0 ? (
-              pagination.paginatedData.map((pedido) => (
-                <tr key={pedido.id_pedido} className="hover:bg-muted/50 transition-colors">
-                  <td className="px-6 py-4 font-mono font-medium">{pedido.id_pedido}</td><td className="px-6 py-4">{pedido.id_cliente}</td><td className="px-6 py-4">{pedido.id_sede}</td><td className="px-6 py-4">{pedido.id_usuario}</td><td className="px-6 py-4">{pedido.fecha_pedido}</td><td className="px-6 py-4">{pedido.fecha_entrega}</td><td className="px-6 py-4 font-semibold">{pedido.valor_total}</td>
-                  <td className="px-6 py-4">
-                    <StatusSwitch value={pedido.estado} />
-                  </td>
-                  <td className="px-6 py-4">
-                    <div className="flex items-center gap-1">
-                      <button
-                        onClick={() => setDetailModal({ isOpen: true, data: pedido })}
-                        className="p-2 hover:bg-muted rounded-lg text-muted-foreground hover:text-foreground"
-                        title="Ver detalle"
-                      >
-                        <Eye className="w-4 h-4" />
-                      </button>
-                      <button
-                        onClick={() => setShowModal(true)} disabled={!can('pedidos', 'editar')}
-                        className="p-2 hover:bg-muted rounded-lg text-muted-foreground hover:text-foreground"
-                        title="Editar"
-                      >
-                        <Edit className="w-4 h-4" />
-                      </button>
-                      <button
-                        onClick={() => setDeleteDialog({ isOpen: true, id: pedido.id_pedido, nombre: pedido.id_pedido })} disabled={!can('pedidos', 'eliminar')}
-                        className="p-2 hover:bg-muted rounded-lg text-destructive"
-                        title="Eliminar pedido"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </button>
-                    </div>
-                  </td>
-                </tr>
-              ))
-            ) : (
-              <tr>
-                <td colSpan={8} className="px-6 py-8 text-center text-muted-foreground">
-                  No se encontraron pedidos.
-                </td>
-              </tr>
-            )}
-          </tbody>
-        </table>
-      </div>
+      <DetailModal
+        isOpen={detailModal.isOpen}
+        onClose={() => setDetailModal({ isOpen: false, data: null })}
+        title="Detalle del Pedido"
+        fields={detailModal.data ? [
+          { label: 'ID', value: detailModal.data.id_pedido },
+          { label: 'Cliente ID', value: detailModal.data.id_cliente },
+          { label: 'Sede ID', value: detailModal.data.id_sede },
+          { label: 'Usuario ID', value: detailModal.data.id_usuario },
+          { label: 'Fecha Pedido', value: detailModal.data.fecha_pedido },
+          { label: 'Fecha Entrega', value: detailModal.data.fecha_entrega },
+          { label: 'Valor Total', value: `$${Number(detailModal.data.valor_total || 0).toLocaleString('es-CO')}` },
+          { label: 'Observaciones', value: detailModal.data.observaciones || 'N/A' },
+          { label: 'Motivo Anulación', value: detailModal.data.motivo_anulacion || 'N/A' },
+          { label: 'Estado', value: detailModal.data.estado },
+        ] : []}
+      />
 
-      {/* Modal de Detalle */}
-      {detailModal.isOpen && detailModal.data && (
-        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-          <div className="bg-card p-6 rounded-lg max-w-md w-full border border-border space-y-4">
-            <h3 className="text-lg font-bold">Detalle del Pedido</h3>
-            <div className="space-y-2 text-sm">
-              <p><strong>ID:</strong> {detailModal.data.id_pedido}</p><p><strong>Cliente ID:</strong> {detailModal.data.id_cliente}</p><p><strong>Sede ID:</strong> {detailModal.data.id_sede}</p><p><strong>Usuario ID:</strong> {detailModal.data.id_usuario}</p><p><strong>Fecha Pedido:</strong> {detailModal.data.fecha_pedido}</p><p><strong>Fecha Entrega:</strong> {detailModal.data.fecha_entrega}</p><p><strong>Valor Total:</strong> {detailModal.data.valor_total}</p><p><strong>Observaciones:</strong> {detailModal.data.observaciones}</p><p><strong>Motivo Anulación:</strong> {detailModal.data.motivo_anulacion}</p>
-              <p><strong>Estado:</strong> {detailModal.data.estado}</p>
-            </div>
-            <div className="flex justify-end pt-4">
-              <button
-                onClick={() => setDetailModal({ isOpen: false, data: null })}
-                className="px-4 py-2 bg-primary text-primary-foreground rounded-lg text-sm font-medium"
-              >
-                Cerrar
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      <PaginationControls {...pagination} />
-
-      <PedidoFormModal open={showModal} onClose={() => setShowModal(false)} />
+      <PedidoFormModal
+        open={showModal}
+        pedido={selectedPedido}
+        onSave={handleSave}
+        isLoading={isSaving}
+        onClose={() => {
+          setShowModal(false);
+          setSelectedPedido(null);
+        }}
+      />
 
       <ConfirmDialog
         isOpen={deleteDialog.isOpen}
@@ -226,4 +219,5 @@ export default function PedidosPage() {
     </div>
   );
 }
+
 
