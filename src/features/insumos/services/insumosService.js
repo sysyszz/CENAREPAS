@@ -1,5 +1,5 @@
 // insumosService.js - Servicio para la gestión de insumos en Masarepas
-export const mockInsumos = [
+export let mockInsumos = [
   {
     id_insumo: 1,
     nombre: "Maíz Blanco Trillado",
@@ -56,7 +56,18 @@ export const getInsumos = async () => {
   return [...mockInsumos];
 };
 
-export const createInsumo = async (insumo) => ({ id_insumo: Date.now(), ...insumo });
-export const updateInsumo = async (id_insumo, insumo) => ({ id_insumo, ...insumo });
-export const deleteInsumo = async (id_insumo) => true;
+export const createInsumo = async (insumo) => {
+  const newObj = { id_insumo: Date.now(), ...insumo };
+  mockInsumos = [newObj, ...mockInsumos];
+  return newObj;
+};
 
+export const updateInsumo = async (id_insumo, insumo) => {
+  mockInsumos = mockInsumos.map((i) => (i.id_insumo === id_insumo ? { ...i, ...insumo } : i));
+  return { id_insumo, ...insumo };
+};
+
+export const deleteInsumo = async (id_insumo) => {
+  mockInsumos = mockInsumos.filter((i) => i.id_insumo !== id_insumo);
+  return true;
+};

@@ -1,7 +1,21 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 
 export default function StatusSwitch({ value, onChange, activeValue = 'activo', inactiveValue = 'inactivo' }) {
-  const [enabled, setEnabled] = useState(value === activeValue || value === 'completada' || value === 'finalizado');
+  const checkIsActive = (val) => {
+    const s = String(val ?? '').toLowerCase();
+    return (
+      s === String(activeValue).toLowerCase() ||
+      s === 'completada' ||
+      s === 'finalizado' ||
+      s === 'true'
+    );
+  };
+
+  const [enabled, setEnabled] = useState(() => checkIsActive(value));
+
+  useEffect(() => {
+    setEnabled(checkIsActive(value));
+  }, [value, activeValue]);
 
   const handleToggle = () => {
     const nextEnabled = !enabled;

@@ -1,15 +1,12 @@
-import { useState, useEffect } from 'react';
-import { getProveedores, deleteProveedor, updateProveedor } from '../services/proveedoresService';
+import { useState, useEffect, useMemo } from 'react';
+import { getProveedores, createProveedor, updateProveedor, deleteProveedor } from '../services/proveedoresService';
 
 export function useProveedores() {
   const [proveedores, setProveedores] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [filterEstado, setFilterEstado] = useState('Todos los estados');
   const [showModal, setShowModal] = useState(false);
-  const [showDetailModal, setShowDetailModal] = useState(false);
-  const [showEditModal, setShowEditModal] = useState(false);
-  const [selectedProveedor, setSelectedProveedor] = useState(null);
-  const [editData, setEditData] = useState(null);
+  const [detailModal, setDetailModal] = useState({ isOpen: false, data: null });
   const [deleteDialog, setDeleteDialog] = useState({ isOpen: false, id: null, nombre: '' });
   const [isDeleting, setIsDeleting] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
@@ -19,75 +16,77 @@ export function useProveedores() {
     getProveedores().then((data) => setProveedores(data));
   }, []);
 
-  const filteredProveedores = proveedores.filter((proveedor) => {
-    const matchesSearch =
-      proveedor.nombre.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      proveedor.nit.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      (proveedor.correo || '').toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesEstado = filterEstado === 'Todos los estados' || proveedor.estado === filterEstado;
-    return matchesSearch && matchesEstado;
-  });
+  const filteredProveedores = useMemo(() => {
+    return proveedores.filter((proveedor) => {
+      const q = searchTerm.toLowerCase().trim();
+      const matchesSearch =
+        !q ||
+        proveedor.nombre.toLowerCase().includes(q) ||
+        proveedor.nit.toLowerCase().includes(q) ||
+        (proveedor.correo || '').toLowerCase().includes(q);
+      const isTodosEstado = filterEstado === 'Todos los estados' || filterEstado === 'Todos';
+      const matchesEstado = isTodosEstado || String(proveedor.estado).toLowerCase() === String(filterEstado).toLowerCase();
+      return matchesSearch && matchesEstado;
+    });
+  }, [proveedores, searchTerm, filterEstado]);
+
+  const handleSave = async (formData) => {
+    setIsSaving(true);
+    try {
+      if (formData.id_proveedor) {
+        const updated = await updateProveedor(formData.id_proveedor, formData);
+        setProveedores((prev) =>
+          prev.map((p) => (p.id_proveedor === formData.id_proveedor ? { ...p, ...updated } : p))
+        );
+        setToast({ isOpen: true, type: 'success', message: 'Proveedor actualizado correctamente' });
+      } else {
+        const created = await createProveedor(formData);
+        setProveedores((prev) => [created, ...prev]);
+        setToast({ isOpen: true, type: 'success', message: 'Proveedor creado correctamente' });
+      }
+      setShowModal(false);
+    } catch (error) {
+      setToast({ isOpen: true, type: 'error', message: 'Error al guardar el proveedor' });
+    } finally {
+      setIsSaving(false);
+    }
+  };
 
   const handleDelete = async () => {
     if (!deleteDialog.id) return;
     setIsDeleting(true);
-    await new Promise((resolve) => setTimeout(resolve, 500));
-    await deleteProveedor(deleteDialog.id);
-    setProveedores((prev) => prev.filter((p) => p.id_proveedor !== deleteDialog.id));
-    setIsDeleting(false);
-    setDeleteDialog({ isOpen: false, id: null, nombre: '' });
-    setToast({ isOpen: true, type: 'success', message: 'Proveedor eliminado correctamente' });
-  };
-
-  const handleViewDetail = (proveedor) => {
-    setSelectedProveedor(proveedor);
-    setShowDetailModal(true);
-  };
-
-  const handleEdit = (proveedor) => {
-    setEditData({ ...proveedor });
-    setShowEditModal(true);
-  };
-
-  const handleSaveEdit = async () => {
-    if (!editData) return;
-    setIsSaving(true);
-    await new Promise((resolve) => setTimeout(resolve, 500));
-    await updateProveedor(editData.id_proveedor, editData);
-    setProveedores((prev) => prev.map((p) => (p.id_proveedor === editData.id_proveedor ? editData : p)));
-    setIsSaving(false);
-    setShowEditModal(false);
-    setEditData(null);
-    setToast({ isOpen: true, type: 'success', message: 'Proveedor actualizado correctamente' });
+    try {
+      await deleteProveedor(deleteDialog.id);
+      setProveedores((prev) => prev.filter((p) => p.id_proveedor !== deleteDialog.id));
+      setToast({ isOpen: true, type: 'success', message: 'Proveedor eliminado correctamente' });
+    } catch (error) {
+      setToast({ isOpen: true, type: 'error', message: 'Error al eliminar el proveedor' });
+    } finally {
+      setIsDeleting(false);
+      setDeleteDialog({ isOpen: false, id: null, nombre: '' });
+    }
   };
 
   return {
-    proveedores,
+    proveedores: filteredProveedores,
     rawProveedores: proveedores,
-    filteredProveedores,
     searchTerm,
     setSearchTerm,
     filterEstado,
     setFilterEstado,
     showModal,
     setShowModal,
-    showDetailModal,
-    setShowDetailModal,
-    showEditModal,
-    setShowEditModal,
-    selectedProveedor,
-    editData,
-    setEditData,
+    detailModal,
+    setDetailModal,
     deleteDialog,
     setDeleteDialog,
     isDeleting,
     isSaving,
     toast,
     setToast,
+    handleSave,
     handleDelete,
-    handleViewDetail,
-    handleEdit,
-    handleSaveEdit,
   };
 }
+
 

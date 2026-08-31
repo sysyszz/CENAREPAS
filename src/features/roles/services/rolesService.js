@@ -1,5 +1,5 @@
 // rolesService.js - Servicio para la gestión de roles en Masarepas
-export const mockRoles = [
+export let mockRoles = [
   {
     id_rol: 1,
     nombre: "Administrador de Planta",
@@ -41,7 +41,25 @@ export const getRoles = async () => {
   return [...mockRoles];
 };
 
-export const createRol = async (rol) => ({ id_rol: Date.now(), ...rol });
-export const updateRol = async (id_rol, rol) => ({ id_rol, ...rol });
-export const deleteRol = async (id) => true;
+export const createRol = async (rol) => {
+  const newObj = {
+    id_rol: Date.now(),
+    fecha_creacion: new Date().toISOString(),
+    estado: 'activo',
+    ...rol,
+  };
+  mockRoles = [newObj, ...mockRoles];
+  return newObj;
+};
+
+export const updateRol = async (id_rol, rol) => {
+  mockRoles = mockRoles.map((r) => (r.id_rol === id_rol ? { ...r, ...rol } : r));
+  return { id_rol, ...rol };
+};
+
+export const deleteRol = async (id) => {
+  mockRoles = mockRoles.filter((r) => r.id_rol !== id);
+  return true;
+};
+
 

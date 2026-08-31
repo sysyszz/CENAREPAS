@@ -1,5 +1,5 @@
 // pedidosService.js - Servicio para la gestión de pedidos en Masarepas
-export const mockPedidos = [
+export let mockPedidos = [
   {
     id_pedido: 1, id_cliente: 1, id_sede: 1, id_usuario: 4,
     fecha_pedido: "2024-03-14T00:00:00", fecha_entrega: "2024-03-16",
@@ -21,7 +21,25 @@ export const mockDetallesPedido = [
   { id_detalle_pedido: 2, id_pedido: 1, id_producto: 2, cantidad: 200, precio_unitario: 6000, subtotal: 1200000 },
 ];
 
-export const createPedido = async (pedido) => ({ id_pedido: Date.now(), ...pedido });
-export const updatePedido = async (id_pedido, pedido) => ({ id_pedido, ...pedido });
-export const deletePedido = async (id_pedido) => true;
+export const createPedido = async (pedido) => {
+  const newObj = {
+    id_pedido: Date.now(),
+    fecha_pedido: new Date().toISOString(),
+    estado: 'pendiente',
+    ...pedido,
+  };
+  mockPedidos = [newObj, ...mockPedidos];
+  return newObj;
+};
+
+export const updatePedido = async (id_pedido, pedido) => {
+  mockPedidos = mockPedidos.map((p) => (p.id_pedido === id_pedido ? { ...p, ...pedido } : p));
+  return { id_pedido, ...pedido };
+};
+
+export const deletePedido = async (id_pedido) => {
+  mockPedidos = mockPedidos.filter((p) => p.id_pedido !== id_pedido);
+  return true;
+};
+
 
