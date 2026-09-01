@@ -41,7 +41,7 @@ export default function VentasPage() {
   const [clientes, setClientes] = useState(mockClientes);
 
   useEffect(() => {
-    getClientClientes: getClientes().then((data) => {
+    getClientes().then((data) => {
       if (data && data.length > 0) setClientes(data);
     });
   }, []);
@@ -57,6 +57,12 @@ export default function VentasPage() {
   );
 
   const totalVentas = rawVentas.length;
+  const ventasHoy = useMemo(
+    () => rawVentas.reduce((acc, v) => acc + (Number(v.valor_total) || 0), 0),
+    [rawVentas]
+  );
+  const promedioVentas = totalVentas > 0 ? ventasHoy / totalVentas : 0;
+
   const filteredData = useMemo(() => {
     return rawVentas.filter((v) => {
       const q = (searchQuery || '').toLowerCase().trim();
