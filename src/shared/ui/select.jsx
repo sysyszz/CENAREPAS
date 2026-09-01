@@ -1,62 +1,219 @@
-"use client";
-import * as React from "react";
-import * as SelectPrimitive from "@radix-ui/react-select";
-import { CheckIcon, ChevronDownIcon, ChevronUpIcon, } from "lucide-react";
-import { cn } from "./utils";
-function Select({ ...props }) {
-    return <SelectPrimitive.Root data-slot="select" {...props}/>;
+import React, { createContext, useContext, useState, useRef, useEffect, useCallback } from 'react';
+import { createPortal } from 'react-dom';
+import { Check, ChevronDown } from 'lucide-react';
+import { cn } from './utils';
+
+const SelectContext = createContext(null);
+
+export function Select({ value, onValueChange, defaultValue, children, disabled = false }) {
+  const [open, setOpen] = useState(false);
+  const [selectedValue, setSelectedValue] = useState(value !== undefined ? value : defaultValue || '');
+  const [itemsMap, setItemsMap] = useState({});
+  const triggerRef = useRef(null);
+
+  useEffect(() => {
+    if (value !== undefined) {
+      setSelectedValue(value);
+    }
+  }, [value]);
+
+  const handleSelect = useCallback(
+    (val) => {
+      if (value === undefined) {
+        setSelectedValue(val);
+      }
+      onValueChange?.(val);
+      setOpen(false);
+    },
+    [value, onValueChange]
+  );
+
+  const registerItem = useCallback((val, label) => {
+    setItemsMap((prev) => {
+      if (prev[val] === label) return prev;
+      return { ...prev, [val]: label };
+    });
+  }, []);
+
+  return (
+    <SelectContext.Provider
+      value={{
+        open,
+        setOpen,
+        selectedValue,
+        handleSelect,
+        triggerRef,
+        itemsMap,
+        registerItem,
+        disabled,
+      }}
+    >
+      <div className="relative inline-block w-full">{children}</div>
+    </SelectContext.Provider>
+  );
 }
-function SelectGroup({ ...props }) {
-    return <SelectPrimitive.Group data-slot="select-group" {...props}/>;
+
+export function SelectTrigger({ className, children, ...props }) {
+  const { open, setOpen, disabled, triggerRef } = useContext(SelectContext);
+
+  return (
+    <button
+      ref={triggerRef}
+      type="button"
+      role="combobox"
+      aria-expanded={open}
+      disabled={disabled}
+      onClick={() => setOpen(!open)}
+      className={cn(
+        'flex h-10 w-full items-center justify-between gap-2 rounded-lg border border-input bg-input-background px-3 py-2 text-sm text-foreground ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 transition-colors shadow-2xs',
+        className
+      )}
+      {...props}
+    >
+      <div className="flex-1 truncate text-left">{children}</div>
+      <ChevronDown
+        className={cn(
+          'h-4 w-4 opacity-50 transition-transform duration-200 shrink-0',
+          open && 'rotate-180'
+        )}
+      />
+    </button>
+  );
 }
-function SelectValue({ ...props }) {
-    return <SelectPrimitive.Value data-slot="select-value" {...props}/>;
+
+export function SelectValue({ placeholder = 'Seleccionar...' }) {
+  const { selectedValue, itemsMap } = useContext(SelectContext);
+  const displayLabel = itemsMap[selectedValue] || selectedValue;
+
+  return (
+    <span className={cn('truncate block', !displayLabel && 'text-muted-foreground')}>
+      {displayLabel || placeholder}
+    </span>
+  );
 }
-function SelectTrigger({ className, size = "default", children, ...props }) {
-    return (<SelectPrimitive.Trigger data-slot="select-trigger" data-size={size} className={cn("border-input data-[placeholder]:text-muted-foreground [&_svg:not([class*='text-'])]:text-muted-foreground focus-visible:border-ring focus-visible:ring-ring/50 aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive dark:bg-input/30 dark:hover:bg-input/50 flex w-full items-center justify-between gap-2 rounded-md border bg-input-background px-3 py-2 text-sm whitespace-nowrap transition-[color,box-shadow] outline-none focus-visible:ring-[3px] disabled:cursor-not-allowed disabled:opacity-50 data-[size=default]:h-9 data-[size=sm]:h-8 *:data-[slot=select-value]:line-clamp-1 *:data-[slot=select-value]:flex *:data-[slot=select-value]:items-center *:data-[slot=select-value]:gap-2 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4", className)} {...props}>
+
+export function SelectContent({ className, children, ...props }) {
+  const { open, setOpen, triggerRef } = useContext(SelectContext);
+  const [coords, setCoords] = useState({ top: 0, left: 0, width: 0, opensUp: false });
+  const contentRef = useRef(null);
+
+  useEffect(() => {
+    if (open && triggerRef.current) {
+      const rect = triggerRef.current.getBoundingClientRect();
+      const spaceBelow = window.innerHeight - rect.bottom;
+      const spaceAbove = rect.top;
+      const opensUp = spaceBelow < 240 && spaceAbove > spaceBelow;
+
+      setCoords({
+        top: opensUp ? rect.top + window.scrollY - 6 : rect.bottom + window.scrollY + 6,
+        bottom: opensUp ? window.innerHeight - rect.top - window.scrollY + 6 : undefined,
+        left: rect.left + window.scrollX,
+        width: rect.width,
+        opensUp,
+      });
+    }
+  }, [open, triggerRef]);
+
+  useEffect(() => {
+    if (!open) return;
+    const handleDown = (e) => {
+      if (
+        contentRef.current &&
+        !contentRef.current.contains(e.target) &&
+        triggerRef.current &&
+        !triggerRef.current.contains(e.target)
+      ) {
+        setOpen(false);
+      }
+    };
+    const handleScroll = (e) => {
+      if (contentRef.current && !contentRef.current.contains(e.target)) {
+        setOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleDown);
+    window.addEventListener('resize', handleScroll);
+    return () => {
+      document.removeEventListener('mousedown', handleDown);
+      window.removeEventListener('resize', handleScroll);
+    };
+  }, [open, setOpen, triggerRef]);
+
+  if (!open) return null;
+
+  return createPortal(
+    <div
+      ref={contentRef}
+      style={{
+        position: 'absolute',
+        top: coords.opensUp ? undefined : `${coords.top}px`,
+        bottom: coords.opensUp ? `${coords.bottom}px` : undefined,
+        left: `${coords.left}px`,
+        width: `${coords.width}px`,
+        zIndex: 9999,
+      }}
+      className={cn(
+        'max-h-60 overflow-y-auto rounded-lg border border-border bg-popover text-popover-foreground shadow-2xl p-1 animate-in fade-in-50 zoom-in-95 duration-150 custom-scrollbar',
+        className
+      )}
+      {...props}
+    >
       {children}
-      <SelectPrimitive.Icon asChild>
-        <ChevronDownIcon className="size-4 opacity-50"/>
-      </SelectPrimitive.Icon>
-    </SelectPrimitive.Trigger>);
+    </div>,
+    document.body
+  );
 }
-function SelectContent({ className, children, position = "popper", ...props }) {
-    return (<SelectPrimitive.Portal>
-      <SelectPrimitive.Content data-slot="select-content" className={cn("bg-popover text-popover-foreground data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2 relative z-50 max-h-(--radix-select-content-available-height) min-w-[8rem] origin-(--radix-select-content-transform-origin) overflow-x-hidden overflow-y-auto rounded-md border shadow-md", position === "popper" &&
-            "data-[side=bottom]:translate-y-1 data-[side=left]:-translate-x-1 data-[side=right]:translate-x-1 data-[side=top]:-translate-y-1", className)} position={position} {...props}>
-        <SelectScrollUpButton />
-        <SelectPrimitive.Viewport className={cn("p-1", position === "popper" &&
-            "h-[var(--radix-select-trigger-height)] w-full min-w-[var(--radix-select-trigger-width)] scroll-my-1")}>
-          {children}
-        </SelectPrimitive.Viewport>
-        <SelectScrollDownButton />
-      </SelectPrimitive.Content>
-    </SelectPrimitive.Portal>);
+
+export function SelectItem({ value, className, children, disabled = false, ...props }) {
+  const { selectedValue, handleSelect, registerItem } = useContext(SelectContext);
+  const isSelected = String(selectedValue) === String(value);
+
+  useEffect(() => {
+    if (typeof children === 'string') {
+      registerItem(value, children);
+    } else if (Array.isArray(children)) {
+      const text = children.filter((c) => typeof c === 'string').join(' ');
+      if (text) registerItem(value, text);
+    }
+  }, [value, children, registerItem]);
+
+  return (
+    <div
+      role="option"
+      aria-selected={isSelected}
+      onClick={() => {
+        if (!disabled) handleSelect(value);
+      }}
+      className={cn(
+        'relative flex w-full cursor-pointer select-none items-center justify-between rounded-md px-3 py-2 text-sm outline-none hover:bg-accent hover:text-accent-foreground transition-colors',
+        isSelected && 'bg-primary/10 text-primary font-medium',
+        disabled && 'pointer-events-none opacity-50',
+        className
+      )}
+      {...props}
+    >
+      <span className="truncate">{children}</span>
+      {isSelected && <Check className="h-4 w-4 text-primary shrink-0 ml-2" />}
+    </div>
+  );
 }
-function SelectLabel({ className, ...props }) {
-    return (<SelectPrimitive.Label data-slot="select-label" className={cn("text-muted-foreground px-2 py-1.5 text-xs", className)} {...props}/>);
+
+export function SelectGroup({ className, children, ...props }) {
+  return <div className={cn('p-1', className)} {...props}>{children}</div>;
 }
-function SelectItem({ className, children, ...props }) {
-    return (<SelectPrimitive.Item data-slot="select-item" className={cn("focus:bg-accent focus:text-accent-foreground [&_svg:not([class*='text-'])]:text-muted-foreground relative flex w-full cursor-default items-center gap-2 rounded-sm py-1.5 pr-8 pl-2 text-sm outline-hidden select-none data-[disabled]:pointer-events-none data-[disabled]:opacity-50 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4 *:[span]:last:flex *:[span]:last:items-center *:[span]:last:gap-2", className)} {...props}>
-      <span className="absolute right-2 flex size-3.5 items-center justify-center">
-        <SelectPrimitive.ItemIndicator>
-          <CheckIcon className="size-4"/>
-        </SelectPrimitive.ItemIndicator>
-      </span>
-      <SelectPrimitive.ItemText>{children}</SelectPrimitive.ItemText>
-    </SelectPrimitive.Item>);
+
+export function SelectLabel({ className, children, ...props }) {
+  return <div className={cn('px-2 py-1.5 text-xs font-semibold text-muted-foreground', className)} {...props}>{children}</div>;
 }
-function SelectSeparator({ className, ...props }) {
-    return (<SelectPrimitive.Separator data-slot="select-separator" className={cn("bg-border pointer-events-none -mx-1 my-1 h-px", className)} {...props}/>);
+
+export function SelectSeparator({ className, ...props }) {
+  return <div className={cn('-mx-1 my-1 h-px bg-border', className)} {...props} />;
 }
-function SelectScrollUpButton({ className, ...props }) {
-    return (<SelectPrimitive.ScrollUpButton data-slot="select-scroll-up-button" className={cn("flex cursor-default items-center justify-center py-1", className)} {...props}>
-      <ChevronUpIcon className="size-4"/>
-    </SelectPrimitive.ScrollUpButton>);
+
+export function SelectScrollUpButton() {
+  return null;
 }
-function SelectScrollDownButton({ className, ...props }) {
-    return (<SelectPrimitive.ScrollDownButton data-slot="select-scroll-down-button" className={cn("flex cursor-default items-center justify-center py-1", className)} {...props}>
-      <ChevronDownIcon className="size-4"/>
-    </SelectPrimitive.ScrollDownButton>);
+
+export function SelectScrollDownButton() {
+  return null;
 }
-export { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectScrollDownButton, SelectScrollUpButton, SelectSeparator, SelectTrigger, SelectValue, };

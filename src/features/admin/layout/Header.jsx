@@ -63,9 +63,10 @@ export default function Header({ onLogout }) {
                 </button>
                 <button
                   onClick={() => {
+                    navigate('/admin/configuracion');
                     setShowUserMenu(false);
                   }}
-                  className="flex items-center gap-3 w-full px-4 py-3 hover:bg-muted text-left"
+                  className="flex items-center gap-3 w-full px-4 py-3 hover:bg-muted text-left cursor-pointer"
                 >
                   <Settings className="w-4 h-4" />
                   Configuración

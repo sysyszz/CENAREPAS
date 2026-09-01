@@ -1,6 +1,8 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { ShoppingCart, CheckCircle, Clock, DollarSign } from 'lucide-react';
 import { useCompras } from '../hooks/useCompras';
+import { mockProveedores, getProveedores } from '../../proveedores/services/proveedoresService';
+import { mockUsuarios } from '../../usuarios/services/usuariosService';
 import { DataTable } from '../../../shared/components/DataTable';
 import { RowActions } from '../../../shared/components/RowActions';
 import { CompraFormModal } from '../components/CompraFormModal';
@@ -16,6 +18,8 @@ export default function ComprasPage() {
   const { can } = usePermissions();
   const {
     rawCompras,
+    searchQuery,
+    setSearchQuery,
     estadoFilter,
     setEstadoFilter,
     showModal,
@@ -33,6 +37,23 @@ export default function ComprasPage() {
   } = useCompras();
 
   const [selectedCompra, setSelectedCompra] = useState(null);
+  const [proveedores, setProveedores] = useState(mockProveedores);
+
+  useEffect(() => {
+    getProveedores().then((data) => {
+      if (data && data.length > 0) setProveedores(data);
+    });
+  }, []);
+
+  const proveedoresNames = useMemo(
+    () => Object.fromEntries(proveedores.map((p) => [p.id_proveedor, p.nombre])),
+    [proveedores]
+  );
+
+  const usuariosNames = useMemo(
+    () => Object.fromEntries(mockUsuarios.map((u) => [u.id_usuario, u.nombre])),
+    []
+  );
 
   const totalCompras = rawCompras.length;
   const recibidas = rawCompras.filter(
@@ -48,38 +69,62 @@ export default function ComprasPage() {
 
   const filteredData = useMemo(() => {
     return rawCompras.filter((c) => {
+      const q = (searchQuery || '').toLowerCase().trim();
+      const proveedorNombre = (proveedoresNames[c.id_proveedor] || '').toLowerCase();
+      const usuarioNombre = (usuariosNames[c.id_usuario] || '').toLowerCase();
+      const matchesSearch =
+        !q ||
+        String(c.id_compra).toLowerCase().includes(q) ||
+        String(c.id_proveedor).toLowerCase().includes(q) ||
+        String(c.id_usuario).toLowerCase().includes(q) ||
+        proveedorNombre.includes(q) ||
+        usuarioNombre.includes(q) ||
+        String(c.medio_pago || '').toLowerCase().includes(q);
+
       const isTodos = estadoFilter === 'Todos' || estadoFilter === 'Todos los estados';
-      if (isTodos) return true;
-      return String(c.estado).toLowerCase() === estadoFilter.toLowerCase();
+      const matchesEstado = isTodos || String(c.estado).toLowerCase() === estadoFilter.toLowerCase();
+      return matchesSearch && matchesEstado;
     });
-  }, [rawCompras, estadoFilter]);
+  }, [rawCompras, searchQuery, estadoFilter, proveedoresNames, usuariosNames]);
 
   const columns = useMemo(
     () => [
       {
         key: 'id_compra',
         label: 'ID',
-        render: (value) => <span className="font-mono font-medium">{value}</span>,
+        render: (value) => <span className="font-mono font-medium text-xs">#{value}</span>,
       },
       {
         key: 'id_proveedor',
-        label: 'Proveedor ID',
-        render: (value) => value,
+        label: 'Proveedor',
+        render: (value) => (
+          <span className="font-semibold text-foreground">
+            {proveedoresNames[value] || (typeof value === 'string' && isNaN(Number(value)) ? value : `Proveedor #${value}`)}
+          </span>
+        ),
       },
       {
         key: 'id_usuario',
-        label: 'Usuario ID',
-        render: (value) => value,
+        label: 'Registrado por',
+        render: (value) => (
+          <span className="text-muted-foreground text-sm">
+            {usuariosNames[value] || `Usuario #${value}`}
+          </span>
+        ),
       },
       {
         key: 'fecha_compra',
         label: 'Fecha Compra',
-        render: (value) => value,
+        render: (value) => <span className="text-muted-foreground text-sm">{value}</span>,
       },
       {
         key: 'valor_total',
         label: 'Valor Total',
-        render: (value) => <span className="font-semibold">{value}</span>,
+        render: (value, c) => (
+          <span className="font-semibold text-primary">
+            ${Number(c.totalNum || value || 0).toLocaleString('es-CO')}
+          </span>
+        ),
       },
       {
         key: 'estado',
@@ -148,6 +193,8 @@ export default function ComprasPage() {
         columns={columns}
         data={filteredData}
         searchPlaceholder="Buscar por código, proveedor o insumo..."
+        searchValue={searchQuery}
+        onSearchChange={setSearchQuery}
         filters={
           <select
             value={estadoFilter}
@@ -165,16 +212,30 @@ export default function ComprasPage() {
       <DetailModal
         isOpen={detailModal.isOpen}
         onClose={() => setDetailModal({ isOpen: false, data: null })}
-        title="Detalle de la Compra"
+        title="Detalle de la Orden de Compra"
         fields={detailModal.data ? [
-          { label: 'ID', value: detailModal.data.id_compra },
-          { label: 'Proveedor ID', value: detailModal.data.id_proveedor },
-          { label: 'Usuario ID', value: detailModal.data.id_usuario },
-          { label: 'Fecha', value: detailModal.data.fecha_compra },
-          { label: 'Valor Total', value: detailModal.data.valor_total },
-          { label: 'Medio de Pago', value: detailModal.data.medio_pago },
-          { label: 'Comprobante', value: detailModal.data.comprobante_url },
-          { label: 'Fecha Registro', value: detailModal.data.fecha_registro },
+          { label: 'ID Compra', value: `#${detailModal.data.id_compra}` },
+          { label: 'Proveedor', value: proveedoresNames[detailModal.data.id_proveedor] || `Proveedor #${detailModal.data.id_proveedor}` },
+          { label: 'Registrado por (Usuario)', value: usuariosNames[detailModal.data.id_usuario] || `Usuario #${detailModal.data.id_usuario}` },
+          { label: 'Fecha de Compra', value: detailModal.data.fecha_compra },
+          { label: 'Valor Total', value: <span className="font-semibold text-primary">{`$${Number(detailModal.data.totalNum || detailModal.data.valor_total || 0).toLocaleString('es-CO')}`}</span> },
+          { label: 'Medio de Pago', value: <span className="capitalize">{detailModal.data.medio_pago}</span> },
+          {
+            label: 'Comprobante / Factura',
+            value: detailModal.data.comprobante_url ? (
+              <a
+                href={detailModal.data.comprobante_url}
+                target="_blank"
+                rel="noreferrer"
+                className="text-primary hover:underline font-medium text-xs inline-flex items-center gap-1"
+              >
+                Ver comprobante adjunto
+              </a>
+            ) : (
+              'Sin comprobante adjunto'
+            ),
+          },
+          { label: 'Fecha de Registro', value: detailModal.data.fecha_registro || 'N/A' },
           { label: 'Estado', value: detailModal.data.estado },
         ] : []}
       />
