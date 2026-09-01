@@ -1,6 +1,7 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { Package, AlertTriangle, CheckCircle, Truck } from 'lucide-react';
 import { useInsumos } from '../hooks/useInsumos';
+import { mockProveedores, getProveedores } from '../../proveedores/services/proveedoresService';
 import { DataTable } from '../../../shared/components/DataTable';
 import { RowActions } from '../../../shared/components/RowActions';
 import { InsumoFormModal } from '../components/InsumoFormModal';
@@ -37,24 +38,38 @@ export default function InsumosPage() {
   } = useInsumos();
 
   const [selectedInsumo, setSelectedInsumo] = useState(null);
+  const [proveedores, setProveedores] = useState(mockProveedores);
+
+  useEffect(() => {
+    getProveedores().then((data) => {
+      if (data && data.length > 0) setProveedores(data);
+    });
+  }, []);
+
+  const proveedorNames = useMemo(
+    () => Object.fromEntries(proveedores.map((p) => [p.id_proveedor, p.nombre])),
+    [proveedores]
+  );
 
   const totalInsumos = rawInsumos.length;
   const disponibles = rawInsumos.filter(
     (i) => String(i.estado).toLowerCase() === 'disponible' || String(i.estado).toLowerCase() === 'activo'
   ).length;
   const bajoStock = rawInsumos.filter(
-    (i) => String(i.estado).toLowerCase() === 'bajo stock' || i.stock_actual <= i.stock_minimo
+    (i) => String(i.estado).toLowerCase() === 'bajo stock' || Number(i.stock_actual) <= Number(i.stock_minimo)
   ).length;
   const proveedoresCount = new Set(rawInsumos.map((i) => i.id_proveedor).filter(Boolean)).size;
 
   const filteredData = useMemo(() => {
     return rawInsumos.filter((i) => {
       const q = searchQuery.toLowerCase().trim();
+      const proveedorNombre = (proveedorNames[i.id_proveedor] || '').toLowerCase();
       const matchesSearch =
         !q ||
         i.nombre.toLowerCase().includes(q) ||
         String(i.id_insumo).toLowerCase().includes(q) ||
-        String(i.id_proveedor).toLowerCase().includes(q);
+        String(i.id_proveedor).toLowerCase().includes(q) ||
+        proveedorNombre.includes(q);
 
       const isTodosCat = categoriaFilter === 'Todas' || categoriaFilter === 'Todas las categorías';
       const matchesCat = isTodosCat || String(i.id_proveedor) === categoriaFilter;
@@ -65,34 +80,52 @@ export default function InsumosPage() {
 
       return matchesSearch && matchesCat && matchesEstado;
     });
-  }, [rawInsumos, searchQuery, categoriaFilter, estadoFilter]);
+  }, [rawInsumos, searchQuery, categoriaFilter, estadoFilter, proveedorNames]);
 
   const columns = useMemo(
     () => [
       {
         key: 'id_insumo',
         label: 'ID',
-        render: (value) => <span className="font-mono font-medium">{value}</span>,
+        render: (value) => <span className="font-mono font-medium text-xs">#{value}</span>,
       },
       {
         key: 'nombre',
         label: 'Insumo',
-        render: (value) => <span className="font-semibold">{value}</span>,
+        render: (value) => <span className="font-semibold text-sm">{value}</span>,
       },
       {
         key: 'unidad_medida',
         label: 'Unidad de Medida',
-        render: (value) => <span className="text-muted-foreground">{value}</span>,
+        render: (value) => <span className="text-muted-foreground text-xs uppercase font-medium">{value}</span>,
       },
       {
         key: 'stock_actual',
         label: 'Stock Actual',
-        render: (value) => <span className="font-semibold">{value}</span>,
+        render: (value, insumo) => {
+          const isLow = Number(value) <= Number(insumo.stock_minimo || 0);
+          return (
+            <div className="flex items-center gap-1.5">
+              <span className={`font-semibold text-sm ${isLow ? 'text-amber-600 dark:text-amber-400 font-bold' : ''}`}>
+                {value}
+              </span>
+              {isLow && (
+                <span className="px-1.5 py-0.5 bg-amber-500/10 text-amber-600 dark:text-amber-400 text-[10px] rounded font-semibold">
+                  Bajo
+                </span>
+              )}
+            </div>
+          );
+        },
       },
       {
         key: 'id_proveedor',
         label: 'Proveedor',
-        render: (value) => <span className="text-muted-foreground">{value}</span>,
+        render: (value) => (
+          <span className="font-medium text-foreground">
+            {proveedorNames[value] || (typeof value === 'string' && isNaN(Number(value)) ? value : `Proveedor #${value}`)}
+          </span>
+        ),
       },
       {
         key: 'estado',
@@ -122,7 +155,7 @@ export default function InsumosPage() {
         ),
       },
     ],
-    [can, setDetailModal, setShowModal, setDeleteDialog]
+    [can, proveedorNames, setDetailModal, setShowModal, setDeleteDialog]
   );
 
   return (
@@ -151,6 +184,8 @@ export default function InsumosPage() {
         columns={columns}
         data={filteredData}
         searchPlaceholder="Buscar por código, nombre o proveedor..."
+        searchValue={searchQuery}
+        onSearchChange={setSearchQuery}
         filters={
           <>
             <select
@@ -181,16 +216,29 @@ export default function InsumosPage() {
         isOpen={detailModal.isOpen}
         onClose={() => setDetailModal({ isOpen: false, data: null })}
         title="Detalle del Insumo"
-        fields={detailModal.data ? [
-          { label: 'ID', value: detailModal.data.id_insumo },
-          { label: 'Nombre', value: detailModal.data.nombre },
-          { label: 'Unidad de Medida', value: detailModal.data.unidad_medida },
-          { label: 'Stock Actual', value: detailModal.data.stock_actual },
-          { label: 'Stock Mínimo', value: detailModal.data.stock_minimo },
-          { label: 'Fecha de Vencimiento', value: detailModal.data.fecha_vencimiento },
-          { label: 'Proveedor', value: detailModal.data.id_proveedor },
-          { label: 'Estado', value: detailModal.data.estado },
-        ] : []}
+        fields={
+          detailModal.data
+            ? [
+                { label: 'ID', value: `#${detailModal.data.id_insumo}` },
+                { label: 'Nombre', value: detailModal.data.nombre },
+                { label: 'Unidad de Medida', value: detailModal.data.unidad_medida },
+                { label: 'Stock Actual', value: detailModal.data.stock_actual },
+                { label: 'Stock Mínimo', value: detailModal.data.stock_minimo },
+                {
+                  label: 'Fecha de Vencimiento',
+                  value: detailModal.data.fecha_vencimiento || 'N/A',
+                },
+                {
+                  label: 'Proveedor',
+                  value:
+                    proveedorNames[detailModal.data.id_proveedor] ||
+                    detailModal.data.id_proveedor ||
+                    'N/A',
+                },
+                { label: 'Estado', value: detailModal.data.estado },
+              ]
+            : []
+        }
       />
 
       <InsumoFormModal

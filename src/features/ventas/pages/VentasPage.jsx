@@ -1,6 +1,8 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { DollarSign, BarChart3, TrendingUp, ShoppingBag } from 'lucide-react';
 import { useVentas } from '../hooks/useVentas';
+import { mockClientes, getClientes } from '../../clientes/services/clientesService';
+import { mockUsuarios } from '../../usuarios/services/usuariosService';
 import { DataTable } from '../../../shared/components/DataTable';
 import { RowActions } from '../../../shared/components/RowActions';
 import { VentaFormModal } from '../components/VentaFormModal';
@@ -36,38 +38,82 @@ export default function VentasPage() {
   } = useVentas();
 
   const [selectedVenta, setSelectedVenta] = useState(null);
+  const [clientes, setClientes] = useState(mockClientes);
+
+  useEffect(() => {
+    getClientes().then((data) => {
+      if (data && data.length > 0) setClientes(data);
+    });
+  }, []);
+
+  const clientesNames = useMemo(
+    () => Object.fromEntries(clientes.map((c) => [c.id_cliente, c.nombre])),
+    [clientes]
+  );
+
+  const usuariosNames = useMemo(
+    () => Object.fromEntries(mockUsuarios.map((u) => [u.id_usuario, u.nombre])),
+    []
+  );
 
   const totalVentas = rawVentas.length;
-  const ventasHoy = rawVentas.reduce((acc, v) => acc + (v.valor_total || 0), 0);
+  const ventasHoy = useMemo(
+    () => rawVentas.reduce((acc, v) => acc + (Number(v.valor_total) || 0), 0),
+    [rawVentas]
+  );
   const promedioVentas = totalVentas > 0 ? ventasHoy / totalVentas : 0;
+
+  const filteredData = useMemo(() => {
+    return rawVentas.filter((v) => {
+      const q = (searchQuery || '').toLowerCase().trim();
+      const clienteNombre = (clientesNames[v.id_cliente] || '').toLowerCase();
+      const usuarioNombre = (usuariosNames[v.id_usuario] || '').toLowerCase();
+      const matchesSearch =
+        !q ||
+        String(v.id_venta).toLowerCase().includes(q) ||
+        String(v.id_cliente).toLowerCase().includes(q) ||
+        clienteNombre.includes(q) ||
+        usuarioNombre.includes(q) ||
+        String(v.id_sede).toLowerCase().includes(q) ||
+        (v.medio_pago || '').toLowerCase().includes(q);
+
+      const isTodosEstado = estadoFilter === 'Todos' || estadoFilter === 'Todos los estados';
+      const matchesEstado = isTodosEstado || String(v.estado).toLowerCase() === String(estadoFilter).toLowerCase();
+      return matchesSearch && matchesEstado;
+    });
+  }, [rawVentas, searchQuery, estadoFilter, clientesNames, usuariosNames]);
 
   const columns = useMemo(
     () => [
       {
         key: 'id_venta',
         label: 'ID',
-        render: (value) => <span className="font-mono font-medium">{value}</span>,
-      },
-      {
-        key: 'id_sede',
-        label: 'Sede ID',
-        render: (value) => <span className="text-muted-foreground">{value}</span>,
+        render: (value) => <span className="font-mono font-medium text-xs">#{value}</span>,
       },
       {
         key: 'id_cliente',
-        label: 'Cliente ID',
-        render: (value) => <span className="font-medium">{value}</span>,
+        label: 'Cliente',
+        render: (value) => (
+          <span className="font-semibold text-foreground">
+            {clientesNames[value] || (typeof value === 'string' && isNaN(Number(value)) ? value : `Cliente #${value}`)}
+          </span>
+        ),
+      },
+      {
+        key: 'id_sede',
+        label: 'Sede',
+        render: (value) => <span className="text-muted-foreground text-xs">{value === 1 ? 'Sede Principal (Ibagué)' : `Sede #${value}`}</span>,
       },
       {
         key: 'id_usuario',
-        label: 'Usuario ID',
-        render: (value) => <span className="text-muted-foreground">{value}</span>,
+        label: 'Vendedor',
+        render: (value) => <span className="text-muted-foreground text-xs">{usuariosNames[value] || `Usuario #${value}`}</span>,
       },
       {
         key: 'fecha_venta',
         label: 'Fecha Venta',
         render: (value) => (
-          <span className="text-muted-foreground">
+          <span className="text-muted-foreground text-xs">
             {value ? new Date(value).toLocaleDateString('es-CO') : 'N/A'}
           </span>
         ),
@@ -75,9 +121,9 @@ export default function VentasPage() {
       {
         key: 'valor_total',
         label: 'Valor Total',
-        render: (value) => (
+        render: (value, v) => (
           <span className="font-semibold text-primary">
-            ${Number(value || 0).toLocaleString('es-CO')}
+            ${Number(v.totalNum || value || 0).toLocaleString('es-CO')}
           </span>
         ),
       },
@@ -112,7 +158,7 @@ export default function VentasPage() {
         ),
       },
     ],
-    [can, setDetailModal, setShowModal, setDeleteDialog]
+    [can, clientesNames, usuariosNames, setDetailModal, setShowModal, setDeleteDialog]
   );
 
   return (
@@ -139,7 +185,7 @@ export default function VentasPage() {
       {/* Tabla con DataTable */}
       <DataTable
         columns={columns}
-        data={ventas}
+        data={filteredData}
         searchPlaceholder="Buscar por ID, cliente, sede o medio de pago..."
         searchValue={searchQuery}
         onSearchChange={setSearchQuery}
@@ -161,14 +207,29 @@ export default function VentasPage() {
         onClose={() => setDetailModal({ isOpen: false, data: null })}
         title="Detalle de la Venta"
         fields={detailModal.data ? [
-          { label: 'ID Venta', value: detailModal.data.id_venta },
-          { label: 'Sede ID', value: detailModal.data.id_sede },
-          { label: 'Cliente ID', value: detailModal.data.id_cliente },
-          { label: 'Usuario ID', value: detailModal.data.id_usuario },
-          { label: 'Pedido ID', value: detailModal.data.id_pedido || 'N/A' },
+          { label: 'ID Venta', value: `#${detailModal.data.id_venta}` },
+          { label: 'Sede / Punto', value: detailModal.data.id_sede === 1 ? 'Sede Principal (Ibagué)' : `Sede #${detailModal.data.id_sede}` },
+          { label: 'Cliente', value: clientesNames[detailModal.data.id_cliente] || `Cliente #${detailModal.data.id_cliente}` },
+          { label: 'Vendedor / Usuario', value: usuariosNames[detailModal.data.id_usuario] || `Usuario #${detailModal.data.id_usuario}` },
+          { label: 'Pedido Origen', value: detailModal.data.id_pedido ? `#${detailModal.data.id_pedido}` : 'Venta directa en mostrador' },
           { label: 'Fecha Venta', value: detailModal.data.fecha_venta },
-          { label: 'Medio de Pago', value: detailModal.data.medio_pago },
-          { label: 'Valor Total', value: `$${Number(detailModal.data.valor_total || 0).toLocaleString('es-CO')}` },
+          { label: 'Medio de Pago', value: <span className="capitalize">{detailModal.data.medio_pago}</span> },
+          { label: 'Valor Total', value: <span className="font-semibold text-primary">{`$${Number(detailModal.data.valor_total || 0).toLocaleString('es-CO')}`}</span> },
+          {
+            label: 'Comprobante de Pago',
+            value: detailModal.data.comprobante_url ? (
+              <a
+                href={detailModal.data.comprobante_url}
+                target="_blank"
+                rel="noreferrer"
+                className="text-primary hover:underline font-medium text-xs inline-flex items-center gap-1"
+              >
+                Ver comprobante adjunto
+              </a>
+            ) : (
+              'Sin comprobante adjunto'
+            ),
+          },
           { label: 'Estado', value: detailModal.data.estado },
         ] : []}
       />

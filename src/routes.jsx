@@ -18,6 +18,7 @@ import ProduccionPage from './features/produccion/pages/ProduccionPage';
 import ProductosPage from './features/productos/pages/ProductosPage';
 import PedidosPage from './features/pedidos/pages/PedidosPage';
 import VentasPage from './features/ventas/pages/VentasPage';
+import ConfiguracionPage from './features/configuracion/pages/ConfiguracionPage';
 import { usePermissions } from './shared/contexts/PermissionContext';
 
 function ProtectedModule({ modulo, children }) {
@@ -46,6 +47,7 @@ export function AppRoutes({ isAuthenticated, setIsAuthenticated }) {
       >
         <Route index element={<DashboardPage />} />
         <Route path="profile" element={<ProfilePage />} />
+        <Route path="configuracion" element={<ProtectedModule modulo="configuracion"><ConfiguracionPage /></ProtectedModule>} />
         <Route path="usuarios" element={<ProtectedModule modulo="usuarios"><UsuariosPage /></ProtectedModule>} />
         <Route path="roles" element={<ProtectedModule modulo="roles"><RolesPage /></ProtectedModule>} />
         <Route path="proveedores" element={<ProtectedModule modulo="proveedores"><ProveedoresPage /></ProtectedModule>} />
