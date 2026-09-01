@@ -118,7 +118,7 @@ export function UsuarioFormModal({ open, onClose, usuario = null, onSave, isLoad
               className="w-full px-4 py-2 border border-input bg-input-background rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-ring"
             />
           </div>
-          <div>
+          <div className="modal-field-wide">
             <label className="block mb-2 text-sm font-medium">Estado</label>
             <select
               value={estado}
@@ -129,19 +129,19 @@ export function UsuarioFormModal({ open, onClose, usuario = null, onSave, isLoad
               <option value="inactivo">Inactivo</option>
             </select>
           </div>
-          <div className="flex gap-2 pt-4">
+          <div className="modal-field-wide flex gap-3 pt-6 border-t border-border/50">
             <button
               type="button"
               onClick={onClose}
               disabled={isLoading}
-              className="flex-1 px-4 py-2 border border-border rounded-lg hover:bg-muted text-sm font-medium transition-colors"
+              className="flex-1 px-4 py-2.5 border border-border rounded-lg hover:bg-muted text-sm font-medium transition-colors cursor-pointer"
             >
               Cancelar
             </button>
             <button
               type="submit"
               disabled={isLoading}
-              className="flex-1 px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:opacity-90 disabled:opacity-50 text-sm font-medium transition-colors"
+              className="flex-1 px-4 py-2.5 bg-primary text-primary-foreground rounded-lg hover:opacity-90 disabled:opacity-50 text-sm font-medium transition-colors cursor-pointer shadow-xs"
             >
               {isLoading ? 'Guardando...' : usuario ? 'Guardar Cambios' : 'Guardar'}
             </button>
