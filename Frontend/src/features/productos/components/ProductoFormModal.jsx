@@ -1,6 +1,8 @@
 import { useState, useEffect } from 'react';
 import { X, Upload, Trash2, Image as ImageIcon } from 'lucide-react';
-import { mockCategorias } from '../../categorias/services/categoriasService';
+import { mockCategorias, getCategorias } from '../../categorias/services/categoriasService';
+import { mockFichasTecnicas, getFichasTecnicas } from '../../fichas-tecnicas/services/fichasTecnicasService';
+import { mockProveedores, getProveedores } from '../../proveedores/services/proveedoresService';
 
 export function ProductoFormModal({ open, onClose, producto = null, onSave, isLoading = false }) {
   const [nombre, setNombre] = useState('');
@@ -16,35 +18,51 @@ export function ProductoFormModal({ open, onClose, producto = null, onSave, isLo
   const [fechaVencimiento, setFechaVencimiento] = useState('');
   const [estado, setEstado] = useState('activo');
 
+  const [categorias, setCategorias] = useState(mockCategorias);
+  const [fichas, setFichas] = useState(mockFichasTecnicas);
+  const [proveedores, setProveedores] = useState(mockProveedores);
+
+  useEffect(() => {
+    getCategorias().then((data) => {
+      if (data && data.length > 0) setCategorias(data);
+    });
+    getFichasTecnicas().then((data) => {
+      if (data && data.length > 0) setFichas(data);
+    });
+    getProveedores().then((data) => {
+      if (data && data.length > 0) setProveedores(data);
+    });
+  }, []);
+
   useEffect(() => {
     if (producto) {
       setNombre(producto.nombre || '');
-      setIdCategoria(producto.id_categoria ? String(producto.id_categoria) : '1');
+      setIdCategoria(producto.id_categoria ? String(producto.id_categoria) : (categorias[0]?.id_categoria ? String(categorias[0].id_categoria) : '1'));
       setPrecioVenta(producto.precio_venta != null ? String(producto.precio_venta) : '');
-      setStockActual(producto.stock_actual != null ? String(producto.stock_actual) : '');
+      setStockActual(producto.stock_actual != null ? String(producto.stock_actual) : '0');
       setDescripcion(producto.descripcion || '');
       setIdFicha(producto.id_ficha ? String(producto.id_ficha) : '');
       setIdProveedor(producto.id_proveedor ? String(producto.id_proveedor) : '');
       setImagenUrl(producto.imagen_url || '');
       setUrlInput('');
-      setStockMinimo(producto.stock_minimo != null ? String(producto.stock_minimo) : '');
+      setStockMinimo(producto.stock_minimo != null ? String(producto.stock_minimo) : '0');
       setFechaVencimiento(producto.fecha_vencimiento || '');
       setEstado(producto.estado || 'activo');
     } else {
       setNombre('');
-      setIdCategoria('1');
+      setIdCategoria(categorias[0]?.id_categoria ? String(categorias[0].id_categoria) : '1');
       setPrecioVenta('');
-      setStockActual('');
+      setStockActual('0');
       setDescripcion('');
       setIdFicha('');
       setIdProveedor('');
       setImagenUrl('');
       setUrlInput('');
-      setStockMinimo('');
+      setStockMinimo('0');
       setFechaVencimiento('');
       setEstado('activo');
     }
-  }, [producto, open]);
+  }, [producto, open, categorias]);
 
   if (!open) return null;
 
@@ -110,7 +128,7 @@ export function ProductoFormModal({ open, onClose, producto = null, onSave, isLo
           <div>
             <h2 className="text-xl font-bold">{producto ? 'Editar Producto' : 'Nuevo Producto'}</h2>
             <p className="text-xs text-muted-foreground mt-0.5">
-              Completa la información y características del producto
+              Completa la información y características del producto terminado
             </p>
           </div>
           <button
@@ -125,8 +143,10 @@ export function ProductoFormModal({ open, onClose, producto = null, onSave, isLo
 
         <form onSubmit={handleSubmit} className="modal-form-grid space-y-4">
           <div className="modal-field-wide">
-            <label className="block mb-1.5 text-sm font-medium">Nombre del Producto *</label>
+            <label htmlFor="producto_nombre" className="block mb-1.5 text-sm font-medium">Nombre del Producto *</label>
             <input
+              id="producto_nombre"
+              name="nombre"
               type="text"
               maxLength={100}
               required
@@ -139,13 +159,15 @@ export function ProductoFormModal({ open, onClose, producto = null, onSave, isLo
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
-              <label className="block mb-1.5 text-sm font-medium">Categoría *</label>
+              <label htmlFor="producto_id_categoria" className="block mb-1.5 text-sm font-medium">Categoría *</label>
               <select
+                id="producto_id_categoria"
+                name="id_categoria"
                 value={idCategoria}
                 onChange={(e) => setIdCategoria(e.target.value)}
                 className="w-full px-4 py-2 border border-input bg-input-background rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-ring"
               >
-                {mockCategorias.map((cat) => (
+                {categorias.map((cat) => (
                   <option key={cat.id_categoria} value={String(cat.id_categoria)}>
                     {cat.nombre}
                   </option>
@@ -153,8 +175,10 @@ export function ProductoFormModal({ open, onClose, producto = null, onSave, isLo
               </select>
             </div>
             <div>
-              <label className="block mb-1.5 text-sm font-medium">Precio de Venta ($) *</label>
+              <label htmlFor="producto_precio_venta" className="block mb-1.5 text-sm font-medium">Precio de Venta ($) *</label>
               <input
+                id="producto_precio_venta"
+                name="precio_venta"
                 type="number"
                 step="50"
                 min="0"
@@ -169,8 +193,10 @@ export function ProductoFormModal({ open, onClose, producto = null, onSave, isLo
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
-              <label className="block mb-1.5 text-sm font-medium">Stock Inicial</label>
+              <label htmlFor="producto_stock_actual" className="block mb-1.5 text-sm font-medium">Stock Inicial</label>
               <input
+                id="producto_stock_actual"
+                name="stock_actual"
                 type="number"
                 min="0"
                 placeholder="Ej. 100"
@@ -180,8 +206,10 @@ export function ProductoFormModal({ open, onClose, producto = null, onSave, isLo
               />
             </div>
             <div>
-              <label className="block mb-1.5 text-sm font-medium">Stock Mínimo</label>
+              <label htmlFor="producto_stock_minimo" className="block mb-1.5 text-sm font-medium">Stock Mínimo</label>
               <input
+                id="producto_stock_minimo"
+                name="stock_minimo"
                 type="number"
                 min="0"
                 placeholder="Ej. 20"
@@ -193,8 +221,10 @@ export function ProductoFormModal({ open, onClose, producto = null, onSave, isLo
           </div>
 
           <div className="modal-field-wide">
-            <label className="block mb-1.5 text-sm font-medium">Descripción</label>
+            <label htmlFor="producto_descripcion" className="block mb-1.5 text-sm font-medium">Descripción</label>
             <textarea
+              id="producto_descripcion"
+              name="descripcion"
               rows={2}
               maxLength={255}
               placeholder="Descripción breve de los ingredientes y presentación..."
@@ -204,7 +234,7 @@ export function ProductoFormModal({ open, onClose, producto = null, onSave, isLo
             />
           </div>
 
-          {/* Sección de Imagen: Vista previa + Carga desde archivo / URL */}
+          {/* Sección de Imagen */}
           <div className="modal-field-wide space-y-2.5 p-3.5 rounded-xl border border-border bg-muted/20">
             <div className="flex items-center justify-between">
               <label className="text-sm font-medium flex items-center gap-1.5">
@@ -248,7 +278,6 @@ export function ProductoFormModal({ open, onClose, producto = null, onSave, isLo
               </div>
             ) : (
               <div className="space-y-3">
-                {/* Zona de subida desde el ordenador */}
                 <label className="border-2 border-dashed border-border hover:border-primary/50 hover:bg-primary/5 rounded-lg p-4 flex flex-col items-center justify-center cursor-pointer transition-colors text-center">
                   <div className="w-9 h-9 rounded-full bg-primary/10 text-primary flex items-center justify-center mb-1.5">
                     <Upload className="w-4 h-4" />
@@ -267,15 +296,16 @@ export function ProductoFormModal({ open, onClose, producto = null, onSave, isLo
                   />
                 </label>
 
-                {/* Opción de pegar URL */}
                 <div className="space-y-1.5">
                   <span className="text-[11px] font-medium text-muted-foreground block">
                     O ingresa la URL de una imagen web:
                   </span>
                   <div className="flex gap-2">
                     <input
+                      id="producto_imagen_url_input"
+                      name="imagen_url_input"
                       type="url"
-                      maxLength={500}
+                      maxLength={255}
                       placeholder="https://ejemplo.com/foto-arepa.jpg"
                       value={urlInput}
                       onChange={(e) => setUrlInput(e.target.value)}
@@ -300,8 +330,10 @@ export function ProductoFormModal({ open, onClose, producto = null, onSave, isLo
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
-              <label className="block mb-1.5 text-sm font-medium">Fecha de Vencimiento</label>
+              <label htmlFor="producto_fecha_vencimiento" className="block mb-1.5 text-sm font-medium">Fecha de Vencimiento</label>
               <input
+                id="producto_fecha_vencimiento"
+                name="fecha_vencimiento"
                 type="date"
                 value={fechaVencimiento}
                 onChange={(e) => setFechaVencimiento(e.target.value)}
@@ -309,8 +341,10 @@ export function ProductoFormModal({ open, onClose, producto = null, onSave, isLo
               />
             </div>
             <div>
-              <label className="block mb-1.5 text-sm font-medium">Estado</label>
+              <label htmlFor="producto_estado" className="block mb-1.5 text-sm font-medium">Estado</label>
               <select
+                id="producto_estado"
+                name="estado"
                 value={estado}
                 onChange={(e) => setEstado(e.target.value)}
                 className="w-full px-4 py-2 border border-input bg-input-background rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-ring"
@@ -323,29 +357,37 @@ export function ProductoFormModal({ open, onClose, producto = null, onSave, isLo
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
-              <label className="block mb-1.5 text-sm font-medium">Ficha Técnica</label>
+              <label htmlFor="producto_id_ficha" className="block mb-1.5 text-sm font-medium">Ficha Técnica (Receta)</label>
               <select
+                id="producto_id_ficha"
+                name="id_ficha"
                 value={idFicha}
                 onChange={(e) => setIdFicha(e.target.value)}
                 className="w-full px-4 py-2 border border-input bg-input-background rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-ring"
               >
                 <option value="">Sin ficha técnica</option>
-                <option value="1">Arepa de Chócolo con Queso</option>
-                <option value="2">Arepa Telita Tradicional</option>
+                {fichas.map((f) => (
+                  <option key={f.id_ficha} value={String(f.id_ficha)}>
+                    {f.nombre}
+                  </option>
+                ))}
               </select>
             </div>
             <div>
-              <label className="block mb-1.5 text-sm font-medium">Proveedor</label>
+              <label htmlFor="producto_id_proveedor" className="block mb-1.5 text-sm font-medium">Proveedor (Opcional)</label>
               <select
+                id="producto_id_proveedor"
+                name="id_proveedor"
                 value={idProveedor}
                 onChange={(e) => setIdProveedor(e.target.value)}
                 className="w-full px-4 py-2 border border-input bg-input-background rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-ring"
               >
                 <option value="">Sin proveedor</option>
-                <option value="1">Agrícola del Valle S.A.</option>
-                <option value="2">Lácteos El Campesino</option>
-                <option value="3">Plásticos San José Ltda.</option>
-                <option value="4">Distribuidora del Campo</option>
+                {proveedores.map((p) => (
+                  <option key={p.id_proveedor} value={String(p.id_proveedor)}>
+                    {p.nombre}
+                  </option>
+                ))}
               </select>
             </div>
           </div>
@@ -355,14 +397,14 @@ export function ProductoFormModal({ open, onClose, producto = null, onSave, isLo
               type="button"
               onClick={onClose}
               disabled={isLoading}
-              className="flex-1 px-4 py-2 border border-border rounded-lg hover:bg-muted text-sm font-medium transition-colors"
+              className="flex-1 px-4 py-2 border border-border rounded-lg hover:bg-muted text-sm font-medium transition-colors cursor-pointer"
             >
               Cancelar
             </button>
             <button
               type="submit"
               disabled={isLoading}
-              className="flex-1 px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:opacity-90 disabled:opacity-50 text-sm font-medium transition-colors shadow-xs"
+              className="flex-1 px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:opacity-90 disabled:opacity-50 text-sm font-medium transition-colors shadow-xs cursor-pointer"
             >
               {isLoading ? 'Guardando...' : producto ? 'Guardar Cambios' : 'Guardar Producto'}
             </button>

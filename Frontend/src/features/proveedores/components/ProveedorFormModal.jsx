@@ -75,8 +75,10 @@ export function ProveedorFormModal({ open, onClose, proveedor = null, onSave, is
         </div>
         <form onSubmit={handleSubmit} className="modal-form-grid space-y-4">
           <div className="modal-field-wide">
-            <label className="block mb-2 text-sm font-medium">Nombre</label>
+            <label htmlFor="proveedor_nombre" className="block mb-2 text-sm font-medium">Nombre / Razón Social *</label>
             <input
+              id="proveedor_nombre"
+              name="nombre"
               type="text"
               maxLength={150}
               required
@@ -87,8 +89,10 @@ export function ProveedorFormModal({ open, onClose, proveedor = null, onSave, is
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
-              <label className="block mb-2 text-sm font-medium">NIT</label>
+              <label htmlFor="proveedor_nit" className="block mb-2 text-sm font-medium">NIT / Cédula *</label>
               <input
+                id="proveedor_nit"
+                name="nit"
                 type="text"
                 maxLength={20}
                 required
@@ -98,9 +102,12 @@ export function ProveedorFormModal({ open, onClose, proveedor = null, onSave, is
               />
             </div>
             <div>
-              <label className="block mb-2 text-sm font-medium">Teléfono</label>
+              <label htmlFor="proveedor_telefono" className="block mb-2 text-sm font-medium">Teléfono</label>
               <input
+                id="proveedor_telefono"
+                name="telefono"
                 type="tel"
+                maxLength={20}
                 value={telefono}
                 onChange={(e) => setTelefono(e.target.value)}
                 className="w-full px-4 py-2 border border-input bg-input-background rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-ring"
@@ -108,8 +115,10 @@ export function ProveedorFormModal({ open, onClose, proveedor = null, onSave, is
             </div>
           </div>
           <div className="modal-field-wide">
-            <label className="block mb-2 text-sm font-medium">Correo</label>
+            <label htmlFor="proveedor_correo" className="block mb-2 text-sm font-medium">Correo Electrónico</label>
             <input
+              id="proveedor_correo"
+              name="correo"
               type="email"
               maxLength={150}
               value={correo}
@@ -118,8 +127,10 @@ export function ProveedorFormModal({ open, onClose, proveedor = null, onSave, is
             />
           </div>
           <div className="modal-field-wide">
-            <label className="block mb-2 text-sm font-medium">Dirección</label>
+            <label htmlFor="proveedor_direccion" className="block mb-2 text-sm font-medium">Dirección</label>
             <input
+              id="proveedor_direccion"
+              name="direccion"
               type="text"
               maxLength={255}
               value={direccion}
@@ -128,8 +139,10 @@ export function ProveedorFormModal({ open, onClose, proveedor = null, onSave, is
             />
           </div>
           <div className="modal-field-wide">
-            <label className="block mb-2 text-sm font-medium">Estado</label>
+            <label htmlFor="proveedor_estado" className="block mb-2 text-sm font-medium">Estado</label>
             <select
+              id="proveedor_estado"
+              name="estado"
               value={estado}
               onChange={(e) => setEstado(e.target.value)}
               className="w-full px-4 py-2 border border-input bg-input-background rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-ring"
@@ -143,14 +156,14 @@ export function ProveedorFormModal({ open, onClose, proveedor = null, onSave, is
               type="button"
               onClick={onClose}
               disabled={isLoading}
-              className="flex-1 px-4 py-2 border border-border rounded-lg hover:bg-muted text-sm font-medium transition-colors"
+              className="flex-1 px-4 py-2 border border-border rounded-lg hover:bg-muted text-sm font-medium transition-colors cursor-pointer"
             >
               Cancelar
             </button>
             <button
               type="submit"
               disabled={isLoading}
-              className="flex-1 px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:opacity-90 disabled:opacity-50 text-sm font-medium transition-colors"
+              className="flex-1 px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:opacity-90 disabled:opacity-50 text-sm font-medium transition-colors shadow-xs cursor-pointer"
             >
               {isLoading ? 'Guardando...' : proveedor ? 'Guardar Cambios' : 'Guardar'}
             </button>

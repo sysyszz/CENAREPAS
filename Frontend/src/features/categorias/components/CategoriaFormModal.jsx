@@ -4,18 +4,18 @@ import { X } from 'lucide-react';
 export function CategoriaFormModal({ open, onClose, categoria = null, onSave, isLoading = false }) {
   const [nombre, setNombre] = useState('');
   const [descripcion, setDescripcion] = useState('');
-  const [estado, setEstado] = useState('Activo');
+  const [estado, setEstado] = useState('activo');
 
   useEffect(() => {
     if (categoria) {
       setNombre(categoria.nombre || '');
       setDescripcion(categoria.descripcion || '');
       const isInactive = String(categoria.estado ?? '').toLowerCase() === 'inactivo';
-      setEstado(isInactive ? 'Inactivo' : 'Activo');
+      setEstado(isInactive ? 'inactivo' : 'activo');
     } else {
       setNombre('');
       setDescripcion('');
-      setEstado('Activo');
+      setEstado('activo');
     }
   }, [categoria, open]);
 
@@ -25,8 +25,8 @@ export function CategoriaFormModal({ open, onClose, categoria = null, onSave, is
     e.preventDefault();
     if (!nombre.trim()) return;
     const payload = categoria
-      ? { ...categoria, nombre: nombre.trim(), descripcion: descripcion.trim(), estado }
-      : { nombre: nombre.trim(), descripcion: descripcion.trim(), estado };
+      ? { ...categoria, nombre: nombre.trim(), descripcion: descripcion.trim() || null, estado }
+      : { nombre: nombre.trim(), descripcion: descripcion.trim() || null, estado };
     if (onSave) {
       onSave(payload);
     }
@@ -49,38 +49,45 @@ export function CategoriaFormModal({ open, onClose, categoria = null, onSave, is
 
         <form onSubmit={handleSubmit} className="modal-form-grid space-y-4">
           <div className="modal-field-wide">
-            <label className="block mb-2 text-sm font-medium">Nombre de la Categoría</label>
+            <label htmlFor="categoria_nombre" className="block mb-2 text-sm font-medium">Nombre de la Categoría</label>
             <input
+              id="categoria_nombre"
+              name="nombre"
               type="text"
               maxLength={80}
               required
               value={nombre}
               onChange={(e) => setNombre(e.target.value)}
               placeholder="Ej. Arepas de Chócolo"
-              className="w-full px-4 py-2 border border-input bg-input-background rounded-lg focus:outline-none focus:ring-2 focus:ring-ring"
+              className="w-full px-4 py-2 border border-input bg-input-background rounded-lg focus:outline-none focus:ring-2 focus:ring-ring text-sm"
             />
           </div>
 
           <div className="modal-field-wide">
-            <label className="block mb-2 text-sm font-medium">Descripción</label>
+            <label htmlFor="categoria_descripcion" className="block mb-2 text-sm font-medium">Descripción</label>
             <textarea
+              id="categoria_descripcion"
+              name="descripcion"
+              maxLength={255}
               rows={3}
               value={descripcion}
               onChange={(e) => setDescripcion(e.target.value)}
               placeholder="Descripción breve de la categoría..."
-              className="w-full px-4 py-2 border border-input bg-input-background rounded-lg focus:outline-none focus:ring-2 focus:ring-ring"
+              className="w-full px-4 py-2 border border-input bg-input-background rounded-lg focus:outline-none focus:ring-2 focus:ring-ring text-sm"
             ></textarea>
           </div>
 
           <div className="modal-field-wide">
-            <label className="block mb-2 text-sm font-medium">Estado</label>
+            <label htmlFor="categoria_estado" className="block mb-2 text-sm font-medium">Estado</label>
             <select
+              id="categoria_estado"
+              name="estado"
               value={estado}
               onChange={(e) => setEstado(e.target.value)}
               className="px-4 py-2 border border-input bg-input-background rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-ring w-full"
             >
-              <option value="Activo">Activo</option>
-              <option value="Inactivo">Inactivo</option>
+              <option value="activo">Activo</option>
+              <option value="inactivo">Inactivo</option>
             </select>
           </div>
 
@@ -89,14 +96,14 @@ export function CategoriaFormModal({ open, onClose, categoria = null, onSave, is
               type="button"
               onClick={onClose}
               disabled={isLoading}
-              className="flex-1 px-4 py-2 border border-border rounded-lg hover:bg-muted font-medium transition-colors"
+              className="flex-1 px-4 py-2 border border-border rounded-lg hover:bg-muted font-medium transition-colors text-sm cursor-pointer"
             >
               Cancelar
             </button>
             <button
               type="submit"
               disabled={isLoading}
-              className="flex-1 px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:opacity-90 disabled:opacity-50 font-medium transition-colors"
+              className="flex-1 px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:opacity-90 disabled:opacity-50 font-medium transition-colors text-sm cursor-pointer shadow-xs"
             >
               {isLoading ? 'Guardando...' : 'Guardar'}
             </button>

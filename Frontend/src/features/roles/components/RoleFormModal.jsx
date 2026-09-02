@@ -81,8 +81,10 @@ export function RoleFormModal({ open, onClose, role = null, onSave, isLoading = 
         </div>
         <form onSubmit={handleSubmit} className="modal-form-grid role-form-content space-y-4">
           <div className="modal-field modal-field-wide">
-            <label className="block mb-2 text-sm font-medium">Nombre del rol</label>
+            <label htmlFor="rol_nombre" className="block mb-2 text-sm font-medium">Nombre del rol</label>
             <input
+              id="rol_nombre"
+              name="nombre"
               type="text"
               maxLength={50}
               required
@@ -93,8 +95,10 @@ export function RoleFormModal({ open, onClose, role = null, onSave, isLoading = 
             />
           </div>
           <div className="modal-field modal-field-wide">
-            <label className="block mb-2 text-sm font-medium">Estado</label>
+            <label htmlFor="rol_estado" className="block mb-2 text-sm font-medium">Estado</label>
             <select
+              id="rol_estado"
+              name="estado"
               value={estado}
               onChange={(e) => setEstado(e.target.value)}
               className="w-full px-4 py-2 border border-input bg-input-background rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-ring"
@@ -104,8 +108,10 @@ export function RoleFormModal({ open, onClose, role = null, onSave, isLoading = 
             </select>
           </div>
           <div className="modal-field role-description-field">
-            <label className="block mb-2 text-sm font-medium">Descripción</label>
+            <label htmlFor="rol_descripcion" className="block mb-2 text-sm font-medium">Descripción</label>
             <textarea
+              id="rol_descripcion"
+              name="descripcion"
               maxLength={255}
               rows={3}
               placeholder="Describe el alcance de este rol"

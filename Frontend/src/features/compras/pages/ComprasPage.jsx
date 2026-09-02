@@ -6,6 +6,7 @@ import { mockUsuarios } from '../../usuarios/services/usuariosService';
 import { DataTable } from '../../../shared/components/DataTable';
 import { RowActions } from '../../../shared/components/RowActions';
 import { CompraFormModal } from '../components/CompraFormModal';
+import { mockDetallesCompra } from '../services/comprasService';
 import ConfirmDialog from '../../../shared/components/ConfirmDialog';
 import Toast from '../../../shared/components/Toast';
 import DetailModal from '../../../shared/components/DetailModal';
@@ -220,6 +221,19 @@ export default function ComprasPage() {
           { label: 'Fecha de Compra', value: detailModal.data.fecha_compra },
           { label: 'Valor Total', value: <span className="font-semibold text-primary">{`$${Number(detailModal.data.totalNum || detailModal.data.valor_total || 0).toLocaleString('es-CO')}`}</span> },
           { label: 'Medio de Pago', value: <span className="capitalize">{detailModal.data.medio_pago}</span> },
+          {
+            label: 'Insumos Comprados',
+            value: (
+              <div className="space-y-1 mt-1 text-left w-full">
+                {(detailModal.data.detalles || mockDetallesCompra.filter((d) => d.id_compra === detailModal.data.id_compra)).map((item, idx) => (
+                  <div key={idx} className="flex items-center justify-between text-xs py-1 border-b border-border/40 last:border-0">
+                    <span className="font-medium text-foreground">{item.nombre_insumo || `Insumo #${item.id_insumo}`}</span>
+                    <span className="text-muted-foreground">{item.cantidad} {item.unidad_medida || 'kg'} x ${Number(item.valor_unitario).toLocaleString('es-CO')} = <strong className="text-primary">${Number(item.subtotal).toLocaleString('es-CO')}</strong></span>
+                  </div>
+                ))}
+              </div>
+            ),
+          },
           {
             label: 'Comprobante / Factura',
             value: detailModal.data.comprobante_url ? (

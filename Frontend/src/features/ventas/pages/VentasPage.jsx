@@ -6,6 +6,7 @@ import { mockUsuarios } from '../../usuarios/services/usuariosService';
 import { DataTable } from '../../../shared/components/DataTable';
 import { RowActions } from '../../../shared/components/RowActions';
 import { VentaFormModal } from '../components/VentaFormModal';
+import { mockDetallesVenta } from '../services/ventasService';
 import ConfirmDialog from '../../../shared/components/ConfirmDialog';
 import Toast from '../../../shared/components/Toast';
 import DetailModal from '../../../shared/components/DetailModal';
@@ -215,6 +216,19 @@ export default function VentasPage() {
           { label: 'Fecha Venta', value: detailModal.data.fecha_venta },
           { label: 'Medio de Pago', value: <span className="capitalize">{detailModal.data.medio_pago}</span> },
           { label: 'Valor Total', value: <span className="font-semibold text-primary">{`$${Number(detailModal.data.valor_total || 0).toLocaleString('es-CO')}`}</span> },
+          {
+            label: 'Productos Vendidos',
+            value: (
+              <div className="space-y-1 mt-1 text-left w-full">
+                {(detailModal.data.detalles || mockDetallesVenta.filter((d) => d.id_venta === detailModal.data.id_venta)).map((item, idx) => (
+                  <div key={idx} className="flex items-center justify-between text-xs py-1 border-b border-border/40 last:border-0">
+                    <span className="font-medium text-foreground">{item.nombre_producto || `Producto #${item.id_producto}`}</span>
+                    <span className="text-muted-foreground">{item.cantidad} und x ${Number(item.precio_unitario).toLocaleString('es-CO')} = <strong className="text-primary">${Number(item.subtotal).toLocaleString('es-CO')}</strong></span>
+                  </div>
+                ))}
+              </div>
+            ),
+          },
           {
             label: 'Comprobante de Pago',
             value: detailModal.data.comprobante_url ? (

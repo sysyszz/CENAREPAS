@@ -7,7 +7,7 @@ export function ClienteFormModal({ open, onClose, cliente = null, onSave, isLoad
   const [telefono, setTelefono] = useState('');
   const [correo, setCorreo] = useState('');
   const [direccion, setDireccion] = useState('');
-  const [estado, setEstado] = useState('Activo');
+  const [estado, setEstado] = useState('activo');
 
   useEffect(() => {
     if (cliente) {
@@ -17,14 +17,14 @@ export function ClienteFormModal({ open, onClose, cliente = null, onSave, isLoad
       setCorreo(cliente.correo || '');
       setDireccion(cliente.direccion || '');
       const isInactive = String(cliente.estado ?? '').toLowerCase() === 'inactivo';
-      setEstado(isInactive ? 'Inactivo' : 'Activo');
+      setEstado(isInactive ? 'inactivo' : 'activo');
     } else {
       setNombre('');
       setDocumento('');
       setTelefono('');
       setCorreo('');
       setDireccion('');
-      setEstado('Activo');
+      setEstado('activo');
     }
   }, [cliente, open]);
 
@@ -32,10 +32,25 @@ export function ClienteFormModal({ open, onClose, cliente = null, onSave, isLoad
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    if (!nombre.trim()) return;
+    if (!nombre.trim() || !documento.trim()) return;
     const payload = cliente
-      ? { ...cliente, nombre: nombre.trim(), documento: documento.trim(), telefono: telefono.trim(), correo: correo.trim(), direccion: direccion.trim(), estado }
-      : { nombre: nombre.trim(), documento: documento.trim(), telefono: telefono.trim(), correo: correo.trim(), direccion: direccion.trim(), estado };
+      ? {
+          ...cliente,
+          nombre: nombre.trim(),
+          documento: documento.trim(),
+          telefono: telefono.trim() || null,
+          correo: correo.trim() || null,
+          direccion: direccion.trim() || null,
+          estado,
+        }
+      : {
+          nombre: nombre.trim(),
+          documento: documento.trim(),
+          telefono: telefono.trim() || null,
+          correo: correo.trim() || null,
+          direccion: direccion.trim() || null,
+          estado,
+        };
     if (onSave) {
       onSave(payload);
     } else {
@@ -48,14 +63,21 @@ export function ClienteFormModal({ open, onClose, cliente = null, onSave, isLoad
       <div className="form-modal-panel bg-card p-6 rounded-lg max-w-md w-full border border-border space-y-4">
         <div className="flex items-start justify-between gap-4">
           <h2 className="text-lg font-bold">{cliente ? 'Editar Cliente' : 'Nuevo Cliente'}</h2>
-          <button onClick={onClose} type="button" className="p-2 -mr-2 -mt-2 rounded-lg hover:bg-muted text-muted-foreground" aria-label="Cerrar formulario">
+          <button
+            onClick={onClose}
+            type="button"
+            className="p-2 -mr-2 -mt-2 rounded-lg hover:bg-muted text-muted-foreground"
+            aria-label="Cerrar formulario"
+          >
             <X className="w-5 h-5" />
           </button>
         </div>
         <form onSubmit={handleSubmit} className="modal-form-grid space-y-4">
           <div className="modal-field-wide">
-            <label className="block mb-2 text-sm font-medium">Nombre / Razón Social</label>
+            <label htmlFor="cliente_nombre" className="block mb-2 text-sm font-medium">Nombre / Razón Social *</label>
             <input
+              id="cliente_nombre"
+              name="nombre"
               type="text"
               value={nombre}
               onChange={(e) => setNombre(e.target.value)}
@@ -65,8 +87,10 @@ export function ClienteFormModal({ open, onClose, cliente = null, onSave, isLoad
             />
           </div>
           <div>
-            <label className="block mb-2 text-sm font-medium">Documento</label>
+            <label htmlFor="cliente_documento" className="block mb-2 text-sm font-medium">Documento / Cédula / NIT *</label>
             <input
+              id="cliente_documento"
+              name="documento"
               type="text"
               value={documento}
               onChange={(e) => setDocumento(e.target.value)}
@@ -76,18 +100,23 @@ export function ClienteFormModal({ open, onClose, cliente = null, onSave, isLoad
             />
           </div>
           <div>
-            <label className="block mb-2 text-sm font-medium">Teléfono</label>
+            <label htmlFor="cliente_telefono" className="block mb-2 text-sm font-medium">Teléfono</label>
             <input
+              id="cliente_telefono"
+              name="telefono"
               type="tel"
               value={telefono}
               onChange={(e) => setTelefono(e.target.value)}
+              maxLength={20}
               className="w-full px-4 py-2 border border-input bg-input-background rounded-lg focus:outline-none focus:ring-2 focus:ring-ring text-sm"
               placeholder="+57 300 000 0000"
             />
           </div>
           <div className="modal-field-wide">
-            <label className="block mb-2 text-sm font-medium">Correo</label>
+            <label htmlFor="cliente_correo" className="block mb-2 text-sm font-medium">Correo Electrónico</label>
             <input
+              id="cliente_correo"
+              name="correo"
               type="email"
               value={correo}
               onChange={(e) => setCorreo(e.target.value)}
@@ -96,8 +125,10 @@ export function ClienteFormModal({ open, onClose, cliente = null, onSave, isLoad
             />
           </div>
           <div className="modal-field-wide">
-            <label className="block mb-2 text-sm font-medium">Dirección</label>
+            <label htmlFor="cliente_direccion" className="block mb-2 text-sm font-medium">Dirección</label>
             <textarea
+              id="cliente_direccion"
+              name="direccion"
               rows={2}
               value={direccion}
               onChange={(e) => setDireccion(e.target.value)}
@@ -106,14 +137,16 @@ export function ClienteFormModal({ open, onClose, cliente = null, onSave, isLoad
             />
           </div>
           <div className="modal-field-wide">
-            <label className="block mb-2 text-sm font-medium">Estado</label>
+            <label htmlFor="cliente_estado" className="block mb-2 text-sm font-medium">Estado</label>
             <select
+              id="cliente_estado"
+              name="estado"
               value={estado}
               onChange={(e) => setEstado(e.target.value)}
               className="w-full px-4 py-2 border border-input bg-input-background rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-ring"
             >
-              <option value="Activo">Activo</option>
-              <option value="Inactivo">Inactivo</option>
+              <option value="activo">Activo</option>
+              <option value="inactivo">Inactivo</option>
             </select>
           </div>
           <div className="flex gap-2 pt-4">
@@ -121,14 +154,14 @@ export function ClienteFormModal({ open, onClose, cliente = null, onSave, isLoad
               type="button"
               onClick={onClose}
               disabled={isLoading}
-              className="flex-1 px-4 py-2 border border-border rounded-lg hover:bg-muted text-sm font-medium transition-colors"
+              className="flex-1 px-4 py-2 border border-border rounded-lg hover:bg-muted text-sm font-medium transition-colors cursor-pointer"
             >
               Cancelar
             </button>
             <button
               type="submit"
               disabled={isLoading}
-              className="flex-1 px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:opacity-90 disabled:opacity-50 text-sm font-medium transition-colors"
+              className="flex-1 px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:opacity-90 disabled:opacity-50 text-sm font-medium transition-colors cursor-pointer shadow-xs"
             >
               {isLoading ? 'Guardando...' : 'Guardar'}
             </button>

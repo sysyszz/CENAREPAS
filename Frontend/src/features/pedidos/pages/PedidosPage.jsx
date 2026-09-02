@@ -6,6 +6,7 @@ import { mockUsuarios } from '../../usuarios/services/usuariosService';
 import { DataTable } from '../../../shared/components/DataTable';
 import { RowActions } from '../../../shared/components/RowActions';
 import { PedidoFormModal } from '../components/PedidoFormModal';
+import { mockDetallesPedido } from '../services/pedidosService';
 import ConfirmDialog from '../../../shared/components/ConfirmDialog';
 import Toast from '../../../shared/components/Toast';
 import DetailModal from '../../../shared/components/DetailModal';
@@ -212,6 +213,19 @@ export default function PedidosPage() {
           { label: 'Fecha de Creación', value: detailModal.data.fecha_pedido },
           { label: 'Fecha de Entrega Estimada', value: detailModal.data.fecha_entrega || 'Por definir' },
           { label: 'Valor Total', value: <span className="font-semibold text-primary">{`$${Number(detailModal.data.totalNum || detailModal.data.valor_total || 0).toLocaleString('es-CO')}`}</span> },
+          {
+            label: 'Productos del Pedido',
+            value: (
+              <div className="space-y-1 mt-1 text-left w-full">
+                {(detailModal.data.detalles || mockDetallesPedido.filter((d) => d.id_pedido === detailModal.data.id_pedido)).map((item, idx) => (
+                  <div key={idx} className="flex items-center justify-between text-xs py-1 border-b border-border/40 last:border-0">
+                    <span className="font-medium text-foreground">{item.nombre_producto || `Producto #${item.id_producto}`}</span>
+                    <span className="text-muted-foreground">{item.cantidad} und x ${Number(item.precio_unitario).toLocaleString('es-CO')} = <strong className="text-primary">${Number(item.subtotal).toLocaleString('es-CO')}</strong></span>
+                  </div>
+                ))}
+              </div>
+            ),
+          },
           { label: 'Observaciones', value: detailModal.data.observaciones || 'Sin observaciones' },
           { label: 'Motivo de Anulación', value: detailModal.data.motivo_anulacion || 'N/A' },
           { label: 'Estado', value: detailModal.data.estado },
