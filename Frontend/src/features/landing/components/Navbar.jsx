@@ -1,10 +1,11 @@
 // components/Navbar.jsx
-import logoIcon from '../../../assets/logo-icon.png';
+import { useConfiguracion } from '../../../shared/contexts/ConfiguracionContext';
 import { useNavigateTo } from '../hooks/useNavigateTo';
 
 const NAV = ['Inicio', 'Nosotros', 'Productos', 'Ventajas', 'Contacto'];
 
 export const Navbar = () => {
+  const { nombreProyecto, logoUrl } = useConfiguracion();
   const navigateToAdmin = useNavigateTo('/admin');
 
   return (
@@ -29,8 +30,8 @@ export const Navbar = () => {
         {/* Logo */}
         <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexShrink: 0 }}>
           <img
-            src={logoIcon}
-            alt="CENAREPAS"
+            src={logoUrl}
+            alt={nombreProyecto}
             style={{
               width: 46,
               height: 46,
@@ -47,7 +48,7 @@ export const Navbar = () => {
               color: '#1A5CDB',
               fontFamily: "'Playfair Display', serif"
             }}>
-              AREPAS DEL CAMPO
+              {nombreProyecto}
             </div>
             <div style={{
               fontWeight: 400,

@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { LogIn, Menu, X } from 'lucide-react';
-import logoIcon from '../../../assets/logo-icon.png';
+import { useConfiguracion } from '../../../shared/contexts/ConfiguracionContext';
 
 const NAV_LINKS = [
   { label: 'Inicio', href: '#inicio' },
@@ -11,6 +11,7 @@ const NAV_LINKS = [
 ];
 
 export function SiteHeader() {
+  const { nombreProyecto, logoUrl, eslogan } = useConfiguracion();
   const [scrolled, setScrolled] = useState(false);
   const [open, setOpen] = useState(false);
 
@@ -26,13 +27,13 @@ export function SiteHeader() {
       <div className="mx-auto flex h-20 max-w-6xl items-center justify-between gap-4 px-4 sm:px-6">
         <a href="#inicio" className="flex items-center gap-3">
           <img
-            src={logoIcon}
-            alt="CENAREPAS"
+            src={logoUrl}
+            alt={nombreProyecto}
             className="h-12 w-12 shrink-0 object-contain drop-shadow-md sm:h-[3.25rem] sm:w-[3.25rem]"
           />
           <span className="flex flex-col leading-tight">
-            <span className="text-base font-extrabold tracking-tight text-brand-dark sm:text-lg">CENAREPAS</span>
-            <span className="text-[10px] font-medium tracking-[0.18em] text-muted-foreground">SISTEMA DE GESTIÓN</span>
+            <span className="text-base font-extrabold tracking-tight text-brand-dark sm:text-lg">{nombreProyecto}</span>
+            <span className="text-[10px] font-medium tracking-[0.18em] text-muted-foreground uppercase">FÁBRICA DE AREPAS</span>
           </span>
         </a>
 

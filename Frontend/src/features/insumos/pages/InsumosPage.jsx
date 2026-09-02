@@ -1,17 +1,21 @@
-import { Plus, Search, Eye, Edit, Trash2, FileDown, FileSpreadsheet, Package, AlertTriangle, CheckCircle, Truck } from 'lucide-react';
+import { useState, useMemo, useEffect } from 'react';
+import { Package, AlertTriangle, CheckCircle, Truck } from 'lucide-react';
 import { useInsumos } from '../hooks/useInsumos';
-import { usePagination } from '../../../shared/hooks/usePagination';
-import { PaginationControls } from '../../../shared/components/PaginationControls';
+import { mockProveedores, getProveedores } from '../../proveedores/services/proveedoresService';
+import { DataTable } from '../../../shared/components/DataTable';
+import { RowActions } from '../../../shared/components/RowActions';
 import { InsumoFormModal } from '../components/InsumoFormModal';
 import ConfirmDialog from '../../../shared/components/ConfirmDialog';
 import Toast from '../../../shared/components/Toast';
+import DetailModal from '../../../shared/components/DetailModal';
+import PageHeader from '../../../shared/components/PageHeader';
+import { MetricCard } from '../../../shared/components/MetricCard';
 import { usePermissions } from '../../../shared/contexts/PermissionContext';
 import StatusSwitch from '../../../shared/components/StatusSwitch';
 
 export default function InsumosPage() {
   const { can } = usePermissions();
   const {
-    insumos,
     rawInsumos,
     searchQuery,
     setSearchQuery,
@@ -26,212 +30,227 @@ export default function InsumosPage() {
     deleteDialog,
     setDeleteDialog,
     isDeleting,
+    isSaving,
     toast,
     setToast,
+    handleSave,
     handleDelete,
   } = useInsumos();
-  const pagination = usePagination(insumos);
+
+  const [selectedInsumo, setSelectedInsumo] = useState(null);
+  const [proveedores, setProveedores] = useState(mockProveedores);
+
+  useEffect(() => {
+    getProveedores().then((data) => {
+      if (data && data.length > 0) setProveedores(data);
+    });
+  }, []);
+
+  const proveedorNames = useMemo(
+    () => Object.fromEntries(proveedores.map((p) => [p.id_proveedor, p.nombre])),
+    [proveedores]
+  );
 
   const totalInsumos = rawInsumos.length;
-  const disponibles = rawInsumos.filter((i) => i.estado === 'Disponible').length;
-  const bajoStock = rawInsumos.filter((i) => i.estado === 'Bajo Stock').length;
+  const disponibles = rawInsumos.filter(
+    (i) => String(i.estado).toLowerCase() === 'disponible' || String(i.estado).toLowerCase() === 'activo'
+  ).length;
+  const bajoStock = rawInsumos.filter(
+    (i) => String(i.estado).toLowerCase() === 'bajo stock' || Number(i.stock_actual) <= Number(i.stock_minimo)
+  ).length;
   const proveedoresCount = new Set(rawInsumos.map((i) => i.id_proveedor).filter(Boolean)).size;
+
+  const filteredData = useMemo(() => {
+    return rawInsumos.filter((i) => {
+      const q = searchQuery.toLowerCase().trim();
+      const proveedorNombre = (proveedorNames[i.id_proveedor] || '').toLowerCase();
+      const matchesSearch =
+        !q ||
+        i.nombre.toLowerCase().includes(q) ||
+        String(i.id_insumo).toLowerCase().includes(q) ||
+        String(i.id_proveedor).toLowerCase().includes(q) ||
+        proveedorNombre.includes(q);
+
+      const isTodosCat = categoriaFilter === 'Todas' || categoriaFilter === 'Todas las categorías';
+      const matchesCat = isTodosCat || String(i.id_proveedor) === categoriaFilter;
+
+      const isTodosEstado = estadoFilter === 'Todos' || estadoFilter === 'Todos los estados';
+      const matchesEstado =
+        isTodosEstado || String(i.estado).toLowerCase() === estadoFilter.toLowerCase();
+
+      return matchesSearch && matchesCat && matchesEstado;
+    });
+  }, [rawInsumos, searchQuery, categoriaFilter, estadoFilter, proveedorNames]);
+
+  const columns = useMemo(
+    () => [
+      {
+        key: 'id_insumo',
+        label: 'ID',
+        render: (value) => <span className="font-mono font-medium text-xs">#{value}</span>,
+      },
+      {
+        key: 'nombre',
+        label: 'Insumo',
+        render: (value) => <span className="font-semibold text-sm">{value}</span>,
+      },
+      {
+        key: 'unidad_medida',
+        label: 'Unidad de Medida',
+        render: (value) => <span className="text-muted-foreground text-xs uppercase font-medium">{value}</span>,
+      },
+      {
+        key: 'stock_actual',
+        label: 'Stock Actual',
+        render: (value, insumo) => {
+          const isLow = Number(value) <= Number(insumo.stock_minimo || 0);
+          return (
+            <div className="flex items-center gap-1.5">
+              <span className={`font-semibold text-sm ${isLow ? 'text-amber-600 dark:text-amber-400 font-bold' : ''}`}>
+                {value}
+              </span>
+              {isLow && (
+                <span className="px-1.5 py-0.5 bg-amber-500/10 text-amber-600 dark:text-amber-400 text-[10px] rounded font-semibold">
+                  Bajo
+                </span>
+              )}
+            </div>
+          );
+        },
+      },
+      {
+        key: 'id_proveedor',
+        label: 'Proveedor',
+        render: (value) => (
+          <span className="font-medium text-foreground">
+            {proveedorNames[value] || (typeof value === 'string' && isNaN(Number(value)) ? value : `Proveedor #${value}`)}
+          </span>
+        ),
+      },
+      {
+        key: 'estado',
+        label: 'Estado',
+        render: (value) => <StatusSwitch value={value} />,
+      },
+      {
+        key: 'acciones',
+        label: 'Acciones',
+        render: (_, insumo) => (
+          <RowActions
+            onView={() => setDetailModal({ isOpen: true, data: insumo })}
+            onEdit={() => {
+              setSelectedInsumo(insumo);
+              setShowModal(true);
+            }}
+            editDisabled={!can('insumos', 'editar')}
+            onDelete={() =>
+              setDeleteDialog({
+                isOpen: true,
+                id: insumo.id_insumo,
+                nombre: insumo.nombre,
+              })
+            }
+            deleteDisabled={!can('insumos', 'eliminar')}
+          />
+        ),
+      },
+    ],
+    [can, proveedorNames, setDetailModal, setShowModal, setDeleteDialog]
+  );
 
   return (
     <div className="space-y-6">
-      {/* Header con exportación */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-bold">Insumos y Materia Prima</h1>
-          <p className="text-muted-foreground">Inventario de granos, lácteos y embalajes para Masarepas</p>
-        </div>
-        <div className="flex items-center gap-2">
-          <button className="flex items-center gap-2 px-4 py-2 border border-border rounded-lg hover:bg-muted text-sm font-medium transition-colors">
-            <FileDown className="w-4 h-4" />
-            Exportar PDF
-          </button>
-          <button className="flex items-center gap-2 px-4 py-2 border border-border rounded-lg hover:bg-muted text-sm font-medium transition-colors">
-            <FileSpreadsheet className="w-4 h-4" />
-            Exportar Excel
-          </button>
-          <button
-            onClick={() => setShowModal(true)} disabled={!can('insumos', 'crear')}
-            className="flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:opacity-90 text-sm font-medium transition-colors"
-          >
-            <Plus className="w-4 h-4" />
-            Nuevo Insumo
-          </button>
-        </div>
-      </div>
+      <PageHeader
+        title="Insumos y Materia Prima"
+        subtitle="Inventario de granos, lácteos y embalajes para Masarepas"
+        addLabel="Nuevo Insumo"
+        addDisabled={!can('insumos', 'crear')}
+        onAdd={() => {
+          setSelectedInsumo(null);
+          setShowModal(true);
+        }}
+      />
 
       {/* Tarjetas de Consolidado */}
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
-        <div className="bg-card p-4 rounded-lg border border-border flex items-center gap-3">
-          <div className="p-3 bg-primary/10 rounded-lg text-primary">
-            <Package className="w-5 h-5" />
-          </div>
-          <div>
-            <p className="text-sm text-muted-foreground">Total Insumos</p>
-            <h3 className="text-xl font-bold">{totalInsumos}</h3>
-          </div>
-        </div>
-        <div className="bg-card p-4 rounded-lg border border-border flex items-center gap-3">
-          <div className="p-3 bg-success/10 rounded-lg text-success">
-            <CheckCircle className="w-5 h-5" />
-          </div>
-          <div>
-            <p className="text-sm text-muted-foreground">Disponibles</p>
-            <h3 className="text-xl font-bold">{disponibles}</h3>
-          </div>
-        </div>
-        <div className="bg-card p-4 rounded-lg border border-border flex items-center gap-3">
-          <div className="p-3 bg-warning/10 rounded-lg text-warning">
-            <AlertTriangle className="w-5 h-5" />
-          </div>
-          <div>
-            <p className="text-sm text-muted-foreground">Bajo Stock</p>
-            <h3 className="text-xl font-bold">{bajoStock}</h3>
-          </div>
-        </div>
-        <div className="bg-card p-4 rounded-lg border border-border flex items-center gap-3">
-          <div className="p-3 bg-accent/10 rounded-lg text-primary">
-            <Truck className="w-5 h-5" />
-          </div>
-          <div>
-            <p className="text-sm text-muted-foreground">Proveedores Activos</p>
-            <h3 className="text-xl font-bold">{proveedoresCount}</h3>
-          </div>
-        </div>
+        <MetricCard title="Total Insumos" value={totalInsumos} icon={Package} variant="primary" />
+        <MetricCard title="Disponibles" value={disponibles} icon={CheckCircle} variant="success" />
+        <MetricCard title="Bajo Stock" value={bajoStock} icon={AlertTriangle} variant="warning" />
+        <MetricCard title="Proveedores Activos" value={proveedoresCount} icon={Truck} variant="accent" />
       </div>
 
-      {/* Filtros y Búsqueda */}
-      <div className="bg-card p-4 rounded-lg border border-border flex flex-col sm:flex-row gap-4">
-        <div className="flex-1 relative">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-          <input
-            type="search"
-            placeholder="Buscar por código, nombre o proveedor..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full pl-10 pr-4 py-2 border border-input bg-input-background rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-ring"
-          />
-        </div>
-        <select
-          value={categoriaFilter}
-          onChange={(e) => setCategoriaFilter(e.target.value)}
-          className="px-4 py-2 border border-input bg-input-background rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-ring"
-        >
-          <option value="Todas">Todas las categorías</option>
-          <option value="Granos y Cereales">Granos y Cereales</option>
-          <option value="Lácteos y Quesos">Lácteos y Quesos</option>
-          <option value="Lácteos y Grasas">Lácteos y Grasas</option>
-          <option value="Empaques y Embalajes">Empaques y Embalajes</option>
-        </select>
-        <select
-          value={estadoFilter}
-          onChange={(e) => setEstadoFilter(e.target.value)}
-          className="px-4 py-2 border border-input bg-input-background rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-ring"
-        >
-          <option value="Todos">Todos los estados</option>
-          <option value="Disponible">Disponible</option>
-          <option value="Bajo Stock">Bajo Stock</option>
-        </select>
-      </div>
+      {/* Tabla con DataTable */}
+      <DataTable
+        columns={columns}
+        data={filteredData}
+        searchPlaceholder="Buscar por código, nombre o proveedor..."
+        searchValue={searchQuery}
+        onSearchChange={setSearchQuery}
+        filters={
+          <>
+            <select
+              value={categoriaFilter}
+              onChange={(e) => setCategoriaFilter(e.target.value)}
+              className="px-4 py-2 border border-input bg-input-background rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+            >
+              <option value="Todas">Todas las categorías</option>
+              <option value="Granos y Cereales">Granos y Cereales</option>
+              <option value="Lácteos y Quesos">Lácteos y Quesos</option>
+              <option value="Lácteos y Grasas">Lácteos y Grasas</option>
+              <option value="Empaques y Embalajes">Empaques y Embalajes</option>
+            </select>
+            <select
+              value={estadoFilter}
+              onChange={(e) => setEstadoFilter(e.target.value)}
+              className="px-4 py-2 border border-input bg-input-background rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+            >
+              <option value="Todos">Todos los estados</option>
+              <option value="Disponible">Disponible / Activo</option>
+              <option value="Bajo Stock">Bajo Stock / Inactivo</option>
+            </select>
+          </>
+        }
+      />
 
-      {/* Tabla Estandarizada */}
-      <div className="records-table-shell bg-card rounded-lg border border-border overflow-hidden">
-        <table className="w-full text-sm text-left">
-          <thead className="bg-muted text-muted-foreground font-semibold">
-            <tr>
-              <th className="px-6 py-3">ID</th>
-              <th className="px-6 py-3">Insumo</th>
-              <th className="px-6 py-3">Unidad de Medida</th>
-              <th className="px-6 py-3">Stock Actual</th>
-              <th className="px-6 py-3">Proveedor</th>
-              <th className="px-6 py-3">Estado</th>
-              <th className="px-6 py-3">Acciones</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-border">
-            {insumos.length > 0 ? (
-              pagination.paginatedData.map((insumo) => (
-                <tr key={insumo.id_insumo} className="hover:bg-muted/50 transition-colors">
-                  <td className="px-6 py-4 font-mono font-medium">{insumo.id_insumo}</td>
-                  <td className="px-6 py-4 font-semibold">{insumo.nombre}</td>
-                  <td className="px-6 py-4 text-muted-foreground">{insumo.unidad_medida}</td>
-                  <td className="px-6 py-4 font-semibold">{insumo.stock_actual}</td>
-                  <td className="px-6 py-4 text-muted-foreground">{insumo.id_proveedor}</td>
-                  <td className="px-6 py-4">
-                    <StatusSwitch value={insumo.estado} />
-                  </td>
-                  <td className="px-6 py-4">
-                    <div className="flex items-center gap-1">
-                      <button
-                        onClick={() => setDetailModal({ isOpen: true, data: insumo })}
-                        className="p-2 hover:bg-muted rounded-lg text-muted-foreground hover:text-foreground"
-                        title="Ver detalle"
-                      >
-                        <Eye className="w-4 h-4" />
-                      </button>
-                      <button
-                        onClick={() => setShowModal(true)} disabled={!can('insumos', 'editar')}
-                        className="p-2 hover:bg-muted rounded-lg text-muted-foreground hover:text-foreground"
-                        title="Editar"
-                      >
-                        <Edit className="w-4 h-4" />
-                      </button>
-                      <button
-                        onClick={() => setDeleteDialog({ isOpen: true, id: insumo.id_insumo, nombre: insumo.nombre })} disabled={!can('insumos', 'eliminar')}
-                        className="p-2 hover:bg-muted rounded-lg text-destructive"
-                        title="Eliminar"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </button>
-                    </div>
-                  </td>
-                </tr>
-              ))
-            ) : (
-              <tr>
-                <td colSpan={8} className="px-6 py-8 text-center text-muted-foreground">
-                  No se encontraron insumos.
-                </td>
-              </tr>
-            )}
-          </tbody>
-        </table>
-      </div>
+      <DetailModal
+        isOpen={detailModal.isOpen}
+        onClose={() => setDetailModal({ isOpen: false, data: null })}
+        title="Detalle del Insumo"
+        fields={
+          detailModal.data
+            ? [
+                { label: 'ID', value: `#${detailModal.data.id_insumo}` },
+                { label: 'Nombre', value: detailModal.data.nombre },
+                { label: 'Unidad de Medida', value: detailModal.data.unidad_medida },
+                { label: 'Stock Actual', value: detailModal.data.stock_actual },
+                { label: 'Stock Mínimo', value: detailModal.data.stock_minimo },
+                {
+                  label: 'Fecha de Vencimiento',
+                  value: detailModal.data.fecha_vencimiento || 'N/A',
+                },
+                {
+                  label: 'Proveedor',
+                  value:
+                    proveedorNames[detailModal.data.id_proveedor] ||
+                    detailModal.data.id_proveedor ||
+                    'N/A',
+                },
+                { label: 'Estado', value: detailModal.data.estado },
+              ]
+            : []
+        }
+      />
 
-      <PaginationControls {...pagination} />
-
-      {/* Modal de Detalle */}
-      {detailModal.isOpen && detailModal.data && (
-        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-          <div className="bg-card p-6 rounded-lg max-w-md w-full border border-border space-y-4">
-            <h3 className="text-lg font-bold">Detalle del Insumo</h3>
-            <div className="space-y-2 text-sm">
-              <p><strong>ID:</strong> {detailModal.data.id_insumo}</p>
-              <p><strong>Nombre:</strong> {detailModal.data.nombre}</p>
-              <p><strong>Unidad de Medida:</strong> {detailModal.data.unidad_medida}</p>
-              <p><strong>Stock Actual:</strong> {detailModal.data.stock_actual}</p>
-              <p><strong>Stock Mínimo:</strong> {detailModal.data.stock_minimo}</p>
-              <p><strong>Fecha de Vencimiento:</strong> {detailModal.data.fecha_vencimiento}</p>
-              <p><strong>Proveedor:</strong> {detailModal.data.id_proveedor}</p>
-              <p><strong>Estado:</strong> {detailModal.data.estado}</p>
-            </div>
-            <div className="flex justify-end pt-4">
-              <button
-                onClick={() => setDetailModal({ isOpen: false, data: null })}
-                className="px-4 py-2 bg-primary text-primary-foreground rounded-lg text-sm font-medium"
-              >
-                Cerrar
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      <InsumoFormModal open={showModal} onClose={() => setShowModal(false)} />
+      <InsumoFormModal
+        open={showModal}
+        insumo={selectedInsumo}
+        onSave={handleSave}
+        isLoading={isSaving}
+        onClose={() => {
+          setShowModal(false);
+          setSelectedInsumo(null);
+        }}
+      />
 
       <ConfirmDialog
         isOpen={deleteDialog.isOpen}
@@ -252,4 +271,3 @@ export default function InsumosPage() {
     </div>
   );
 }
-

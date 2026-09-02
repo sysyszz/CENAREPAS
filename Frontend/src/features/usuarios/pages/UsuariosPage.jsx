@@ -1,13 +1,15 @@
-import { Plus, Search, Edit, Trash2, Lock, Eye, FileDown, FileSpreadsheet, Users, UserCheck, ShieldCheck, KeyRound } from 'lucide-react';
+import { useState, useMemo } from 'react';
+import { Lock, Users, UserCheck, ShieldCheck, KeyRound } from 'lucide-react';
 import { useUsuarios } from '../hooks/useUsuarios';
 import { mockRoles } from '../../roles/services/rolesService';
-import { usePagination } from '../../../shared/hooks/usePagination';
-import { PaginationControls } from '../../../shared/components/PaginationControls';
+import { DataTable } from '../../../shared/components/DataTable';
+import { RowActions } from '../../../shared/components/RowActions';
+import { MetricCard } from '../../../shared/components/MetricCard';
 import { UsuarioFormModal } from '../components/UsuarioFormModal';
-import { UsuarioDetailModal } from '../components/UsuarioDetailModal';
-import { UsuarioEditModal } from '../components/UsuarioEditModal';
 import ConfirmDialog from '../../../shared/components/ConfirmDialog';
 import Toast from '../../../shared/components/Toast';
+import UsuarioDetailModal from '../components/UsuarioDetailModal';
+import PageHeader from '../../../shared/components/PageHeader';
 import { usePermissions } from '../../../shared/contexts/PermissionContext';
 import StatusSwitch from '../../../shared/components/StatusSwitch';
 
@@ -15,7 +17,7 @@ export default function UsuariosPage() {
   const { can } = usePermissions();
   const {
     usuarios,
-    filteredUsuarios,
+    rawUsuarios,
     searchTerm,
     setSearchTerm,
     filterRol,
@@ -24,211 +26,174 @@ export default function UsuariosPage() {
     setFilterEstado,
     showModal,
     setShowModal,
-    showDetailModal,
-    setShowDetailModal,
-    showEditModal,
-    setShowEditModal,
-    selectedUsuario,
-    editData,
-    setEditData,
+    detailModal,
+    setDetailModal,
     deleteDialog,
     setDeleteDialog,
     isDeleting,
     isSaving,
     toast,
     setToast,
+    handleSave,
     handleDelete,
-    handleViewDetail,
-    handleEdit,
-    handleSaveEdit,
   } = useUsuarios();
-  const pagination = usePagination(filteredUsuarios);
 
-  const totalUsuarios = usuarios.length;
-  const usuariosActivos = usuarios.filter((u) => u.estado === 'activo').length;
-  const rolesAsignados = new Set(usuarios.map((usuario) => usuario.id_rol)).size;
-  const credencialesConfiguradas = usuarios.filter((usuario) => Boolean(usuario.contrasena_hash)).length;
-  const roleNames = Object.fromEntries(mockRoles.map((role) => [role.id_rol, role.nombre]));
+  const [selectedUsuario, setSelectedUsuario] = useState(null);
+
+  const totalUsuarios = rawUsuarios.length;
+  const usuariosActivos = rawUsuarios.filter((u) => String(u.estado).toLowerCase() === 'activo').length;
+  const rolesAsignados = new Set(rawUsuarios.map((usuario) => usuario.id_rol)).size;
+  const credencialesConfiguradas = rawUsuarios.filter((usuario) => Boolean(usuario.contrasena_hash)).length;
+  const roleNames = useMemo(
+    () => Object.fromEntries(mockRoles.map((role) => [role.id_rol, role.nombre])),
+    []
+  );
+
+  const columns = useMemo(
+    () => [
+      {
+        key: 'id_usuario',
+        label: 'ID',
+        render: (value) => <span className="font-mono font-medium">{value}</span>,
+      },
+      {
+        key: 'nombre',
+        label: 'Nombre',
+        render: (value) => <span className="font-semibold">{value}</span>,
+      },
+      {
+        key: 'correo',
+        label: 'Correo',
+        render: (value) => <span className="text-muted-foreground">{value}</span>,
+      },
+      {
+        key: 'id_rol',
+        label: 'Rol',
+        render: (value) => (
+          <span className="px-2.5 py-1 bg-primary/10 text-primary rounded-full text-xs font-medium">
+            {roleNames[value] || 'Rol no encontrado'}
+          </span>
+        ),
+      },
+      {
+        key: 'estado',
+        label: 'Estado',
+        render: (value) => <StatusSwitch value={value} />,
+      },
+      {
+        key: 'fecha_creacion',
+        label: 'Fecha de Creación',
+        render: (value) => <span className="text-muted-foreground">{value}</span>,
+      },
+      {
+        key: 'acciones',
+        label: 'Acciones',
+        render: (_, usuario) => (
+          <RowActions
+            onView={() => setDetailModal({ isOpen: true, data: usuario })}
+            onEdit={() => {
+              setSelectedUsuario(usuario);
+              setShowModal(true);
+            }}
+            editDisabled={!can('usuarios', 'editar')}
+            onDelete={() =>
+              setDeleteDialog({
+                isOpen: true,
+                id: usuario.id_usuario,
+                nombre: usuario.nombre,
+              })
+            }
+            deleteDisabled={!can('usuarios', 'eliminar')}
+            extra={
+              <button
+                className="p-1.5 hover:bg-muted rounded-lg text-muted-foreground hover:text-foreground transition-colors"
+                title="Cambiar contraseña"
+                onClick={() => {
+                  setSelectedUsuario(usuario);
+                  setShowModal(true);
+                }}
+              >
+                <Lock className="w-4 h-4" />
+              </button>
+            }
+          />
+        ),
+      },
+    ],
+    [can, roleNames, setDetailModal, setShowModal, setDeleteDialog]
+  );
 
   return (
     <div className="space-y-6">
-      {/* Header con Exportación */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-bold">Usuarios</h1>
-          <p className="text-muted-foreground">Gestión de usuarios y accesos del sistema Masarepas</p>
-        </div>
-        <div className="flex items-center gap-2">
-          <button className="flex items-center gap-2 px-4 py-2 border border-border rounded-lg hover:bg-muted text-sm font-medium transition-colors">
-            <FileDown className="w-4 h-4" />
-            Exportar PDF
-          </button>
-          <button className="flex items-center gap-2 px-4 py-2 border border-border rounded-lg hover:bg-muted text-sm font-medium transition-colors">
-            <FileSpreadsheet className="w-4 h-4" />
-            Exportar Excel
-          </button>
-          <button
-            onClick={() => setShowModal(true)} disabled={!can('usuarios', 'crear')}
-            className="flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:opacity-90 text-sm font-medium transition-colors"
-          >
-            <Plus className="w-4 h-4" />
-            Nuevo Usuario
-          </button>
-        </div>
-      </div>
+      <PageHeader
+        title="Usuarios"
+        subtitle="Gestión de usuarios y accesos del sistema Masarepas"
+        addLabel="Nuevo Usuario"
+        addDisabled={!can('usuarios', 'crear')}
+        onAdd={() => {
+          setSelectedUsuario(null);
+          setShowModal(true);
+        }}
+      />
 
       {/* Tarjetas de Consolidado */}
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
-        <div className="bg-card p-4 rounded-lg border border-border flex items-center gap-3">
-          <div className="p-3 bg-primary/10 rounded-lg text-primary">
-            <Users className="w-5 h-5" />
-          </div>
-          <div>
-            <p className="text-sm text-muted-foreground">Total Usuarios</p>
-            <h3 className="text-xl font-bold">{totalUsuarios}</h3>
-          </div>
-        </div>
-        <div className="bg-card p-4 rounded-lg border border-border flex items-center gap-3">
-          <div className="p-3 bg-accent/10 rounded-lg text-primary"><ShieldCheck className="w-5 h-5" /></div>
-          <div><p className="text-sm text-muted-foreground">Roles Asignados</p><h3 className="text-xl font-bold">{rolesAsignados}</h3></div>
-        </div>
-        <div className="bg-card p-4 rounded-lg border border-border flex items-center gap-3">
-          <div className="p-3 bg-warning/10 rounded-lg text-warning"><KeyRound className="w-5 h-5" /></div>
-          <div><p className="text-sm text-muted-foreground">Credenciales Configuradas</p><h3 className="text-xl font-bold">{credencialesConfiguradas}</h3></div>
-        </div>
-        <div className="bg-card p-4 rounded-lg border border-border flex items-center gap-3">
-          <div className="p-3 bg-success/10 rounded-lg text-success">
-            <UserCheck className="w-5 h-5" />
-          </div>
-          <div>
-            <p className="text-sm text-muted-foreground">Usuarios Activos</p>
-            <h3 className="text-xl font-bold">{usuariosActivos}</h3>
-          </div>
-        </div>
+        <MetricCard title="Total Usuarios" value={totalUsuarios} icon={Users} variant="primary" />
+        <MetricCard title="Roles Asignados" value={rolesAsignados} icon={ShieldCheck} variant="accent" />
+        <MetricCard title="Credenciales Configuradas" value={credencialesConfiguradas} icon={KeyRound} variant="warning" />
+        <MetricCard title="Usuarios Activos" value={usuariosActivos} icon={UserCheck} variant="success" />
       </div>
 
-
-      <div className="bg-card p-4 rounded-lg border border-border">
-        <div className="flex gap-4">
-          <div className="flex-1 relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
-            <input
-              type="search"
-              placeholder="Buscar usuario..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-10 pr-4 py-2 border border-input bg-input-background rounded-lg focus:outline-none focus:ring-2 focus:ring-ring"
-            />
-          </div>
-          <select
-            value={filterRol}
-            onChange={(e) => setFilterRol(e.target.value)}
-            className="px-4 py-2 border border-input bg-input-background rounded-lg focus:outline-none focus:ring-2 focus:ring-ring"
-          >
-            <option>Todos los roles</option>
-            <option value="1">Administrador de Planta</option>
-            <option value="2">Supervisor de Producción</option>
-            <option value="3">Gestor de Compras y Proveedores</option>
-            <option value="4">Vendedor y Distribución</option>
-            <option value="5">Auditor de Calidad</option>
-          </select>
-          <select
-            value={filterEstado}
-            onChange={(e) => setFilterEstado(e.target.value)}
-            className="px-4 py-2 border border-input bg-input-background rounded-lg focus:outline-none focus:ring-2 focus:ring-ring"
-          >
-            <option>Todos los estados</option>
-            <option value="activo">Activo</option>
-            <option value="inactivo">Inactivo</option>
-          </select>
-        </div>
-      </div>
-
-      <div className="records-table-shell bg-card rounded-lg border border-border overflow-hidden">
-        <table className="w-full">
-          <thead className="bg-muted">
-            <tr>
-              <th className="text-left px-6 py-3">ID</th>
-              <th className="text-left px-6 py-3">Nombre</th>
-              <th className="text-left px-6 py-3">Correo</th>
-              <th className="text-left px-6 py-3">Rol</th>
-              <th className="text-left px-6 py-3">Estado</th>
-              <th className="text-left px-6 py-3">Fecha de Creación</th>
-              <th className="text-left px-6 py-3">Acciones</th>
-            </tr>
-          </thead>
-          <tbody>
-            {filteredUsuarios.length === 0 ? (
-              <tr>
-                <td colSpan={6} className="px-6 py-8 text-center text-muted-foreground">
-                  No se encontraron usuarios
-                </td>
-              </tr>
-            ) : (
-              pagination.paginatedData.map((usuario) => (
-                <tr key={usuario.id_usuario} className="border-b border-border hover:bg-muted/50">
-                  <td className="px-6 py-4">{usuario.id_usuario}</td>
-                  <td className="px-6 py-4">{usuario.nombre}</td>
-                  <td className="px-6 py-4 text-muted-foreground">{usuario.correo}</td>
-                  <td className="px-6 py-4">
-                    <span className="px-2 py-1 bg-primary/10 text-primary rounded text-sm">
-                      {roleNames[usuario.id_rol] || 'Rol no encontrado'}
-                    </span>
-                  </td>
-                  <td className="px-6 py-4">
-                    <StatusSwitch value={usuario.estado} />
-                  </td>
-                  <td className="px-6 py-4">{usuario.fecha_creacion}</td>
-                  <td className="px-6 py-4">
-                    <div className="flex items-center gap-2">
-                      <button
-                        onClick={() => handleViewDetail(usuario)}
-                        className="p-2 hover:bg-muted rounded-lg"
-                        title="Ver detalle"
-                      >
-                        <Eye className="w-4 h-4" />
-                      </button>
-                      <button
-                        onClick={() => handleEdit(usuario)} disabled={!can('usuarios', 'editar')}
-                        className="p-2 hover:bg-muted rounded-lg"
-                        title="Editar"
-                      >
-                        <Edit className="w-4 h-4" />
-                      </button>
-                      <button className="p-2 hover:bg-muted rounded-lg" title="Cambiar contraseña">
-                        <Lock className="w-4 h-4" />
-                      </button>
-                      <button
-                        onClick={() => setDeleteDialog({ isOpen: true, id: usuario.id_usuario, nombre: usuario.nombre })} disabled={!can('usuarios', 'eliminar')}
-                        className="p-2 hover:bg-muted rounded-lg text-destructive"
-                        title="Eliminar"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </button>
-                    </div>
-                  </td>
-                </tr>
-              ))
-            )}
-          </tbody>
-        </table>
-      </div>
-
-      <PaginationControls {...pagination} />
-
-      <UsuarioFormModal open={showModal} onClose={() => setShowModal(false)} />
-      <UsuarioDetailModal
-        open={showDetailModal}
-        usuario={selectedUsuario}
-        onClose={() => setShowDetailModal(false)}
+      {/* Tabla con DataTable */}
+      <DataTable
+        columns={columns}
+        data={usuarios}
+        searchPlaceholder="Buscar usuario por nombre o correo..."
+        searchValue={searchTerm}
+        onSearchChange={setSearchTerm}
+        filters={
+          <>
+            <select
+              value={filterRol}
+              onChange={(e) => setFilterRol(e.target.value)}
+              className="px-4 py-2 border border-input bg-input-background rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+            >
+              <option value="Todos los roles">Todos los roles</option>
+              <option value="1">Administrador de Planta</option>
+              <option value="2">Supervisor de Producción</option>
+              <option value="3">Gestor de Compras y Proveedores</option>
+              <option value="4">Vendedor y Distribución</option>
+              <option value="5">Auditor de Calidad</option>
+            </select>
+            <select
+              value={filterEstado}
+              onChange={(e) => setFilterEstado(e.target.value)}
+              className="px-4 py-2 border border-input bg-input-background rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+            >
+              <option value="Todos los estados">Todos los estados</option>
+              <option value="activo">Activo</option>
+              <option value="inactivo">Inactivo</option>
+            </select>
+          </>
+        }
       />
-      <UsuarioEditModal
-        open={showEditModal}
-        editData={editData}
-        setEditData={setEditData}
-        onClose={() => setShowEditModal(false)}
-        onSave={handleSaveEdit}
-        isSaving={isSaving}
+
+      <UsuarioDetailModal
+        isOpen={detailModal.isOpen}
+        onClose={() => setDetailModal({ isOpen: false, data: null })}
+        usuario={detailModal.data}
+        roleNames={roleNames}
+      />
+
+      <UsuarioFormModal
+        open={showModal}
+        usuario={selectedUsuario}
+        onSave={handleSave}
+        isLoading={isSaving}
+        onClose={() => {
+          setShowModal(false);
+          setSelectedUsuario(null);
+        }}
       />
 
       <ConfirmDialog
@@ -249,3 +214,4 @@ export default function UsuariosPage() {
     </div>
   );
 }
+

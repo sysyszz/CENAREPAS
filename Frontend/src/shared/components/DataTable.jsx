@@ -1,6 +1,9 @@
-import { useState } from "react";
-import { usePagination } from "../hooks/usePagination";
-import { PaginationControls } from "./PaginationControls";
+import { useState } from 'react';
+import { usePagination } from '../hooks/usePagination';
+import { PaginationControls } from './PaginationControls';
+import { SearchFilterBar } from './SearchFilterBar';
+import { RowActions } from './RowActions';
+import ConfirmDialog from './ConfirmDialog';
 import {
   Table,
   TableBody,
@@ -8,31 +11,8 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from "../ui/table";
-import { Button } from "../ui/button";
-import { Input } from "../ui/input";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "../ui/dropdown-menu";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "../ui/dialog";
-import {
-  Search,
-  Plus,
-  MoreVertical,
-  Edit,
-  Trash2,
-  Eye,
-} from "lucide-react";
+} from '../ui/table';
+import { Plus } from 'lucide-react';
 
 export function DataTable({
   columns,
@@ -41,125 +21,108 @@ export function DataTable({
   onEdit,
   onDelete,
   onView,
-  searchPlaceholder = "Buscar...",
+  searchPlaceholder = 'Buscar...',
   title,
   filters,
+  searchValue,
+  onSearchChange,
 }) {
-  const [searchTerm, setSearchTerm] = useState("");
-  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
-  const [selectedRow, setSelectedRow] = useState(null);
-  const filteredData = data.filter((row) =>
-    Object.values(row).some((value) =>
-      String(value).toLowerCase().includes(searchTerm.toLowerCase())
-    )
-  );
+  const [internalSearchTerm, setInternalSearchTerm] = useState('');
+  const [deleteDialog, setDeleteDialog] = useState({ isOpen: false, row: null });
+
+  const isControlled = searchValue !== undefined;
+  const searchTerm = isControlled ? searchValue : internalSearchTerm;
+
+  const handleSearchChange = (e) => {
+    const val = e.target.value;
+    if (isControlled) {
+      onSearchChange?.(val);
+    } else {
+      setInternalSearchTerm(val);
+    }
+  };
+
+  const filteredData = isControlled
+    ? data
+    : data.filter((row) =>
+        Object.values(row).some((value) =>
+          String(value).toLowerCase().includes(searchTerm.toLowerCase())
+        )
+      );
 
   const pagination = usePagination(filteredData);
 
-  const handleDelete = () => {
-    if (onDelete && selectedRow) {
-      onDelete(selectedRow);
+  const hasRowActions = Boolean(onEdit || onDelete || onView);
+
+  const handleConfirmDelete = () => {
+    if (onDelete && deleteDialog.row) {
+      onDelete(deleteDialog.row);
     }
-    setShowDeleteDialog(false);
-    setSelectedRow(null);
+    setDeleteDialog({ isOpen: false, row: null });
   };
 
   return (
     <div className="space-y-4">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
-        <div className="flex-1 flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
-          <div className="relative flex-1 max-w-sm">
-            <Search
-              className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4"
-              style={{ color: "#64748B" }}
-            />
-            <Input
-              placeholder={searchPlaceholder}
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-10"
-              style={{ backgroundColor: "#FFFFFF", borderColor: "#E2E8F0" }}
-            />
-          </div>
-          {filters}
+      {/* Header con SearchFilterBar compartido */}
+      <div className="flex flex-col sm:flex-row gap-4 items-stretch sm:items-center justify-between">
+        <div className="flex-1">
+          <SearchFilterBar
+            placeholder={searchPlaceholder}
+            value={searchTerm}
+            onChange={handleSearchChange}
+          >
+            {filters}
+          </SearchFilterBar>
         </div>
         {onAdd && (
-          <Button
+          <button
+            type="button"
             onClick={onAdd}
-            className="text-white"
-            style={{ backgroundColor: "#2563EB" }}
+            className="flex items-center justify-center gap-2 px-4 py-2.5 bg-primary text-primary-foreground rounded-lg hover:opacity-90 text-sm font-medium transition-colors shrink-0 shadow-xs h-10"
           >
-            <Plus className="w-4 h-4 mr-2" />
+            <Plus className="w-4 h-4" />
             Agregar
-          </Button>
+          </button>
         )}
       </div>
 
       {/* Table */}
-      <div
-        className="rounded-lg border overflow-hidden"
-        style={{ backgroundColor: "#FFFFFF", borderColor: "#E2E8F0" }}
-      >
+      <div className="records-table-shell bg-card rounded-lg border border-border overflow-hidden">
         <Table>
           <TableHeader>
-            <TableRow style={{ backgroundColor: "#F8FAFC" }}>
+            <TableRow className="bg-muted text-muted-foreground font-semibold">
               {columns.map((column) => (
-                <TableHead key={column.key} style={{ color: "#0F172A", fontWeight: 600 }}>
+                <TableHead key={column.key} className="px-6 py-3 font-semibold text-foreground">
                   {column.label}
                 </TableHead>
               ))}
-              {(onEdit || onDelete || onView) && (
-                <TableHead style={{ color: "#0F172A", fontWeight: 600 }}>Acciones</TableHead>
+              {hasRowActions && (
+                <TableHead className="px-6 py-3 font-semibold text-foreground">Acciones</TableHead>
               )}
             </TableRow>
           </TableHeader>
-          <TableBody>
+          <TableBody className="divide-y divide-border">
             {pagination.paginatedData.length > 0 ? (
               pagination.paginatedData.map((row, index) => (
-                <TableRow key={index}>
+                <TableRow key={index} className="hover:bg-muted/50 transition-colors">
                   {columns.map((column) => (
-                    <TableCell key={column.key} style={{ color: "#0F172A" }}>
+                    <TableCell key={column.key} className="px-6 py-4">
                       {column.render
                         ? column.render(row[column.key], row)
                         : row[column.key]}
                     </TableCell>
                   ))}
-                  {(onEdit || onDelete || onView) && (
-                    <TableCell>
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button variant="ghost" size="icon">
-                            <MoreVertical className="w-4 h-4" />
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                          {onView && (
-                            <DropdownMenuItem onClick={() => onView(row)}>
-                              <Eye className="w-4 h-4 mr-2" />
-                              Ver Detalle
-                            </DropdownMenuItem>
-                          )}
-                          {onEdit && (
-                            <DropdownMenuItem onClick={() => onEdit(row)}>
-                              <Edit className="w-4 h-4 mr-2" />
-                              Editar
-                            </DropdownMenuItem>
-                          )}
-                          {onDelete && (
-                            <DropdownMenuItem
-                              onClick={() => {
-                                setSelectedRow(row);
-                                setShowDeleteDialog(true);
-                              }}
-                              style={{ color: "#EF4444" }}
-                            >
-                              <Trash2 className="w-4 h-4 mr-2" />
-                              Eliminar
-                            </DropdownMenuItem>
-                          )}
-                        </DropdownMenuContent>
-                      </DropdownMenu>
+                  {hasRowActions && (
+                    <TableCell className="px-6 py-4">
+                      <RowActions
+                        onView={onView ? () => onView(row) : undefined}
+                        onEdit={onEdit ? () => onEdit(row) : undefined}
+                        onDelete={
+                          onDelete
+                            ? () => setDeleteDialog({ isOpen: true, row })
+                            : undefined
+                        }
+                      />
                     </TableCell>
                   )}
                 </TableRow>
@@ -167,9 +130,8 @@ export function DataTable({
             ) : (
               <TableRow>
                 <TableCell
-                  colSpan={columns.length + 1}
-                  className="text-center py-8"
-                  style={{ color: "#64748B" }}
+                  colSpan={columns.length + (hasRowActions ? 1 : 0)}
+                  className="px-6 py-8 text-center text-muted-foreground"
                 >
                   No se encontraron resultados
                 </TableCell>
@@ -179,31 +141,20 @@ export function DataTable({
         </Table>
       </div>
 
-      {/* Pagination */}
+      {/* Pagination con PaginationControls compartido */}
       <PaginationControls {...pagination} />
 
       {/* Delete Confirmation Dialog */}
-      <Dialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle style={{ color: "#0F172A" }}>Confirmar Eliminación</DialogTitle>
-            <DialogDescription style={{ color: "#64748B" }}>
-              ¿Estás seguro de que deseas eliminar este registro? Esta acción no se puede deshacer.
-            </DialogDescription>
-          </DialogHeader>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setShowDeleteDialog(false)}>
-              Cancelar
-            </Button>
-            <Button
-              onClick={handleDelete}
-              style={{ backgroundColor: "#EF4444", color: "#FFFFFF" }}
-            >
-              Eliminar
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      {hasRowActions && (
+        <ConfirmDialog
+          isOpen={deleteDialog.isOpen}
+          title="Confirmar Eliminación"
+          message="¿Estás seguro de que deseas eliminar este registro? Esta acción no se puede deshacer."
+          confirmText="Eliminar"
+          onConfirm={handleConfirmDelete}
+          onCancel={() => setDeleteDialog({ isOpen: false, row: null })}
+        />
+      )}
     </div>
   );
 }

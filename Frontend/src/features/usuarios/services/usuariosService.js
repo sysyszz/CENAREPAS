@@ -1,5 +1,5 @@
 // usuariosService.js - Servicio para la gestión de usuarios en Masarepas
-export const mockUsuarios = [
+export let mockUsuarios = [
   {
     id_usuario: 1,
     nombre: "Carlos Eduardo Gómez",
@@ -61,7 +61,25 @@ export const getUsuarios = async () => {
   return [...mockUsuarios];
 };
 
-export const createUsuario = async (usuario) => ({ id_usuario: Date.now(), ...usuario });
-export const updateUsuario = async (id_usuario, usuario) => ({ id_usuario, ...usuario });
-export const deleteUsuario = async (id_usuario) => true;
+export const createUsuario = async (usuario) => {
+  const newObj = {
+    id_usuario: Date.now(),
+    fecha_creacion: new Date().toISOString(),
+    estado: 'activo',
+    ...usuario,
+  };
+  mockUsuarios = [newObj, ...mockUsuarios];
+  return newObj;
+};
+
+export const updateUsuario = async (id_usuario, usuario) => {
+  mockUsuarios = mockUsuarios.map((u) => (u.id_usuario === id_usuario ? { ...u, ...usuario } : u));
+  return { id_usuario, ...usuario };
+};
+
+export const deleteUsuario = async (id_usuario) => {
+  mockUsuarios = mockUsuarios.filter((u) => u.id_usuario !== id_usuario);
+  return true;
+};
+
 

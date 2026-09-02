@@ -1,17 +1,22 @@
-import { Plus, Search, Eye, Edit, XCircle, FileDown, FileSpreadsheet, ShoppingCart, CheckCircle, Clock, DollarSign } from 'lucide-react';
+import { useState, useMemo, useEffect } from 'react';
+import { ShoppingCart, CheckCircle, Clock, DollarSign } from 'lucide-react';
 import { useCompras } from '../hooks/useCompras';
-import { usePagination } from '../../../shared/hooks/usePagination';
-import { PaginationControls } from '../../../shared/components/PaginationControls';
+import { mockProveedores, getProveedores } from '../../proveedores/services/proveedoresService';
+import { mockUsuarios } from '../../usuarios/services/usuariosService';
+import { DataTable } from '../../../shared/components/DataTable';
+import { RowActions } from '../../../shared/components/RowActions';
 import { CompraFormModal } from '../components/CompraFormModal';
 import ConfirmDialog from '../../../shared/components/ConfirmDialog';
 import Toast from '../../../shared/components/Toast';
+import DetailModal from '../../../shared/components/DetailModal';
+import PageHeader from '../../../shared/components/PageHeader';
+import { MetricCard } from '../../../shared/components/MetricCard';
 import { usePermissions } from '../../../shared/contexts/PermissionContext';
 import StatusSwitch from '../../../shared/components/StatusSwitch';
 
 export default function ComprasPage() {
   const { can } = usePermissions();
   const {
-    compras,
     rawCompras,
     searchQuery,
     setSearchQuery,
@@ -24,190 +29,227 @@ export default function ComprasPage() {
     deleteDialog,
     setDeleteDialog,
     isDeleting,
+    isSaving,
     toast,
     setToast,
+    handleSave,
     handleAnular,
   } = useCompras();
-  const pagination = usePagination(compras);
+
+  const [selectedCompra, setSelectedCompra] = useState(null);
+  const [proveedores, setProveedores] = useState(mockProveedores);
+
+  useEffect(() => {
+    getProveedores().then((data) => {
+      if (data && data.length > 0) setProveedores(data);
+    });
+  }, []);
+
+  const proveedoresNames = useMemo(
+    () => Object.fromEntries(proveedores.map((p) => [p.id_proveedor, p.nombre])),
+    [proveedores]
+  );
+
+  const usuariosNames = useMemo(
+    () => Object.fromEntries(mockUsuarios.map((u) => [u.id_usuario, u.nombre])),
+    []
+  );
 
   const totalCompras = rawCompras.length;
-  const recibidas = rawCompras.filter((c) => c.estado === 'Recibida').length;
-  const pendientes = rawCompras.filter((c) => c.estado === 'Pendiente').length;
-  const totalInvertido = rawCompras.reduce((acc, c) => acc + (c.totalNum || 0), 0);
+  const recibidas = rawCompras.filter(
+    (c) => String(c.estado).toLowerCase() === 'recibida' || String(c.estado).toLowerCase() === 'activo'
+  ).length;
+  const pendientes = rawCompras.filter(
+    (c) => String(c.estado).toLowerCase() === 'pendiente'
+  ).length;
+  const totalInvertido = rawCompras.reduce(
+    (acc, c) => acc + (c.totalNum || c.valor_total || 0),
+    0
+  );
+
+  const filteredData = useMemo(() => {
+    return rawCompras.filter((c) => {
+      const q = (searchQuery || '').toLowerCase().trim();
+      const proveedorNombre = (proveedoresNames[c.id_proveedor] || '').toLowerCase();
+      const usuarioNombre = (usuariosNames[c.id_usuario] || '').toLowerCase();
+      const matchesSearch =
+        !q ||
+        String(c.id_compra).toLowerCase().includes(q) ||
+        String(c.id_proveedor).toLowerCase().includes(q) ||
+        String(c.id_usuario).toLowerCase().includes(q) ||
+        proveedorNombre.includes(q) ||
+        usuarioNombre.includes(q) ||
+        String(c.medio_pago || '').toLowerCase().includes(q);
+
+      const isTodos = estadoFilter === 'Todos' || estadoFilter === 'Todos los estados';
+      const matchesEstado = isTodos || String(c.estado).toLowerCase() === estadoFilter.toLowerCase();
+      return matchesSearch && matchesEstado;
+    });
+  }, [rawCompras, searchQuery, estadoFilter, proveedoresNames, usuariosNames]);
+
+  const columns = useMemo(
+    () => [
+      {
+        key: 'id_compra',
+        label: 'ID',
+        render: (value) => <span className="font-mono font-medium text-xs">#{value}</span>,
+      },
+      {
+        key: 'id_proveedor',
+        label: 'Proveedor',
+        render: (value) => (
+          <span className="font-semibold text-foreground">
+            {proveedoresNames[value] || (typeof value === 'string' && isNaN(Number(value)) ? value : `Proveedor #${value}`)}
+          </span>
+        ),
+      },
+      {
+        key: 'id_usuario',
+        label: 'Registrado por',
+        render: (value) => (
+          <span className="text-muted-foreground text-sm">
+            {usuariosNames[value] || `Usuario #${value}`}
+          </span>
+        ),
+      },
+      {
+        key: 'fecha_compra',
+        label: 'Fecha Compra',
+        render: (value) => <span className="text-muted-foreground text-sm">{value}</span>,
+      },
+      {
+        key: 'valor_total',
+        label: 'Valor Total',
+        render: (value, c) => (
+          <span className="font-semibold text-primary">
+            ${Number(c.totalNum || value || 0).toLocaleString('es-CO')}
+          </span>
+        ),
+      },
+      {
+        key: 'estado',
+        label: 'Estado',
+        render: (value) => <StatusSwitch value={value} />,
+      },
+      {
+        key: 'acciones',
+        label: 'Acciones',
+        render: (_, compra) => {
+          const isAnulada =
+            String(compra.estado).toLowerCase() === 'anulada' ||
+            String(compra.estado).toLowerCase() === 'anulado';
+          return (
+            <RowActions
+              onView={() => setDetailModal({ isOpen: true, data: compra })}
+              onEdit={() => {
+                setSelectedCompra(compra);
+                setShowModal(true);
+              }}
+              editDisabled={!can('compras', 'editar')}
+              onDelete={
+                !isAnulada
+                  ? () =>
+                      setDeleteDialog({
+                        isOpen: true,
+                        id: compra.id_compra,
+                        nombre: compra.id_compra,
+                      })
+                  : undefined
+              }
+              deleteDisabled={!can('compras', 'eliminar')}
+              deleteIcon="x"
+              deleteTitle="Anular compra"
+            />
+          );
+        },
+      },
+    ],
+    [can, setDetailModal, setShowModal, setDeleteDialog]
+  );
 
   return (
     <div className="space-y-6">
-      {/* Header con exportación */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-bold">Compras de Insumos</h1>
-          <p className="text-muted-foreground">Órdenes de compra de materias primas e insumos a proveedores</p>
-        </div>
-        <div className="flex items-center gap-2">
-          <button className="flex items-center gap-2 px-4 py-2 border border-border rounded-lg hover:bg-muted text-sm font-medium transition-colors">
-            <FileDown className="w-4 h-4" />
-            Exportar PDF
-          </button>
-          <button className="flex items-center gap-2 px-4 py-2 border border-border rounded-lg hover:bg-muted text-sm font-medium transition-colors">
-            <FileSpreadsheet className="w-4 h-4" />
-            Exportar Excel
-          </button>
-          <button
-            onClick={() => setShowModal(true)} disabled={!can('compras', 'crear')}
-            className="flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:opacity-90 text-sm font-medium transition-colors"
-          >
-            <Plus className="w-4 h-4" />
-            Nueva Compra
-          </button>
-        </div>
-      </div>
+      <PageHeader
+        title="Compras de Insumos"
+        subtitle="Órdenes de compra de materias primas e insumos a proveedores"
+        addLabel="Nueva Compra"
+        addDisabled={!can('compras', 'crear')}
+        onAdd={() => {
+          setSelectedCompra(null);
+          setShowModal(true);
+        }}
+      />
 
       {/* Tarjetas de Consolidado */}
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
-        <div className="bg-card p-4 rounded-lg border border-border flex items-center gap-3">
-          <div className="p-3 bg-primary/10 rounded-lg text-primary">
-            <ShoppingCart className="w-5 h-5" />
-          </div>
-          <div>
-            <p className="text-sm text-muted-foreground">Total Compras</p>
-            <h3 className="text-xl font-bold">{totalCompras}</h3>
-          </div>
-        </div>
-        <div className="bg-card p-4 rounded-lg border border-border flex items-center gap-3">
-          <div className="p-3 bg-success/10 rounded-lg text-success">
-            <CheckCircle className="w-5 h-5" />
-          </div>
-          <div>
-            <p className="text-sm text-muted-foreground">Recibidas</p>
-            <h3 className="text-xl font-bold">{recibidas}</h3>
-          </div>
-        </div>
-        <div className="bg-card p-4 rounded-lg border border-border flex items-center gap-3">
-          <div className="p-3 bg-warning/10 rounded-lg text-warning">
-            <Clock className="w-5 h-5" />
-          </div>
-          <div>
-            <p className="text-sm text-muted-foreground">Pendientes</p>
-            <h3 className="text-xl font-bold">{pendientes}</h3>
-          </div>
-        </div>
-        <div className="bg-card p-4 rounded-lg border border-border flex items-center gap-3">
-          <div className="p-3 bg-accent/10 rounded-lg text-primary">
-            <DollarSign className="w-5 h-5" />
-          </div>
-          <div>
-            <p className="text-sm text-muted-foreground">Total Invertido</p>
-            <h3 className="text-xl font-bold">${totalInvertido.toLocaleString('es-CO')}</h3>
-          </div>
-        </div>
+        <MetricCard title="Total Compras" value={totalCompras} icon={ShoppingCart} variant="primary" />
+        <MetricCard title="Recibidas" value={recibidas} icon={CheckCircle} variant="success" />
+        <MetricCard title="Pendientes" value={pendientes} icon={Clock} variant="warning" />
+        <MetricCard title="Total Invertido" value={`$${totalInvertido.toLocaleString('es-CO')}`} icon={DollarSign} variant="accent" />
       </div>
 
-      {/* Filtros y Búsqueda */}
-      <div className="bg-card p-4 rounded-lg border border-border flex flex-col sm:flex-row gap-4">
-        <div className="flex-1 relative">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-          <input
-            type="search"
-            placeholder="Buscar por código, proveedor o insumo..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full pl-10 pr-4 py-2 border border-input bg-input-background rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-ring"
-          />
-        </div>
-        <select
-          value={estadoFilter}
-          onChange={(e) => setEstadoFilter(e.target.value)}
-          className="px-4 py-2 border border-input bg-input-background rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-ring"
-        >
-          <option value="Todos">Todos los estados</option>
-          <option value="Recibida">Recibida</option>
-          <option value="Pendiente">Pendiente</option>
-          <option value="Anulada">Anulada</option>
-        </select>
-      </div>
+      {/* Tabla con DataTable */}
+      <DataTable
+        columns={columns}
+        data={filteredData}
+        searchPlaceholder="Buscar por código, proveedor o insumo..."
+        searchValue={searchQuery}
+        onSearchChange={setSearchQuery}
+        filters={
+          <select
+            value={estadoFilter}
+            onChange={(e) => setEstadoFilter(e.target.value)}
+            className="px-4 py-2 border border-input bg-input-background rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+          >
+            <option value="Todos">Todos los estados</option>
+            <option value="Recibida">Recibida</option>
+            <option value="Pendiente">Pendiente</option>
+            <option value="Anulada">Anulada</option>
+          </select>
+        }
+      />
 
-      {/* Tabla Estandarizada */}
-      <div className="records-table-shell bg-card rounded-lg border border-border overflow-hidden">
-        <table className="w-full text-sm text-left">
-          <thead className="bg-muted text-muted-foreground font-semibold">
-            <tr>
-              <th className="px-6 py-3">ID</th><th className="px-6 py-3">Proveedor ID</th><th className="px-6 py-3">Usuario ID</th><th className="px-6 py-3">Fecha Compra</th><th className="px-6 py-3">Valor Total</th>
-              <th className="px-6 py-3">Estado</th>
-              <th className="px-6 py-3">Acciones</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-border">
-            {compras.length > 0 ? (
-              pagination.paginatedData.map((compra) => (
-                <tr key={compra.id_compra} className="hover:bg-muted/50 transition-colors">
-                  <td className="px-6 py-4 font-mono font-medium">{compra.id_compra}</td><td className="px-6 py-4">{compra.id_proveedor}</td><td className="px-6 py-4">{compra.id_usuario}</td><td className="px-6 py-4">{compra.fecha_compra}</td><td className="px-6 py-4 font-semibold">{compra.valor_total}</td>
-                  <td className="px-6 py-4">
-                    <StatusSwitch value={compra.estado} />
-                  </td>
-                  <td className="px-6 py-4">
-                    <div className="flex items-center gap-1">
-                      <button
-                        onClick={() => setDetailModal({ isOpen: true, data: compra })}
-                        className="p-2 hover:bg-muted rounded-lg text-muted-foreground hover:text-foreground"
-                        title="Ver detalle"
-                      >
-                        <Eye className="w-4 h-4" />
-                      </button>
-                      <button
-                        onClick={() => setShowModal(true)} disabled={!can('compras', 'editar')}
-                        className="p-2 hover:bg-muted rounded-lg text-muted-foreground hover:text-foreground"
-                        title="Editar"
-                      >
-                        <Edit className="w-4 h-4" />
-                      </button>
-                      {compra.estado !== 'Anulada' && (
-                        <button
-                          onClick={() => setDeleteDialog({ isOpen: true, id: compra.id_compra, nombre: compra.id_compra })} disabled={!can('compras', 'eliminar')}
-                          className="p-2 hover:bg-muted rounded-lg text-destructive"
-                          title="Anular compra"
-                        >
-                          <XCircle className="w-4 h-4" />
-                        </button>
-                      )}
-                    </div>
-                  </td>
-                </tr>
-              ))
-            ) : (
-              <tr>
-                <td colSpan={7} className="px-6 py-8 text-center text-muted-foreground">
-                  No se encontraron compras.
-                </td>
-              </tr>
-            )}
-          </tbody>
-        </table>
-      </div>
-
-      {/* Modal de Detalle */}
-      {detailModal.isOpen && detailModal.data && (
-        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-          <div className="bg-card p-6 rounded-lg max-w-md w-full border border-border space-y-4">
-            <h3 className="text-lg font-bold">Detalle de la Compra</h3>
-            <div className="space-y-2 text-sm">
-              <p><strong>ID:</strong> {detailModal.data.id_compra}</p><p><strong>Proveedor ID:</strong> {detailModal.data.id_proveedor}</p><p><strong>Usuario ID:</strong> {detailModal.data.id_usuario}</p><p><strong>Fecha:</strong> {detailModal.data.fecha_compra}</p><p><strong>Valor Total:</strong> {detailModal.data.valor_total}</p><p><strong>Medio de Pago:</strong> {detailModal.data.medio_pago}</p><p><strong>Comprobante:</strong> {detailModal.data.comprobante_url}</p><p><strong>Fecha Registro:</strong> {detailModal.data.fecha_registro}</p>
-              <p><strong>Estado:</strong> {detailModal.data.estado}</p>
-            </div>
-            <div className="flex justify-end pt-4">
-              <button
-                onClick={() => setDetailModal({ isOpen: false, data: null })}
-                className="px-4 py-2 bg-primary text-primary-foreground rounded-lg text-sm font-medium"
+      <DetailModal
+        isOpen={detailModal.isOpen}
+        onClose={() => setDetailModal({ isOpen: false, data: null })}
+        title="Detalle de la Orden de Compra"
+        fields={detailModal.data ? [
+          { label: 'ID Compra', value: `#${detailModal.data.id_compra}` },
+          { label: 'Proveedor', value: proveedoresNames[detailModal.data.id_proveedor] || `Proveedor #${detailModal.data.id_proveedor}` },
+          { label: 'Registrado por (Usuario)', value: usuariosNames[detailModal.data.id_usuario] || `Usuario #${detailModal.data.id_usuario}` },
+          { label: 'Fecha de Compra', value: detailModal.data.fecha_compra },
+          { label: 'Valor Total', value: <span className="font-semibold text-primary">{`$${Number(detailModal.data.totalNum || detailModal.data.valor_total || 0).toLocaleString('es-CO')}`}</span> },
+          { label: 'Medio de Pago', value: <span className="capitalize">{detailModal.data.medio_pago}</span> },
+          {
+            label: 'Comprobante / Factura',
+            value: detailModal.data.comprobante_url ? (
+              <a
+                href={detailModal.data.comprobante_url}
+                target="_blank"
+                rel="noreferrer"
+                className="text-primary hover:underline font-medium text-xs inline-flex items-center gap-1"
               >
-                Cerrar
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+                Ver comprobante adjunto
+              </a>
+            ) : (
+              'Sin comprobante adjunto'
+            ),
+          },
+          { label: 'Fecha de Registro', value: detailModal.data.fecha_registro || 'N/A' },
+          { label: 'Estado', value: detailModal.data.estado },
+        ] : []}
+      />
 
-      <PaginationControls {...pagination} />
-
-      <CompraFormModal open={showModal} onClose={() => setShowModal(false)} />
+      <CompraFormModal
+        open={showModal}
+        compra={selectedCompra}
+        onSave={handleSave}
+        isLoading={isSaving}
+        onClose={() => {
+          setShowModal(false);
+          setSelectedCompra(null);
+        }}
+      />
 
       <ConfirmDialog
         isOpen={deleteDialog.isOpen}
@@ -228,4 +270,3 @@ export default function ComprasPage() {
     </div>
   );
 }
-

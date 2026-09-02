@@ -1,17 +1,20 @@
-import { Plus, Search, Eye, Edit, Trash2, FileDown, FileSpreadsheet, FolderTree, CheckCircle, Package, Layers } from 'lucide-react';
+import { useState, useMemo } from 'react';
+import { FolderTree, CheckCircle, Package, Layers } from 'lucide-react';
 import { useCategorias } from '../hooks/useCategorias';
-import { usePagination } from '../../../shared/hooks/usePagination';
-import { PaginationControls } from '../../../shared/components/PaginationControls';
+import { DataTable } from '../../../shared/components/DataTable';
+import { RowActions } from '../../../shared/components/RowActions';
 import { CategoriaFormModal } from '../components/CategoriaFormModal';
 import ConfirmDialog from '../../../shared/components/ConfirmDialog';
 import Toast from '../../../shared/components/Toast';
+import DetailModal from '../../../shared/components/DetailModal';
+import PageHeader from '../../../shared/components/PageHeader';
+import { MetricCard } from '../../../shared/components/MetricCard';
 import { usePermissions } from '../../../shared/contexts/PermissionContext';
 import StatusSwitch from '../../../shared/components/StatusSwitch';
 
 export default function CategoriasPage() {
   const { can } = usePermissions();
   const {
-    categorias,
     rawCategorias,
     searchQuery,
     setSearchQuery,
@@ -24,193 +27,146 @@ export default function CategoriasPage() {
     deleteDialog,
     setDeleteDialog,
     isDeleting,
+    isSaving,
     toast,
     setToast,
+    handleSave,
     handleDelete,
   } = useCategorias();
-  const pagination = usePagination(categorias);
+
+  const [selectedCategoria, setSelectedCategoria] = useState(null);
 
   const totalCategorias = rawCategorias.length;
-  const activas = rawCategorias.filter((c) => c.estado === 'Activo').length;
+  const activas = rawCategorias.filter((c) => String(c.estado).toLowerCase() === 'activo').length;
   const totalProductosAsignados = 0;
   const promedioProductos = totalCategorias > 0 ? (totalProductosAsignados / totalCategorias).toFixed(1) : 0;
 
+  const filteredData = useMemo(() => {
+    return rawCategorias.filter((c) => {
+      const q = (searchQuery || '').toLowerCase().trim();
+      const matchesSearch =
+        !q ||
+        c.nombre.toLowerCase().includes(q) ||
+        String(c.id_categoria).toLowerCase().includes(q) ||
+        (c.descripcion || '').toLowerCase().includes(q);
+
+      const isTodos = estadoFilter === 'Todos' || estadoFilter === 'Todos los estados';
+      const matchesEstado = isTodos || String(c.estado).toLowerCase() === estadoFilter.toLowerCase();
+      return matchesSearch && matchesEstado;
+    });
+  }, [rawCategorias, searchQuery, estadoFilter]);
+
+  const columns = useMemo(
+    () => [
+      {
+        key: 'id_categoria',
+        label: 'ID',
+        render: (value) => <span className="font-mono font-medium">{value}</span>,
+      },
+      {
+        key: 'nombre',
+        label: 'Nombre Categoría',
+        render: (value) => <span className="font-semibold">{value}</span>,
+      },
+      {
+        key: 'descripcion',
+        label: 'Descripción',
+        render: (value) => <span className="text-muted-foreground max-w-xs truncate block">{value}</span>,
+      },
+      {
+        key: 'estado',
+        label: 'Estado',
+        render: (value) => <StatusSwitch value={value} />,
+      },
+      {
+        key: 'acciones',
+        label: 'Acciones',
+        render: (_, categoria) => (
+          <RowActions
+            onView={() => setDetailModal({ isOpen: true, data: categoria })}
+            onEdit={() => {
+              setSelectedCategoria(categoria);
+              setShowModal(true);
+            }}
+            editDisabled={!can('categorias', 'editar')}
+            onDelete={() =>
+              setDeleteDialog({
+                isOpen: true,
+                id: categoria.id_categoria,
+                nombre: categoria.nombre,
+              })
+            }
+            deleteDisabled={!can('categorias', 'eliminar')}
+          />
+        ),
+      },
+    ],
+    [can, setDetailModal, setShowModal, setDeleteDialog]
+  );
+
   return (
     <div className="space-y-6">
-      {/* Header con exportación */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-bold">Categorías de Productos</h1>
-          <p className="text-muted-foreground">Clasificación de arepas y subproductos de fábrica</p>
-        </div>
-        <div className="flex items-center gap-2">
-          <button className="flex items-center gap-2 px-4 py-2 border border-border rounded-lg hover:bg-muted text-sm font-medium transition-colors">
-            <FileDown className="w-4 h-4" />
-            Exportar PDF
-          </button>
-          <button className="flex items-center gap-2 px-4 py-2 border border-border rounded-lg hover:bg-muted text-sm font-medium transition-colors">
-            <FileSpreadsheet className="w-4 h-4" />
-            Exportar Excel
-          </button>
-          <button
-            onClick={() => setShowModal(true)} disabled={!can('categorias', 'crear')}
-            className="flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:opacity-90 text-sm font-medium transition-colors"
-          >
-            <Plus className="w-4 h-4" />
-            Nueva Categoría
-          </button>
-        </div>
-      </div>
+      <PageHeader
+        title="Categorías de Productos"
+        subtitle="Clasificación de arepas y subproductos de fábrica"
+        addLabel="Nueva Categoría"
+        addDisabled={!can('categorias', 'crear')}
+        onAdd={() => {
+          setSelectedCategoria(null);
+          setShowModal(true);
+        }}
+      />
 
       {/* Tarjetas de Consolidado */}
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
-        <div className="bg-card p-4 rounded-lg border border-border flex items-center gap-3">
-          <div className="p-3 bg-primary/10 rounded-lg text-primary">
-            <FolderTree className="w-5 h-5" />
-          </div>
-          <div>
-            <p className="text-sm text-muted-foreground">Total Categorías</p>
-            <h3 className="text-xl font-bold">{totalCategorias}</h3>
-          </div>
-        </div>
-        <div className="bg-card p-4 rounded-lg border border-border flex items-center gap-3">
-          <div className="p-3 bg-success/10 rounded-lg text-success">
-            <CheckCircle className="w-5 h-5" />
-          </div>
-          <div>
-            <p className="text-sm text-muted-foreground">Categorías Activas</p>
-            <h3 className="text-xl font-bold">{activas}</h3>
-          </div>
-        </div>
-        <div className="bg-card p-4 rounded-lg border border-border flex items-center gap-3">
-          <div className="p-3 bg-accent/10 rounded-lg text-primary">
-            <Package className="w-5 h-5" />
-          </div>
-          <div>
-            <p className="text-sm text-muted-foreground">Prod. Clasificados</p>
-            <h3 className="text-xl font-bold">{totalProductosAsignados}</h3>
-          </div>
-        </div>
-        <div className="bg-card p-4 rounded-lg border border-border flex items-center gap-3">
-          <div className="p-3 bg-warning/10 rounded-lg text-warning">
-            <Layers className="w-5 h-5" />
-          </div>
-          <div>
-            <p className="text-sm text-muted-foreground">Promedio Prod/Cat</p>
-            <h3 className="text-xl font-bold">{promedioProductos}</h3>
-          </div>
-        </div>
+        <MetricCard title="Total Categorías" value={totalCategorias} icon={FolderTree} variant="primary" />
+        <MetricCard title="Categorías Activas" value={activas} icon={CheckCircle} variant="success" />
+        <MetricCard title="Prod. Clasificados" value={totalProductosAsignados} icon={Package} variant="accent" />
+        <MetricCard title="Promedio Prod/Cat" value={promedioProductos} icon={Layers} variant="warning" />
       </div>
 
-      {/* Filtros y Búsqueda */}
-      <div className="bg-card p-4 rounded-lg border border-border flex flex-col sm:flex-row gap-4">
-        <div className="flex-1 relative">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-          <input
-            type="search"
-            placeholder="Buscar por código, nombre o descripción..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full pl-10 pr-4 py-2 border border-input bg-input-background rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-ring"
-          />
-        </div>
-        <select
-          value={estadoFilter}
-          onChange={(e) => setEstadoFilter(e.target.value)}
-          className="px-4 py-2 border border-input bg-input-background rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-ring"
-        >
-          <option value="Todos">Todos los estados</option>
-          <option value="Activo">Activo</option>
-          <option value="Inactivo">Inactivo</option>
-        </select>
-      </div>
+      {/* Tabla con DataTable y RowActions */}
+      <DataTable
+        columns={columns}
+        data={filteredData}
+        searchPlaceholder="Buscar por código, nombre o descripción..."
+        searchValue={searchQuery}
+        onSearchChange={setSearchQuery}
+        filters={
+          <select
+            value={estadoFilter}
+            onChange={(e) => setEstadoFilter(e.target.value)}
+            className="px-4 py-2 border border-input bg-input-background rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+          >
+            <option value="Todos">Todos los estados</option>
+            <option value="Activo">Activo</option>
+            <option value="Inactivo">Inactivo</option>
+          </select>
+        }
+      />
 
-      {/* Tabla con Acciones Estandarizadas */}
-      <div className="records-table-shell bg-card rounded-lg border border-border overflow-hidden">
-        <table className="w-full text-sm text-left">
-          <thead className="bg-muted text-muted-foreground font-semibold">
-            <tr>
-              <th className="px-6 py-3">ID</th>
-              <th className="px-6 py-3">Nombre Categoría</th>
-              <th className="px-6 py-3">Descripción</th>
-              <th className="px-6 py-3">Estado</th>
-              <th className="px-6 py-3">Acciones</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-border">
-            {categorias.length > 0 ? (
-              pagination.paginatedData.map((categoria) => (
-                <tr key={categoria.id_categoria} className="hover:bg-muted/50 transition-colors">
-                  <td className="px-6 py-4 font-mono font-medium">{categoria.id_categoria}</td>
-                  <td className="px-6 py-4 font-semibold">{categoria.nombre}</td>
-                  <td className="px-6 py-4 text-muted-foreground max-w-xs truncate">{categoria.descripcion}</td>
-                  <td className="px-6 py-4">
-                    <StatusSwitch value={categoria.estado} />
-                  </td>
-                  <td className="px-6 py-4">
-                    <div className="flex items-center gap-1">
-                      <button
-                        onClick={() => setDetailModal({ isOpen: true, data: categoria })}
-                        className="p-2 hover:bg-muted rounded-lg text-muted-foreground hover:text-foreground"
-                        title="Ver detalle"
-                      >
-                        <Eye className="w-4 h-4" />
-                      </button>
-                      <button
-                        onClick={() => setShowModal(true)} disabled={!can('categorias', 'editar')}
-                        className="p-2 hover:bg-muted rounded-lg text-muted-foreground hover:text-foreground"
-                        title="Editar"
-                      >
-                        <Edit className="w-4 h-4" />
-                      </button>
-                      <button
-                        onClick={() => setDeleteDialog({ isOpen: true, id: categoria.id_categoria, nombre: categoria.nombre })} disabled={!can('categorias', 'eliminar')}
-                        className="p-2 hover:bg-muted rounded-lg text-destructive"
-                        title="Eliminar"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </button>
-                    </div>
-                  </td>
-                </tr>
-              ))
-            ) : (
-              <tr>
-                <td colSpan={6} className="px-6 py-8 text-center text-muted-foreground">
-                  No se encontraron categorías.
-                </td>
-              </tr>
-            )}
-          </tbody>
-        </table>
-      </div>
+      <DetailModal
+        isOpen={detailModal.isOpen}
+        onClose={() => setDetailModal({ isOpen: false, data: null })}
+        title="Detalle de Categoría"
+        fields={detailModal.data ? [
+          { label: 'ID', value: detailModal.data.id_categoria },
+          { label: 'Nombre', value: detailModal.data.nombre },
+          { label: 'Descripción', value: detailModal.data.descripcion },
+          { label: 'Estado', value: detailModal.data.estado },
+        ] : []}
+      />
 
-      <PaginationControls {...pagination} />
-
-      {/* Modal de Detalle */}
-      {detailModal.isOpen && detailModal.data && (
-        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-          <div className="bg-card p-6 rounded-lg max-w-md w-full border border-border space-y-4">
-            <h3 className="text-lg font-bold">Detalle de Categoría</h3>
-            <div className="space-y-2 text-sm">
-              <p><strong>ID:</strong> {detailModal.data.id_categoria}</p>
-              <p><strong>Nombre:</strong> {detailModal.data.nombre}</p>
-              <p><strong>Descripción:</strong> {detailModal.data.descripcion}</p>
-              <p><strong>Estado:</strong> {detailModal.data.estado}</p>
-            </div>
-            <div className="flex justify-end pt-4">
-              <button
-                onClick={() => setDetailModal({ isOpen: false, data: null })}
-                className="px-4 py-2 bg-primary text-primary-foreground rounded-lg text-sm font-medium"
-              >
-                Cerrar
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      <CategoriaFormModal open={showModal} onClose={() => setShowModal(false)} />
+      <CategoriaFormModal
+        open={showModal}
+        categoria={selectedCategoria}
+        onSave={handleSave}
+        isLoading={isSaving}
+        onClose={() => {
+          setShowModal(false);
+          setSelectedCategoria(null);
+        }}
+      />
 
       <ConfirmDialog
         isOpen={deleteDialog.isOpen}
@@ -231,4 +187,5 @@ export default function CategoriasPage() {
     </div>
   );
 }
+
 

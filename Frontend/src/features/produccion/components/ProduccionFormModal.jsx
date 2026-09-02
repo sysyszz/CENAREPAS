@@ -1,63 +1,344 @@
-import { X } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { X, Package, Plus, Trash2 } from 'lucide-react';
+import { mockFichasTecnicas, mockFichaTecnicaInsumos, getFichasTecnicas } from '../../fichas-tecnicas/services/fichasTecnicasService';
+import { mockInsumos, getInsumos } from '../../insumos/services/insumosService';
+import { mockUsuarios } from '../../usuarios/services/usuariosService';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '../../../shared/ui/select';
 
-export function ProduccionFormModal({ open, onClose }) {
+export function ProduccionFormModal({ open, onClose, lote = null, onSave, isLoading = false }) {
+  const [idFicha, setIdFicha] = useState('1');
+  const [cantidadProducida, setCantidadProducida] = useState('');
+  const [idUsuarioResponsable, setIdUsuarioResponsable] = useState('1');
+  const [fechaProduccion, setFechaProduccion] = useState('');
+  const [estado, setEstado] = useState('en_proceso');
+  const [observaciones, setObservaciones] = useState('');
+
+  const [fichas, setFichas] = useState(mockFichasTecnicas);
+  const [availableInsumos, setAvailableInsumos] = useState(mockInsumos);
+  const [insumosList, setInsumosList] = useState([]);
+  const [selectedInsumoId, setSelectedInsumoId] = useState('');
+  const [cantidadInsumo, setCantidadInsumo] = useState('');
+
+  useEffect(() => {
+    getFichasTecnicas().then((data) => {
+      if (data && data.length > 0) setFichas(data);
+    });
+    getInsumos().then((data) => {
+      if (data && data.length > 0) setAvailableInsumos(data);
+    });
+  }, []);
+
+  useEffect(() => {
+    if (lote) {
+      setIdFicha(lote.id_ficha ? String(lote.id_ficha) : '1');
+      setCantidadProducida(lote.cantidad_producida != null ? String(lote.cantidad_producida) : '');
+      setIdUsuarioResponsable(lote.id_usuario_responsable ? String(lote.id_usuario_responsable) : '1');
+      setFechaProduccion(lote.fecha_produccion || '');
+      setEstado(lote.estado || 'en_proceso');
+      setObservaciones(lote.observaciones || '');
+    } else {
+      setIdFicha('1');
+      setCantidadProducida('');
+      setIdUsuarioResponsable('1');
+      setFechaProduccion(new Date().toISOString().split('T')[0]);
+      setEstado('en_proceso');
+      setObservaciones('');
+    }
+  }, [lote, open]);
+
+  // Actualizar insumos requeridos cuando cambia la ficha seleccionada
+  useEffect(() => {
+    if (!idFicha) return;
+    const recipeInsumos = mockFichaTecnicaInsumos.filter((fi) => String(fi.id_ficha) === String(idFicha));
+    if (recipeInsumos.length > 0) {
+      setInsumosList(
+        recipeInsumos.map((item) => {
+          const ins = availableInsumos.find((i) => i.id_insumo === item.id_insumo);
+          return {
+            id_insumo: item.id_insumo,
+            nombre: ins?.nombre || `Insumo #${item.id_insumo}`,
+            cantidad: item.cantidad,
+            unidad_medida: item.unidad_medida || ins?.unidad_medida || 'kg',
+          };
+        })
+      );
+    } else {
+      setInsumosList([]);
+    }
+  }, [idFicha, availableInsumos]);
+
   if (!open) return null;
 
+  const handleAddInsumo = () => {
+    if (!selectedInsumoId || !cantidadInsumo || Number(cantidadInsumo) <= 0) return;
+    const ins = availableInsumos.find((i) => String(i.id_insumo) === String(selectedInsumoId));
+    if (!ins) return;
+
+    const existingIdx = insumosList.findIndex((i) => String(i.id_insumo) === String(selectedInsumoId));
+    if (existingIdx >= 0) {
+      const updated = [...insumosList];
+      updated[existingIdx].cantidad = Number(cantidadInsumo);
+      setInsumosList(updated);
+    } else {
+      setInsumosList([
+        ...insumosList,
+        {
+          id_insumo: ins.id_insumo,
+          nombre: ins.nombre,
+          cantidad: Number(cantidadInsumo),
+          unidad_medida: ins.unidad_medida || 'kg',
+        },
+      ]);
+    }
+    setSelectedInsumoId('');
+    setCantidadInsumo('');
+  };
+
+  const handleRemoveInsumo = (idToRemove) => {
+    setInsumosList(insumosList.filter((i) => i.id_insumo !== idToRemove));
+  };
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    const payload = lote
+      ? {
+          ...lote,
+          id_ficha: Number(idFicha) || 1,
+          cantidad_producida: Number(cantidadProducida) || 0,
+          id_usuario_responsable: Number(idUsuarioResponsable) || 1,
+          fecha_produccion: fechaProduccion || new Date().toISOString().split('T')[0],
+          insumos: insumosList,
+          estado,
+          observaciones: observaciones.trim() || null,
+        }
+      : {
+          id_ficha: Number(idFicha) || 1,
+          cantidad_producida: Number(cantidadProducida) || 0,
+          id_usuario_responsable: Number(idUsuarioResponsable) || 1,
+          fecha_produccion: fechaProduccion || new Date().toISOString().split('T')[0],
+          insumos: insumosList,
+          estado: estado || 'en_proceso',
+          observaciones: observaciones.trim() || null,
+        };
+
+    if (onSave) {
+      onSave(payload);
+    } else {
+      onClose();
+    }
+  };
+
   return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-      <div className="form-modal-panel bg-card p-6 rounded-lg">
-        <div className="flex items-start justify-between gap-4"><h2>Registrar Lote de Producción</h2><button onClick={onClose} className="p-2 -mr-2 -mt-2 rounded-lg hover:bg-muted text-muted-foreground" aria-label="Cerrar formulario"><X className="w-5 h-5" /></button></div>
-        <div className="modal-form-grid">
+    <div className="fixed inset-0 bg-black/50 backdrop-blur-xs flex items-center justify-center z-50 p-4">
+      <div className="form-modal-panel bg-card text-card-foreground p-6 rounded-xl max-w-lg w-full border border-border shadow-2xl space-y-4 max-h-[90vh] overflow-y-auto custom-scrollbar animate-in fade-in-50 zoom-in-95 duration-200">
+        <div className="flex items-start justify-between gap-4 pb-2 border-b border-border">
           <div>
-            <label className="block mb-2">Ficha Técnica (Receta)</label>
-            <select className="w-full px-4 py-2 border border-input bg-input-background rounded-lg focus:outline-none focus:ring-2 focus:ring-ring">
-              <option>Seleccionar receta</option>
-              <option value="1">Arepa de Chócolo con Queso</option><option value="2">Arepa Telita Tradicional</option>
-            </select>
+            <h2 className="text-xl font-bold">{lote ? 'Editar Lote de Producción' : 'Registrar Lote de Producción'}</h2>
+            <p className="text-xs text-muted-foreground mt-0.5">
+              Control de producción de lotes y balance de insumos utilizados
+            </p>
           </div>
-          <div>
-            <label className="block mb-2">Cantidad a Producir</label>
-            <input type="number" min="0" required placeholder="Cantidad producida" className="w-full px-4 py-2 border border-input bg-input-background rounded-lg focus:outline-none focus:ring-2 focus:ring-ring" />
-          </div>
-          <div>
-            <label className="block mb-2">Usuario Responsable</label>
-            <select required className="w-full px-4 py-2 border border-input bg-input-background rounded-lg">
-              <option value="1">Carlos Eduardo Gómez</option>
-              <option value="2">María Fernanda Rojas</option>
-              <option value="3">Jorge Eliecer Restrepo</option>
-              <option value="4">Ana Lucía Benítez</option>
-            </select>
-          </div>
-          <div>
-            <label className="block mb-2">Fecha de Producción</label>
-            <input type="date" className="w-full px-4 py-2 border border-input bg-input-background rounded-lg" />
-          </div>
+          <button
+            type="button"
+            onClick={onClose}
+            className="p-1.5 rounded-lg hover:bg-muted text-muted-foreground hover:text-foreground transition-colors"
+            aria-label="Cerrar formulario"
+          >
+            <X className="w-5 h-5" />
+          </button>
+        </div>
+
+        <form onSubmit={handleSubmit} className="modal-form-grid space-y-4">
           <div className="modal-field-wide">
-            <label className="block mb-2">Estado</label>
-            <select defaultValue="en_proceso" className="w-full px-4 py-2 border border-input bg-input-background rounded-lg">
-              <option value="en_proceso">En proceso</option>
-              <option value="finalizado">Finalizado</option>
-            </select>
+            <label className="block mb-1.5 text-sm font-medium">Ficha Técnica (Receta) *</label>
+            <Select value={idFicha} onValueChange={setIdFicha}>
+              <SelectTrigger className="w-full bg-input-background">
+                <SelectValue placeholder="Seleccionar receta..." />
+              </SelectTrigger>
+              <SelectContent className="z-[100] max-h-56">
+                {fichas.map((f) => (
+                  <SelectItem key={f.id_ficha} value={String(f.id_ficha)}>
+                    {f.nombre}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
-          <div className="modal-field-wide">
-            <label className="block mb-2">Observaciones</label>
-            <textarea maxLength={255} className="w-full px-4 py-2 border border-input bg-input-background rounded-lg" />
-          </div>
-          <div className="p-4 bg-accent/10 rounded-lg">
-            <h4 className="mb-2">Insumos Requeridos</h4>
-            <div className="space-y-1 text-sm">
-              <p className="text-muted-foreground">Selecciona una receta para ver los insumos necesarios</p>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <label className="block mb-1.5 text-sm font-medium">Cantidad Producida (und) *</label>
+              <input
+                type="number"
+                min="1"
+                required
+                placeholder="Ej. 500"
+                value={cantidadProducida}
+                onChange={(e) => setCantidadProducida(e.target.value)}
+                className="w-full px-4 py-2 border border-input bg-input-background rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+              />
+            </div>
+            <div>
+              <label className="block mb-1.5 text-sm font-medium">Fecha de Producción *</label>
+              <input
+                type="date"
+                required
+                value={fechaProduccion}
+                onChange={(e) => setFechaProduccion(e.target.value)}
+                className="w-full px-4 py-2 border border-input bg-input-background rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+              />
             </div>
           </div>
-          <div className="flex gap-2 pt-4">
-            <button onClick={onClose} className="flex-1 px-4 py-2 border border-border rounded-lg hover:bg-muted">
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <label className="block mb-1.5 text-sm font-medium">Usuario Responsable *</label>
+              <Select value={idUsuarioResponsable} onValueChange={setIdUsuarioResponsable}>
+                <SelectTrigger className="w-full bg-input-background">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent className="z-[100] max-h-56">
+                  {mockUsuarios.map((u) => (
+                    <SelectItem key={u.id_usuario} value={String(u.id_usuario)}>
+                      {u.nombre}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
+              <label className="block mb-1.5 text-sm font-medium">Estado *</label>
+              <Select value={estado} onValueChange={setEstado}>
+                <SelectTrigger className="w-full bg-input-background">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent className="z-[100]">
+                  <SelectItem value="en_proceso">En proceso</SelectItem>
+                  <SelectItem value="finalizado">Finalizado</SelectItem>
+                  <SelectItem value="programado">Programado</SelectItem>
+                  <SelectItem value="anulado">Anulado</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+
+          {/* Sección de Insumos Requeridos con Select Radix UI */}
+          <div className="modal-field-wide space-y-3 p-4 rounded-xl border border-border bg-muted/20">
+            <div>
+              <h4 className="text-sm font-semibold text-foreground flex items-center gap-1.5">
+                <Package className="w-4 h-4 text-primary" />
+                Insumos Requeridos
+              </h4>
+              <p className="text-xs text-muted-foreground mt-0.5">
+                Insumos y materias primas a descontar del inventario
+              </p>
+            </div>
+
+            <div className="flex flex-col sm:flex-row gap-2">
+              <div className="flex-1">
+                <Select value={selectedInsumoId} onValueChange={setSelectedInsumoId}>
+                  <SelectTrigger className="w-full bg-input-background">
+                    <SelectValue placeholder="Seleccionar insumo..." />
+                  </SelectTrigger>
+                  <SelectContent className="z-[100] max-h-56">
+                    {availableInsumos.map((ins) => (
+                      <SelectItem key={ins.id_insumo} value={String(ins.id_insumo)}>
+                        {ins.nombre} ({ins.unidad_medida})
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="flex gap-2 sm:w-56">
+                <input
+                  type="number"
+                  min="0.01"
+                  step="0.01"
+                  placeholder="Cantidad"
+                  value={cantidadInsumo}
+                  onChange={(e) => setCantidadInsumo(e.target.value)}
+                  className="w-full px-3 py-2 border border-input bg-input-background rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+                />
+                <button
+                  type="button"
+                  onClick={handleAddInsumo}
+                  disabled={!selectedInsumoId || !cantidadInsumo}
+                  className="px-3.5 py-2 bg-primary text-primary-foreground rounded-lg hover:opacity-90 disabled:opacity-50 text-xs font-semibold flex items-center gap-1 shrink-0 transition-opacity"
+                >
+                  <Plus className="w-3.5 h-3.5" />
+                  Agregar
+                </button>
+              </div>
+            </div>
+
+            {insumosList.length > 0 ? (
+              <div className="divide-y divide-border border border-border rounded-lg bg-card overflow-hidden">
+                {insumosList.map((item) => (
+                  <div key={item.id_insumo} className="flex items-center justify-between p-2.5 text-xs">
+                    <div className="flex items-center gap-2">
+                      <span className="w-2 h-2 rounded-full bg-primary" />
+                      <span className="font-medium text-foreground">{item.nombre}</span>
+                    </div>
+                    <div className="flex items-center gap-3">
+                      <span className="font-semibold text-foreground px-2 py-0.5 bg-muted rounded">
+                        {item.cantidad} {item.unidad_medida}
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => handleRemoveInsumo(item.id_insumo)}
+                        className="text-muted-foreground hover:text-destructive p-1 rounded transition-colors"
+                        title="Eliminar insumo"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="text-center py-3 border border-dashed border-border rounded-lg text-xs text-muted-foreground">
+                No hay insumos requeridos seleccionados para este lote.
+              </div>
+            )}
+          </div>
+
+          <div className="modal-field-wide">
+            <label className="block mb-1.5 text-sm font-medium">Observaciones</label>
+            <textarea
+              maxLength={255}
+              rows={2}
+              placeholder="Notas sobre el turno, incidencias o condiciones del lote..."
+              value={observaciones}
+              onChange={(e) => setObservaciones(e.target.value)}
+              className="w-full px-4 py-2 border border-input bg-input-background rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+            />
+          </div>
+
+          <div className="flex gap-2 pt-4 border-t border-border">
+            <button
+              type="button"
+              onClick={onClose}
+              disabled={isLoading}
+              className="flex-1 px-4 py-2 border border-border rounded-lg hover:bg-muted text-sm font-medium transition-colors"
+            >
               Cancelar
             </button>
-            <button onClick={onClose} className="flex-1 px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:opacity-90">
-              Registrar Lote
+            <button
+              type="submit"
+              disabled={isLoading}
+              className="flex-1 px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:opacity-90 disabled:opacity-50 text-sm font-medium transition-colors shadow-xs"
+            >
+              {isLoading ? 'Guardando...' : lote ? 'Guardar Cambios' : 'Registrar Lote'}
             </button>
           </div>
-        </div>
+        </form>
       </div>
     </div>
   );
