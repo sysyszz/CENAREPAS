@@ -14,54 +14,73 @@ export function ProveedorEditModal({ open, editData, setEditData, onClose, onSav
         </div>
         <div className="modal-form-grid">
           <div>
-            <label className="block mb-2">Nombre</label>
+            <label htmlFor="edit_proveedor_nombre" className="block mb-2 text-sm font-medium">Nombre / Razón Social *</label>
             <input
+              id="edit_proveedor_nombre"
+              name="nombre"
               type="text"
+              maxLength={150}
+              required
               value={editData.nombre}
               onChange={(e) => setEditData({ ...editData, nombre: e.target.value })}
               className="w-full px-4 py-2 border border-input bg-input-background rounded-lg focus:outline-none focus:ring-2 focus:ring-ring"
             />
           </div>
           <div>
-            <label className="block mb-2">NIT</label>
+            <label htmlFor="edit_proveedor_nit" className="block mb-2 text-sm font-medium">NIT / Cédula *</label>
             <input
+              id="edit_proveedor_nit"
+              name="nit"
               type="text"
+              maxLength={20}
+              required
               value={editData.nit}
               onChange={(e) => setEditData({ ...editData, nit: e.target.value })}
               className="w-full px-4 py-2 border border-input bg-input-background rounded-lg focus:outline-none focus:ring-2 focus:ring-ring"
             />
           </div>
           <div>
-            <label className="block mb-2">Teléfono</label>
+            <label htmlFor="edit_proveedor_telefono" className="block mb-2 text-sm font-medium">Teléfono</label>
             <input
+              id="edit_proveedor_telefono"
+              name="telefono"
               type="tel"
-              value={editData.telefono}
+              maxLength={20}
+              value={editData.telefono || ''}
               onChange={(e) => setEditData({ ...editData, telefono: e.target.value })}
               className="w-full px-4 py-2 border border-input bg-input-background rounded-lg focus:outline-none focus:ring-2 focus:ring-ring"
             />
           </div>
           <div>
-            <label className="block mb-2">Correo</label>
+            <label htmlFor="edit_proveedor_correo" className="block mb-2 text-sm font-medium">Correo Electrónico</label>
             <input
+              id="edit_proveedor_correo"
+              name="correo"
               type="email"
-              value={editData.correo}
+              maxLength={150}
+              value={editData.correo || ''}
               onChange={(e) => setEditData({ ...editData, correo: e.target.value })}
               className="w-full px-4 py-2 border border-input bg-input-background rounded-lg focus:outline-none focus:ring-2 focus:ring-ring"
             />
           </div>
-          <div>
-            <label className="block mb-2">Dirección</label>
+          <div className="modal-field-wide">
+            <label htmlFor="edit_proveedor_direccion" className="block mb-2 text-sm font-medium">Dirección</label>
             <input
+              id="edit_proveedor_direccion"
+              name="direccion"
               type="text"
-              value={editData.direccion}
+              maxLength={255}
+              value={editData.direccion || ''}
               onChange={(e) => setEditData({ ...editData, direccion: e.target.value })}
               className="w-full px-4 py-2 border border-input bg-input-background rounded-lg focus:outline-none focus:ring-2 focus:ring-ring"
             />
           </div>
           <div className="modal-field-wide">
-            <label className="block mb-2">Estado</label>
+            <label htmlFor="edit_proveedor_estado" className="block mb-2 text-sm font-medium">Estado</label>
             <select
-              value={editData.estado}
+              id="edit_proveedor_estado"
+              name="estado"
+              value={editData.estado || 'activo'}
               onChange={(e) => setEditData({ ...editData, estado: e.target.value })}
               className="w-full px-4 py-2 border border-input bg-input-background rounded-lg focus:outline-none focus:ring-2 focus:ring-ring"
             >

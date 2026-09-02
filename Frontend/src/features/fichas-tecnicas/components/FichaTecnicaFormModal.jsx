@@ -159,8 +159,10 @@ export function FichaTecnicaFormModal({ open, onClose, ficha = null, onSave, isL
 
         <form onSubmit={handleSubmit} className="modal-form-grid space-y-4">
           <div className="modal-field-wide">
-            <label className="block mb-1.5 text-sm font-medium">Nombre de la Receta / Ficha *</label>
+            <label htmlFor="ficha_nombre" className="block mb-1.5 text-sm font-medium">Nombre de la Receta / Ficha *</label>
             <input
+              id="ficha_nombre"
+              name="nombre"
               type="text"
               maxLength={100}
               required
@@ -172,8 +174,10 @@ export function FichaTecnicaFormModal({ open, onClose, ficha = null, onSave, isL
           </div>
 
           <div className="modal-field-wide">
-            <label className="block mb-1.5 text-sm font-medium">Descripción</label>
+            <label htmlFor="ficha_descripcion" className="block mb-1.5 text-sm font-medium">Descripción</label>
             <textarea
+              id="ficha_descripcion"
+              name="descripcion"
               maxLength={255}
               rows={2}
               placeholder="Breve resumen de la receta y características..."
@@ -185,8 +189,10 @@ export function FichaTecnicaFormModal({ open, onClose, ficha = null, onSave, isL
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
-              <label className="block mb-1.5 text-sm font-medium">Tiempo Estimado (min)</label>
+              <label htmlFor="ficha_tiempo_estimado_minutos" className="block mb-1.5 text-sm font-medium">Tiempo Estimado (min)</label>
               <input
+                id="ficha_tiempo_estimado_minutos"
+                name="tiempo_estimado_minutos"
                 type="number"
                 min="0"
                 placeholder="Ej. 45"
@@ -196,11 +202,13 @@ export function FichaTecnicaFormModal({ open, onClose, ficha = null, onSave, isL
               />
             </div>
             <div>
-              <label className="block mb-1.5 text-sm font-medium">Rendimiento por Lote (unidades)</label>
+              <label htmlFor="ficha_rendimiento_lote" className="block mb-1.5 text-sm font-medium">Rendimiento por Lote (unidades)</label>
               <input
+                id="ficha_rendimiento_lote"
+                name="rendimiento_lote"
                 type="number"
                 min="0"
-                step="1"
+                step="0.01"
                 placeholder="Ej. 100"
                 value={rendimiento}
                 onChange={(e) => setRendimiento(e.target.value)}
@@ -224,7 +232,7 @@ export function FichaTecnicaFormModal({ open, onClose, ficha = null, onSave, isL
             <div className="flex flex-col sm:flex-row gap-2">
               <div className="flex-1">
                 <Select value={selectedInsumoId} onValueChange={setSelectedInsumoId}>
-                  <SelectTrigger className="w-full bg-input-background">
+                  <SelectTrigger id="ficha_insumo_id_insumo" className="w-full bg-input-background">
                     <SelectValue placeholder="Seleccionar insumo..." />
                   </SelectTrigger>
                   <SelectContent className="z-[100] max-h-56">
@@ -239,6 +247,8 @@ export function FichaTecnicaFormModal({ open, onClose, ficha = null, onSave, isL
 
               <div className="flex gap-2 sm:w-56">
                 <input
+                  id="ficha_insumo_cantidad"
+                  name="cantidad"
                   type="number"
                   min="0.01"
                   step="0.01"
@@ -292,8 +302,10 @@ export function FichaTecnicaFormModal({ open, onClose, ficha = null, onSave, isL
           </div>
 
           <div className="modal-field-wide">
-            <label className="block mb-1.5 text-sm font-medium">Instrucciones de Preparación</label>
+            <label htmlFor="ficha_instrucciones_preparacion" className="block mb-1.5 text-sm font-medium">Instrucciones de Preparación</label>
             <textarea
+              id="ficha_instrucciones_preparacion"
+              name="instrucciones_preparacion"
               rows={3}
               placeholder="Paso a paso del proceso de mezclado, amasado, formado y cocción..."
               value={instrucciones}

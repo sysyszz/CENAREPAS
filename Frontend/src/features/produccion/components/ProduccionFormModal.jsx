@@ -156,9 +156,9 @@ export function ProduccionFormModal({ open, onClose, lote = null, onSave, isLoad
 
         <form onSubmit={handleSubmit} className="modal-form-grid space-y-4">
           <div className="modal-field-wide">
-            <label className="block mb-1.5 text-sm font-medium">Ficha Técnica (Receta) *</label>
+            <label htmlFor="lote_id_ficha" className="block mb-1.5 text-sm font-medium">Ficha Técnica (Receta) *</label>
             <Select value={idFicha} onValueChange={setIdFicha}>
-              <SelectTrigger className="w-full bg-input-background">
+              <SelectTrigger id="lote_id_ficha" className="w-full bg-input-background">
                 <SelectValue placeholder="Seleccionar receta..." />
               </SelectTrigger>
               <SelectContent className="z-[100] max-h-56">
@@ -173,10 +173,13 @@ export function ProduccionFormModal({ open, onClose, lote = null, onSave, isLoad
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
-              <label className="block mb-1.5 text-sm font-medium">Cantidad Producida (und) *</label>
+              <label htmlFor="lote_cantidad_producida" className="block mb-1.5 text-sm font-medium">Cantidad Producida (und) *</label>
               <input
+                id="lote_cantidad_producida"
+                name="cantidad_producida"
                 type="number"
-                min="1"
+                min="0.01"
+                step="0.01"
                 required
                 placeholder="Ej. 500"
                 value={cantidadProducida}
@@ -185,8 +188,10 @@ export function ProduccionFormModal({ open, onClose, lote = null, onSave, isLoad
               />
             </div>
             <div>
-              <label className="block mb-1.5 text-sm font-medium">Fecha de Producción *</label>
+              <label htmlFor="lote_fecha_produccion" className="block mb-1.5 text-sm font-medium">Fecha de Producción *</label>
               <input
+                id="lote_fecha_produccion"
+                name="fecha_produccion"
                 type="date"
                 required
                 value={fechaProduccion}
@@ -198,9 +203,9 @@ export function ProduccionFormModal({ open, onClose, lote = null, onSave, isLoad
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
-              <label className="block mb-1.5 text-sm font-medium">Usuario Responsable *</label>
+              <label htmlFor="lote_id_usuario_responsable" className="block mb-1.5 text-sm font-medium">Usuario Responsable *</label>
               <Select value={idUsuarioResponsable} onValueChange={setIdUsuarioResponsable}>
-                <SelectTrigger className="w-full bg-input-background">
+                <SelectTrigger id="lote_id_usuario_responsable" className="w-full bg-input-background">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent className="z-[100] max-h-56">
@@ -213,9 +218,9 @@ export function ProduccionFormModal({ open, onClose, lote = null, onSave, isLoad
               </Select>
             </div>
             <div>
-              <label className="block mb-1.5 text-sm font-medium">Estado *</label>
+              <label htmlFor="lote_estado" className="block mb-1.5 text-sm font-medium">Estado *</label>
               <Select value={estado} onValueChange={setEstado}>
-                <SelectTrigger className="w-full bg-input-background">
+                <SelectTrigger id="lote_estado" className="w-full bg-input-background">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent className="z-[100]">
@@ -243,7 +248,7 @@ export function ProduccionFormModal({ open, onClose, lote = null, onSave, isLoad
             <div className="flex flex-col sm:flex-row gap-2">
               <div className="flex-1">
                 <Select value={selectedInsumoId} onValueChange={setSelectedInsumoId}>
-                  <SelectTrigger className="w-full bg-input-background">
+                  <SelectTrigger id="lote_insumo_id_insumo" className="w-full bg-input-background">
                     <SelectValue placeholder="Seleccionar insumo..." />
                   </SelectTrigger>
                   <SelectContent className="z-[100] max-h-56">
@@ -258,6 +263,8 @@ export function ProduccionFormModal({ open, onClose, lote = null, onSave, isLoad
 
               <div className="flex gap-2 sm:w-56">
                 <input
+                  id="lote_insumo_cantidad_consumida"
+                  name="cantidad_consumida"
                   type="number"
                   min="0.01"
                   step="0.01"
@@ -310,8 +317,10 @@ export function ProduccionFormModal({ open, onClose, lote = null, onSave, isLoad
           </div>
 
           <div className="modal-field-wide">
-            <label className="block mb-1.5 text-sm font-medium">Observaciones</label>
+            <label htmlFor="lote_observaciones" className="block mb-1.5 text-sm font-medium">Observaciones</label>
             <textarea
+              id="lote_observaciones"
+              name="observaciones"
               maxLength={255}
               rows={2}
               placeholder="Notas sobre el turno, incidencias o condiciones del lote..."
