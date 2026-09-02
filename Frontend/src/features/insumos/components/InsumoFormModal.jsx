@@ -93,8 +93,10 @@ export function InsumoFormModal({ open, onClose, insumo = null, onSave, isLoadin
 
         <form onSubmit={handleSubmit} className="modal-form-grid space-y-4">
           <div className="modal-field-wide">
-            <label className="block mb-1.5 text-sm font-medium">Nombre del Insumo *</label>
+            <label htmlFor="insumo_nombre" className="block mb-1.5 text-sm font-medium">Nombre del Insumo *</label>
             <input
+              id="insumo_nombre"
+              name="nombre"
               type="text"
               maxLength={100}
               required
@@ -107,10 +109,13 @@ export function InsumoFormModal({ open, onClose, insumo = null, onSave, isLoadin
 
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block mb-1.5 text-sm font-medium">Stock Inicial *</label>
+              <label htmlFor="insumo_stock_actual" className="block mb-1.5 text-sm font-medium">Stock Inicial *</label>
               <input
+                id="insumo_stock_actual"
+                name="stock_actual"
                 type="number"
                 min="0"
+                step="0.01"
                 required
                 placeholder="Ej. 100"
                 value={stockActual}
@@ -119,8 +124,10 @@ export function InsumoFormModal({ open, onClose, insumo = null, onSave, isLoadin
               />
             </div>
             <div>
-              <label className="block mb-1.5 text-sm font-medium">Unidad de Medida *</label>
+              <label htmlFor="insumo_unidad_medida" className="block mb-1.5 text-sm font-medium">Unidad de Medida *</label>
               <select
+                id="insumo_unidad_medida"
+                name="unidad_medida"
                 value={unidadMedida}
                 onChange={(e) => setUnidadMedida(e.target.value)}
                 className="w-full px-4 py-2 border border-input bg-input-background rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-ring"
@@ -136,8 +143,10 @@ export function InsumoFormModal({ open, onClose, insumo = null, onSave, isLoadin
 
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block mb-1.5 text-sm font-medium">Fecha de Vencimiento</label>
+              <label htmlFor="insumo_fecha_vencimiento" className="block mb-1.5 text-sm font-medium">Fecha de Vencimiento</label>
               <input
+                id="insumo_fecha_vencimiento"
+                name="fecha_vencimiento"
                 type="date"
                 value={fechaVencimiento}
                 onChange={(e) => setFechaVencimiento(e.target.value)}
@@ -145,10 +154,13 @@ export function InsumoFormModal({ open, onClose, insumo = null, onSave, isLoadin
               />
             </div>
             <div>
-              <label className="block mb-1.5 text-sm font-medium">Stock Mínimo</label>
+              <label htmlFor="insumo_stock_minimo" className="block mb-1.5 text-sm font-medium">Stock Mínimo</label>
               <input
+                id="insumo_stock_minimo"
+                name="stock_minimo"
                 type="number"
                 min="0"
+                step="0.01"
                 placeholder="Ej. 20"
                 value={stockMinimo}
                 onChange={(e) => setStockMinimo(e.target.value)}
@@ -158,8 +170,10 @@ export function InsumoFormModal({ open, onClose, insumo = null, onSave, isLoadin
           </div>
 
           <div className="modal-field-wide">
-            <label className="block mb-1.5 text-sm font-medium">Proveedor *</label>
+            <label htmlFor="insumo_id_proveedor" className="block mb-1.5 text-sm font-medium">Proveedor *</label>
             <select
+              id="insumo_id_proveedor"
+              name="id_proveedor"
               value={idProveedor}
               onChange={(e) => setIdProveedor(e.target.value)}
               className="w-full px-4 py-2 border border-input bg-input-background rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-ring"
@@ -173,14 +187,16 @@ export function InsumoFormModal({ open, onClose, insumo = null, onSave, isLoadin
           </div>
 
           <div className="modal-field-wide">
-            <label className="block mb-1.5 text-sm font-medium">Estado</label>
+            <label htmlFor="insumo_estado" className="block mb-1.5 text-sm font-medium">Estado</label>
             <select
+              id="insumo_estado"
+              name="estado"
               value={estado}
               onChange={(e) => setEstado(e.target.value)}
               className="w-full px-4 py-2 border border-input bg-input-background rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-ring"
             >
-              <option value="Activo">Activo / Disponible</option>
-              <option value="Inactivo">Inactivo / Bajo Stock</option>
+              <option value="activo">Activo / Disponible</option>
+              <option value="inactivo">Inactivo / Agotado</option>
             </select>
           </div>
 
@@ -189,14 +205,14 @@ export function InsumoFormModal({ open, onClose, insumo = null, onSave, isLoadin
               type="button"
               onClick={onClose}
               disabled={isLoading}
-              className="flex-1 px-4 py-2 border border-border rounded-lg hover:bg-muted text-sm font-medium transition-colors"
+              className="flex-1 px-4 py-2 border border-border rounded-lg hover:bg-muted text-sm font-medium transition-colors cursor-pointer"
             >
               Cancelar
             </button>
             <button
               type="submit"
               disabled={isLoading}
-              className="flex-1 px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:opacity-90 disabled:opacity-50 text-sm font-medium transition-colors shadow-xs"
+              className="flex-1 px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:opacity-90 disabled:opacity-50 text-sm font-medium transition-colors shadow-xs cursor-pointer"
             >
               {isLoading ? 'Guardando...' : insumo ? 'Guardar Cambios' : 'Guardar Insumo'}
             </button>

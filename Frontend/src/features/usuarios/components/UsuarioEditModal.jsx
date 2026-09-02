@@ -1,6 +1,16 @@
+import { useState, useEffect } from 'react';
 import { X, Save } from 'lucide-react';
+import { mockRoles, getRoles } from '../../roles/services/rolesService';
 
 export function UsuarioEditModal({ open, editData, setEditData, onClose, onSave, isSaving }) {
+  const [roles, setRoles] = useState(mockRoles);
+
+  useEffect(() => {
+    getRoles().then((data) => {
+      if (data && data.length > 0) setRoles(data);
+    });
+  }, []);
+
   if (!open || !editData) return null;
 
   return (
@@ -8,23 +18,28 @@ export function UsuarioEditModal({ open, editData, setEditData, onClose, onSave,
       <div className="form-modal-panel bg-card p-6 rounded-lg">
         <div className="flex items-center justify-between mb-4">
           <h2>Editar Usuario</h2>
-          <button onClick={onClose} className="p-2 hover:bg-muted rounded-lg">
+          <button onClick={onClose} className="p-2 hover:bg-muted rounded-lg" aria-label="Cerrar modal">
             <X className="w-5 h-5" />
           </button>
         </div>
         <div className="modal-form-grid">
           <div>
-            <label className="block mb-2">Nombre</label>
+            <label htmlFor="edit_usuario_nombre" className="block mb-2 text-sm font-medium">Nombre</label>
             <input
+              id="edit_usuario_nombre"
+              name="nombre"
               type="text"
+              maxLength={100}
               value={editData.nombre}
               onChange={(e) => setEditData({ ...editData, nombre: e.target.value })}
               className="w-full px-4 py-2 border border-input bg-input-background rounded-lg focus:outline-none focus:ring-2 focus:ring-ring"
             />
           </div>
           <div>
-            <label className="block mb-2">Email</label>
+            <label htmlFor="edit_usuario_correo" className="block mb-2 text-sm font-medium">Email</label>
             <input
+              id="edit_usuario_correo"
+              name="correo"
               type="email"
               value={editData.correo}
               maxLength={100}
@@ -33,22 +48,26 @@ export function UsuarioEditModal({ open, editData, setEditData, onClose, onSave,
             />
           </div>
           <div>
-            <label className="block mb-2">Rol</label>
+            <label htmlFor="edit_usuario_id_rol" className="block mb-2 text-sm font-medium">Rol</label>
             <select
+              id="edit_usuario_id_rol"
+              name="id_rol"
               value={editData.id_rol}
               onChange={(e) => setEditData({ ...editData, id_rol: Number(e.target.value) })}
               className="w-full px-4 py-2 border border-input bg-input-background rounded-lg focus:outline-none focus:ring-2 focus:ring-ring"
             >
-              <option value="1">Administrador de Planta</option>
-              <option value="2">Supervisor de Producción</option>
-              <option value="3">Gestor de Compras y Proveedores</option>
-              <option value="4">Vendedor y Distribución</option>
-              <option value="5">Auditor de Calidad</option>
+              {roles.map((r) => (
+                <option key={r.id_rol} value={r.id_rol}>
+                  {r.nombre}
+                </option>
+              ))}
             </select>
           </div>
           <div className="modal-field-wide">
-            <label className="block mb-2">Estado</label>
+            <label htmlFor="edit_usuario_estado" className="block mb-2 text-sm font-medium">Estado</label>
             <select
+              id="edit_usuario_estado"
+              name="estado"
               value={editData.estado}
               onChange={(e) => setEditData({ ...editData, estado: e.target.value })}
               className="w-full px-4 py-2 border border-input bg-input-background rounded-lg focus:outline-none focus:ring-2 focus:ring-ring"

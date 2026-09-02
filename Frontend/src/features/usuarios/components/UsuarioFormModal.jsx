@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { X } from 'lucide-react';
+import { mockRoles, getRoles } from '../../roles/services/rolesService';
 
 export function UsuarioFormModal({ open, onClose, usuario = null, onSave, isLoading = false }) {
   const [nombre, setNombre] = useState('');
@@ -7,6 +8,13 @@ export function UsuarioFormModal({ open, onClose, usuario = null, onSave, isLoad
   const [idRol, setIdRol] = useState('1');
   const [contrasena, setContrasena] = useState('');
   const [estado, setEstado] = useState('activo');
+  const [roles, setRoles] = useState(mockRoles);
+
+  useEffect(() => {
+    getRoles().then((data) => {
+      if (data && data.length > 0) setRoles(data);
+    });
+  }, []);
 
   useEffect(() => {
     if (usuario) {
@@ -18,11 +26,11 @@ export function UsuarioFormModal({ open, onClose, usuario = null, onSave, isLoad
     } else {
       setNombre('');
       setCorreo('');
-      setIdRol('1');
+      setIdRol(roles[0]?.id_rol ? String(roles[0].id_rol) : '1');
       setContrasena('');
       setEstado('activo');
     }
-  }, [usuario, open]);
+  }, [usuario, open, roles]);
 
   if (!open) return null;
 
@@ -70,8 +78,10 @@ export function UsuarioFormModal({ open, onClose, usuario = null, onSave, isLoad
         </div>
         <form onSubmit={handleSubmit} className="modal-form-grid space-y-4">
           <div>
-            <label className="block mb-2 text-sm font-medium">Nombre</label>
+            <label htmlFor="usuario_nombre" className="block mb-2 text-sm font-medium">Nombre</label>
             <input
+              id="usuario_nombre"
+              name="nombre"
               type="text"
               maxLength={100}
               required
@@ -81,8 +91,10 @@ export function UsuarioFormModal({ open, onClose, usuario = null, onSave, isLoad
             />
           </div>
           <div>
-            <label className="block mb-2 text-sm font-medium">Correo</label>
+            <label htmlFor="usuario_correo" className="block mb-2 text-sm font-medium">Correo</label>
             <input
+              id="usuario_correo"
+              name="correo"
               type="email"
               maxLength={100}
               required
@@ -92,24 +104,28 @@ export function UsuarioFormModal({ open, onClose, usuario = null, onSave, isLoad
             />
           </div>
           <div>
-            <label className="block mb-2 text-sm font-medium">Rol</label>
+            <label htmlFor="usuario_id_rol" className="block mb-2 text-sm font-medium">Rol</label>
             <select
+              id="usuario_id_rol"
+              name="id_rol"
               value={idRol}
               onChange={(e) => setIdRol(e.target.value)}
               className="w-full px-4 py-2 border border-input bg-input-background rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-ring"
             >
-              <option value="1">Administrador de Planta</option>
-              <option value="2">Supervisor de Producción</option>
-              <option value="3">Gestor de Compras y Proveedores</option>
-              <option value="4">Vendedor y Distribución</option>
-              <option value="5">Auditor de Calidad</option>
+              {roles.map((r) => (
+                <option key={r.id_rol} value={String(r.id_rol)}>
+                  {r.nombre}
+                </option>
+              ))}
             </select>
           </div>
           <div>
-            <label className="block mb-2 text-sm font-medium">
+            <label htmlFor="usuario_contrasena" className="block mb-2 text-sm font-medium">
               Contraseña {usuario ? '(Dejar en blanco para mantener la actual)' : ''}
             </label>
             <input
+              id="usuario_contrasena"
+              name="contrasena_hash"
               type="password"
               maxLength={255}
               required={!usuario}
@@ -119,8 +135,10 @@ export function UsuarioFormModal({ open, onClose, usuario = null, onSave, isLoad
             />
           </div>
           <div className="modal-field-wide">
-            <label className="block mb-2 text-sm font-medium">Estado</label>
+            <label htmlFor="usuario_estado" className="block mb-2 text-sm font-medium">Estado</label>
             <select
+              id="usuario_estado"
+              name="estado"
               value={estado}
               onChange={(e) => setEstado(e.target.value)}
               className="w-full px-4 py-2 border border-input bg-input-background rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-ring"
