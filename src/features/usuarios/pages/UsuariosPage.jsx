@@ -8,7 +8,7 @@ import { MetricCard } from '../../../shared/components/MetricCard';
 import { UsuarioFormModal } from '../components/UsuarioFormModal';
 import ConfirmDialog from '../../../shared/components/ConfirmDialog';
 import Toast from '../../../shared/components/Toast';
-import DetailModal from '../../../shared/components/DetailModal';
+import UsuarioDetailModal from '../components/UsuarioDetailModal';
 import PageHeader from '../../../shared/components/PageHeader';
 import { usePermissions } from '../../../shared/contexts/PermissionContext';
 import StatusSwitch from '../../../shared/components/StatusSwitch';
@@ -178,18 +178,11 @@ export default function UsuariosPage() {
         }
       />
 
-      <DetailModal
+      <UsuarioDetailModal
         isOpen={detailModal.isOpen}
         onClose={() => setDetailModal({ isOpen: false, data: null })}
-        title="Detalle del Usuario"
-        fields={detailModal.data ? [
-          { label: 'ID', value: detailModal.data.id_usuario },
-          { label: 'Nombre', value: detailModal.data.nombre },
-          { label: 'Correo', value: detailModal.data.correo },
-          { label: 'Rol', value: roleNames[detailModal.data.id_rol] || detailModal.data.id_rol },
-          { label: 'Estado', value: detailModal.data.estado },
-          { label: 'Fecha de Creación', value: detailModal.data.fecha_creacion },
-        ] : []}
+        usuario={detailModal.data}
+        roleNames={roleNames}
       />
 
       <UsuarioFormModal

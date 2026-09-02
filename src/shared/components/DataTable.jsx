@@ -1,8 +1,9 @@
-import { useState } from "react";
-import { usePagination } from "../hooks/usePagination";
-import { PaginationControls } from "./PaginationControls";
-import { RowActions } from "./RowActions";
-import ConfirmDialog from "./ConfirmDialog";
+import { useState } from 'react';
+import { usePagination } from '../hooks/usePagination';
+import { PaginationControls } from './PaginationControls';
+import { SearchFilterBar } from './SearchFilterBar';
+import { RowActions } from './RowActions';
+import ConfirmDialog from './ConfirmDialog';
 import {
   Table,
   TableBody,
@@ -10,9 +11,8 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from "../ui/table";
-import { Input } from "../ui/input";
-import { Search, Plus } from "lucide-react";
+} from '../ui/table';
+import { Plus } from 'lucide-react';
 
 export function DataTable({
   columns,
@@ -21,18 +21,34 @@ export function DataTable({
   onEdit,
   onDelete,
   onView,
-  searchPlaceholder = "Buscar...",
+  searchPlaceholder = 'Buscar...',
   title,
   filters,
+  searchValue,
+  onSearchChange,
 }) {
-  const [searchTerm, setSearchTerm] = useState("");
+  const [internalSearchTerm, setInternalSearchTerm] = useState('');
   const [deleteDialog, setDeleteDialog] = useState({ isOpen: false, row: null });
 
-  const filteredData = data.filter((row) =>
-    Object.values(row).some((value) =>
-      String(value).toLowerCase().includes(searchTerm.toLowerCase())
-    )
-  );
+  const isControlled = searchValue !== undefined;
+  const searchTerm = isControlled ? searchValue : internalSearchTerm;
+
+  const handleSearchChange = (e) => {
+    const val = e.target.value;
+    if (isControlled) {
+      onSearchChange?.(val);
+    } else {
+      setInternalSearchTerm(val);
+    }
+  };
+
+  const filteredData = isControlled
+    ? data
+    : data.filter((row) =>
+        Object.values(row).some((value) =>
+          String(value).toLowerCase().includes(searchTerm.toLowerCase())
+        )
+      );
 
   const pagination = usePagination(filteredData);
 
@@ -47,25 +63,22 @@ export function DataTable({
 
   return (
     <div className="space-y-4">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
-        <div className="flex-1 flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
-          <div className="relative flex-1 max-w-sm">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-            <Input
-              placeholder={searchPlaceholder}
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-10 bg-card border-border"
-            />
-          </div>
-          {filters}
+      {/* Header con SearchFilterBar compartido */}
+      <div className="flex flex-col sm:flex-row gap-4 items-stretch sm:items-center justify-between">
+        <div className="flex-1">
+          <SearchFilterBar
+            placeholder={searchPlaceholder}
+            value={searchTerm}
+            onChange={handleSearchChange}
+          >
+            {filters}
+          </SearchFilterBar>
         </div>
         {onAdd && (
           <button
             type="button"
             onClick={onAdd}
-            className="flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:opacity-90 text-sm font-medium transition-colors"
+            className="flex items-center justify-center gap-2 px-4 py-2.5 bg-primary text-primary-foreground rounded-lg hover:opacity-90 text-sm font-medium transition-colors shrink-0 shadow-xs h-10"
           >
             <Plus className="w-4 h-4" />
             Agregar
@@ -128,7 +141,7 @@ export function DataTable({
         </Table>
       </div>
 
-      {/* Pagination */}
+      {/* Pagination con PaginationControls compartido */}
       <PaginationControls {...pagination} />
 
       {/* Delete Confirmation Dialog */}

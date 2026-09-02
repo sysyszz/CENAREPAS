@@ -16,6 +16,8 @@ export default function CategoriasPage() {
   const { can } = usePermissions();
   const {
     rawCategorias,
+    searchQuery,
+    setSearchQuery,
     estadoFilter,
     setEstadoFilter,
     showModal,
@@ -41,10 +43,18 @@ export default function CategoriasPage() {
 
   const filteredData = useMemo(() => {
     return rawCategorias.filter((c) => {
-      if (estadoFilter === 'Todos') return true;
-      return String(c.estado).toLowerCase() === estadoFilter.toLowerCase();
+      const q = (searchQuery || '').toLowerCase().trim();
+      const matchesSearch =
+        !q ||
+        c.nombre.toLowerCase().includes(q) ||
+        String(c.id_categoria).toLowerCase().includes(q) ||
+        (c.descripcion || '').toLowerCase().includes(q);
+
+      const isTodos = estadoFilter === 'Todos' || estadoFilter === 'Todos los estados';
+      const matchesEstado = isTodos || String(c.estado).toLowerCase() === estadoFilter.toLowerCase();
+      return matchesSearch && matchesEstado;
     });
-  }, [rawCategorias, estadoFilter]);
+  }, [rawCategorias, searchQuery, estadoFilter]);
 
   const columns = useMemo(
     () => [
@@ -120,6 +130,8 @@ export default function CategoriasPage() {
         columns={columns}
         data={filteredData}
         searchPlaceholder="Buscar por código, nombre o descripción..."
+        searchValue={searchQuery}
+        onSearchChange={setSearchQuery}
         filters={
           <select
             value={estadoFilter}

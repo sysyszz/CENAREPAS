@@ -1,9 +1,7 @@
 import { useState, useMemo } from 'react';
 import { UserCircle, CheckCircle, ShoppingBag, DollarSign } from 'lucide-react';
 import { useClientes } from '../hooks/useClientes';
-import { usePagination } from '../../../shared/hooks/usePagination';
-import { PaginationControls } from '../../../shared/components/PaginationControls';
-import { SearchFilterBar } from '../../../shared/components/SearchFilterBar';
+import { DataTable } from '../../../shared/components/DataTable';
 import { RowActions } from '../../../shared/components/RowActions';
 import { ClienteFormModal } from '../components/ClienteFormModal';
 import ConfirmDialog from '../../../shared/components/ConfirmDialog';
@@ -61,7 +59,62 @@ export default function ClientesPage() {
     });
   }, [rawClientes, searchQuery, estadoFilter]);
 
-  const pagination = usePagination(filteredData);
+  const columns = useMemo(
+    () => [
+      {
+        key: 'id_cliente',
+        label: 'ID',
+        render: (value) => <span className="font-mono font-medium">{value}</span>,
+      },
+      {
+        key: 'nombre',
+        label: 'Cliente / Razón Social',
+        render: (value) => <span className="font-semibold">{value}</span>,
+      },
+      {
+        key: 'documento',
+        label: 'Documento',
+        render: (value) => <span className="text-muted-foreground">{value}</span>,
+      },
+      {
+        key: 'telefono',
+        label: 'Teléfono',
+        render: (value) => <span className="text-muted-foreground">{value}</span>,
+      },
+      {
+        key: 'correo',
+        label: 'Correo',
+        render: (value) => <span className="text-muted-foreground">{value}</span>,
+      },
+      {
+        key: 'direccion',
+        label: 'Dirección',
+        render: (value) => <span className="text-muted-foreground">{value}</span>,
+      },
+      {
+        key: 'estado',
+        label: 'Estado',
+        render: (value) => <StatusSwitch value={value} />,
+      },
+      {
+        key: 'acciones',
+        label: 'Acciones',
+        render: (_, cliente) => (
+          <RowActions
+            onView={() => setDetailModal({ isOpen: true, data: cliente })}
+            onEdit={() => {
+              setSelectedCliente(cliente);
+              setShowModal(true);
+            }}
+            editDisabled={!can('clientes', 'editar')}
+            onDelete={() => setDeleteDialog({ isOpen: true, id: cliente.id_cliente, nombre: cliente.nombre })}
+            deleteDisabled={!can('clientes', 'eliminar')}
+          />
+        ),
+      },
+    ],
+    [can, setDetailModal, setShowModal, setDeleteDialog]
+  );
 
   return (
     <div className="space-y-6">
@@ -84,76 +137,25 @@ export default function ClientesPage() {
         <MetricCard title="Facturación Total" value={`$${totalFacturadoHistorico.toLocaleString('es-CO')}`} icon={DollarSign} variant="warning" />
       </div>
 
-      <SearchFilterBar
-        placeholder="Buscar por código, nombre, NIT o ciudad..."
-        value={searchQuery}
-        onChange={(e) => setSearchQuery(e.target.value)}
-      >
-        <select
-          value={estadoFilter}
-          onChange={(e) => setEstadoFilter(e.target.value)}
-          className="px-4 py-2 border border-input bg-input-background rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-ring"
-        >
-          <option value="Todos">Todos los estados</option>
-          <option value="Activo">Activo</option>
-          <option value="Inactivo">Inactivo</option>
-        </select>
-      </SearchFilterBar>
-
-      {/* Tabla Estandarizada */}
-      <div className="records-table-shell bg-card rounded-lg border border-border overflow-hidden">
-        <table className="w-full text-sm text-left">
-          <thead className="bg-muted text-muted-foreground font-semibold">
-            <tr>
-              <th className="px-6 py-3">ID</th>
-              <th className="px-6 py-3">Cliente / Razón Social</th>
-              <th className="px-6 py-3">Documento</th>
-              <th className="px-6 py-3">Teléfono</th>
-              <th className="px-6 py-3">Correo</th>
-              <th className="px-6 py-3">Dirección</th>
-              <th className="px-6 py-3">Estado</th>
-              <th className="px-6 py-3">Acciones</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-border">
-            {filteredData.length > 0 ? (
-              pagination.paginatedData.map((cliente) => (
-                <tr key={cliente.id_cliente} className="hover:bg-muted/50 transition-colors">
-                  <td className="px-6 py-4 font-mono font-medium">{cliente.id_cliente}</td>
-                  <td className="px-6 py-4 font-semibold">{cliente.nombre}</td>
-                  <td className="px-6 py-4 text-muted-foreground">{cliente.documento}</td>
-                  <td className="px-6 py-4 text-muted-foreground">{cliente.telefono}</td>
-                  <td className="px-6 py-4 text-muted-foreground">{cliente.correo}</td>
-                  <td className="px-6 py-4 text-muted-foreground">{cliente.direccion}</td>
-                  <td className="px-6 py-4">
-                    <StatusSwitch value={cliente.estado} />
-                  </td>
-                  <td className="px-6 py-4">
-                    <RowActions
-                      onView={() => setDetailModal({ isOpen: true, data: cliente })}
-                      onEdit={() => {
-                        setSelectedCliente(cliente);
-                        setShowModal(true);
-                      }}
-                      editDisabled={!can('clientes', 'editar')}
-                      onDelete={() => setDeleteDialog({ isOpen: true, id: cliente.id_cliente, nombre: cliente.nombre })}
-                      deleteDisabled={!can('clientes', 'eliminar')}
-                    />
-                  </td>
-                </tr>
-              ))
-            ) : (
-              <tr>
-                <td colSpan={8} className="px-6 py-8 text-center text-muted-foreground">
-                  No se encontraron clientes.
-                </td>
-              </tr>
-            )}
-          </tbody>
-        </table>
-      </div>
-
-      <PaginationControls {...pagination} />
+      {/* Tabla con DataTable (usa SearchFilterBar y PaginationControls internamente) */}
+      <DataTable
+        columns={columns}
+        data={filteredData}
+        searchPlaceholder="Buscar por código, nombre, NIT o ciudad..."
+        searchValue={searchQuery}
+        onSearchChange={setSearchQuery}
+        filters={
+          <select
+            value={estadoFilter}
+            onChange={(e) => setEstadoFilter(e.target.value)}
+            className="px-4 py-2 border border-input bg-input-background rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+          >
+            <option value="Todos">Todos los estados</option>
+            <option value="Activo">Activo</option>
+            <option value="Inactivo">Inactivo</option>
+          </select>
+        }
+      />
 
       <DetailModal
         isOpen={detailModal.isOpen}

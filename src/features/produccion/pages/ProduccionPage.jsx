@@ -1,6 +1,10 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { Factory, CheckCircle, Clock, Calendar } from 'lucide-react';
 import { useProduccion } from '../hooks/useProduccion';
+import { mockLotesProduccionInsumos } from '../services/produccionService';
+import { mockInsumos } from '../../insumos/services/insumosService';
+import { mockFichasTecnicas, getFichasTecnicas } from '../../fichas-tecnicas/services/fichasTecnicasService';
+import { mockUsuarios } from '../../usuarios/services/usuariosService';
 import { DataTable } from '../../../shared/components/DataTable';
 import { RowActions } from '../../../shared/components/RowActions';
 import { ProduccionFormModal } from '../components/ProduccionFormModal';
@@ -35,6 +39,43 @@ export default function ProduccionPage() {
   } = useProduccion();
 
   const [selectedLote, setSelectedLote] = useState(null);
+  const [fichas, setFichas] = useState(mockFichasTecnicas);
+
+  const getLoteInsumosList = (lote) => {
+    if (!lote) return [];
+    if (Array.isArray(lote.insumos) && lote.insumos.length > 0) {
+      return lote.insumos;
+    }
+    const fromMock = mockLotesProduccionInsumos.filter((li) => li.id_lote === lote.id_lote);
+    if (fromMock.length > 0) {
+      return fromMock.map((li) => {
+        const ins = mockInsumos.find((i) => i.id_insumo === li.id_insumo);
+        return {
+          id_insumo: li.id_insumo,
+          nombre: ins?.nombre || `Insumo #${li.id_insumo}`,
+          cantidad: li.cantidad_consumida || li.cantidad,
+          unidad_medida: ins?.unidad_medida || 'kg',
+        };
+      });
+    }
+    return [];
+  };
+
+  useEffect(() => {
+    getFichasTecnicas().then((data) => {
+      if (data && data.length > 0) setFichas(data);
+    });
+  }, []);
+
+  const fichasNames = useMemo(
+    () => Object.fromEntries(fichas.map((f) => [f.id_ficha, f.nombre])),
+    [fichas]
+  );
+
+  const usuariosNames = useMemo(
+    () => Object.fromEntries(mockUsuarios.map((u) => [u.id_usuario, u.nombre])),
+    []
+  );
 
   const totalLotes = rawLotes.length;
   const finalizados = rawLotes.filter((l) => String(l.estado).toLowerCase() === 'finalizado').length;
@@ -44,11 +85,16 @@ export default function ProduccionPage() {
   const filteredData = useMemo(() => {
     return rawLotes.filter((l) => {
       const q = searchQuery.toLowerCase().trim();
+      const fichaNombre = (fichasNames[l.id_ficha] || '').toLowerCase();
+      const usuarioNombre = (usuariosNames[l.id_usuario_responsable] || '').toLowerCase();
       const matchesSearch =
         !q ||
         String(l.id_lote).toLowerCase().includes(q) ||
         String(l.id_ficha).toLowerCase().includes(q) ||
-        String(l.id_usuario_responsable).toLowerCase().includes(q);
+        String(l.id_usuario_responsable).toLowerCase().includes(q) ||
+        fichaNombre.includes(q) ||
+        usuarioNombre.includes(q) ||
+        (l.observaciones || '').toLowerCase().includes(q);
 
       const isTodosEstado = estadoFilter === 'Todos' || estadoFilter === 'Todos los estados';
       const matchesEstado =
@@ -56,34 +102,42 @@ export default function ProduccionPage() {
 
       return matchesSearch && matchesEstado;
     });
-  }, [rawLotes, searchQuery, estadoFilter]);
+  }, [rawLotes, searchQuery, estadoFilter, fichasNames, usuariosNames]);
 
   const columns = useMemo(
     () => [
       {
         key: 'id_lote',
         label: 'Código Lote',
-        render: (value) => <span className="font-mono font-medium">{value}</span>,
+        render: (value) => <span className="font-mono font-medium text-xs">#{value}</span>,
       },
       {
         key: 'id_ficha',
-        label: 'Ficha ID',
-        render: (value) => <span>{value}</span>,
+        label: 'Ficha Técnica / Receta',
+        render: (value) => (
+          <span className="font-semibold text-foreground">
+            {fichasNames[value] || `Receta #${value}`}
+          </span>
+        ),
       },
       {
         key: 'id_usuario_responsable',
-        label: 'Usuario ID',
-        render: (value) => <span>{value}</span>,
+        label: 'Responsable',
+        render: (value) => (
+          <span className="text-muted-foreground text-sm">
+            {usuariosNames[value] || `Usuario #${value}`}
+          </span>
+        ),
       },
       {
         key: 'cantidad_producida',
         label: 'Cantidad Producida',
-        render: (value) => <span className="font-semibold">{value}</span>,
+        render: (value) => <span className="font-semibold text-sm">{Number(value || 0).toLocaleString('es-CO')} und</span>,
       },
       {
         key: 'fecha_produccion',
         label: 'Fecha',
-        render: (value) => <span className="text-muted-foreground">{value}</span>,
+        render: (value) => <span className="text-muted-foreground text-sm">{value}</span>,
       },
       {
         key: 'estado',
@@ -93,31 +147,34 @@ export default function ProduccionPage() {
       {
         key: 'acciones',
         label: 'Acciones',
-        render: (_, lote) => (
-          <RowActions
-            onView={() => setDetailModal({ isOpen: true, data: lote })}
-            onEdit={() => {
-              setSelectedLote(lote);
-              setShowModal(true);
-            }}
-            editDisabled={!can('produccion', 'editar')}
-            onDelete={
-              String(lote.estado).toLowerCase() !== 'anulado'
-                ? () =>
-                    setDeleteDialog({
-                      isOpen: true,
-                      id: lote.id_lote,
-                      nombre: `Lote #${lote.id_lote}`,
-                    })
-                : undefined
-            }
-            deleteDisabled={!can('produccion', 'eliminar')}
-            deleteTitle="Anular Lote"
-          />
-        ),
+        render: (_, lote) => {
+          const isAnulado = String(lote.estado).toLowerCase() === 'anulado';
+          return (
+            <RowActions
+              onView={() => setDetailModal({ isOpen: true, data: lote })}
+              onEdit={() => {
+                setSelectedLote(lote);
+                setShowModal(true);
+              }}
+              editDisabled={!can('produccion', 'editar')}
+              onDelete={
+                !isAnulado
+                  ? () =>
+                      setDeleteDialog({
+                        isOpen: true,
+                        id: lote.id_lote,
+                        nombre: `Lote #${lote.id_lote}`,
+                      })
+                  : undefined
+              }
+              deleteDisabled={!can('produccion', 'eliminar') || isAnulado}
+              deleteTitle="Anular Lote"
+            />
+          );
+        },
       },
     ],
-    [can, setDetailModal, setShowModal, setDeleteDialog]
+    [can, fichasNames, usuariosNames, setDetailModal, setShowModal, setDeleteDialog]
   );
 
   return (
@@ -141,11 +198,13 @@ export default function ProduccionPage() {
         <MetricCard title="Programados" value={programados} icon={Calendar} variant="accent" />
       </div>
 
-      {/* Tabla con DataTable */}
+      {/* Tabla con DataTable y RowActions */}
       <DataTable
         columns={columns}
         data={filteredData}
-        searchPlaceholder="Buscar por ID de lote, ficha o usuario responsable..."
+        searchPlaceholder="Buscar por código de lote, receta o responsable..."
+        searchValue={searchQuery}
+        onSearchChange={setSearchQuery}
         filters={
           <select
             value={estadoFilter}
@@ -166,11 +225,30 @@ export default function ProduccionPage() {
         onClose={() => setDetailModal({ isOpen: false, data: null })}
         title="Detalle del Lote de Producción"
         fields={detailModal.data ? [
-          { label: 'ID', value: detailModal.data.id_lote },
-          { label: 'Ficha ID', value: detailModal.data.id_ficha },
-          { label: 'Usuario Responsable ID', value: detailModal.data.id_usuario_responsable },
-          { label: 'Fecha', value: detailModal.data.fecha_produccion },
-          { label: 'Cantidad', value: detailModal.data.cantidad_producida },
+          { label: 'ID', value: `#${detailModal.data.id_lote}` },
+          { label: 'Ficha / Receta', value: fichasNames[detailModal.data.id_ficha] || `Receta #${detailModal.data.id_ficha}` },
+          { label: 'Responsable', value: usuariosNames[detailModal.data.id_usuario_responsable] || `Usuario #${detailModal.data.id_usuario_responsable}` },
+          { label: 'Fecha de Producción', value: detailModal.data.fecha_produccion },
+          { label: 'Cantidad Producida', value: `${Number(detailModal.data.cantidad_producida || 0).toLocaleString('es-CO')} und` },
+          {
+            label: 'Insumos Utilizados',
+            value: (() => {
+              const list = getLoteInsumosList(detailModal.data);
+              if (!list || list.length === 0) return 'Sin registro de insumos';
+              return (
+                <div className="space-y-1 w-full text-left">
+                  {list.map((item, idx) => (
+                    <div key={idx} className="flex items-center justify-between gap-3 text-xs bg-card p-1.5 rounded border border-border/50">
+                      <span className="font-medium text-foreground">{item.nombre}</span>
+                      <span className="font-semibold text-primary px-2 py-0.5 bg-primary/10 rounded">
+                        {item.cantidad} {item.unidad_medida || 'kg'}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              );
+            })(),
+          },
           { label: 'Observaciones', value: detailModal.data.observaciones || 'N/A' },
           { label: 'Estado', value: detailModal.data.estado },
         ] : []}
@@ -206,5 +284,3 @@ export default function ProduccionPage() {
     </div>
   );
 }
-
-

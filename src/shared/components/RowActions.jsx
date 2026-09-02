@@ -1,9 +1,11 @@
 import { Eye, Edit, Trash2, XCircle } from 'lucide-react';
 
 const mutedButtonClass =
-  'p-2 hover:bg-muted rounded-lg text-muted-foreground hover:text-foreground';
-const plainButtonClass = 'p-2 hover:bg-muted rounded-lg';
-const deleteButtonClass = 'p-2 hover:bg-muted rounded-lg text-destructive';
+  'inline-flex items-center justify-center p-1.5 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted transition-colors disabled:opacity-40 disabled:pointer-events-none cursor-pointer';
+const plainButtonClass =
+  'inline-flex items-center justify-center p-1.5 rounded-lg hover:bg-muted transition-colors disabled:opacity-40 disabled:pointer-events-none cursor-pointer';
+const deleteButtonClass =
+  'inline-flex items-center justify-center p-1.5 rounded-lg text-destructive hover:bg-destructive/10 transition-colors disabled:opacity-40 disabled:pointer-events-none cursor-pointer';
 
 function wrapNode(wrapper, node) {
   return wrapper ? wrapper(node) : node;
@@ -42,8 +44,9 @@ export function RowActions({
       disabled={viewDisabled}
       className={actionClass}
       title={viewTitle || undefined}
+      aria-label={viewTitle}
     >
-      <Eye className="w-4 h-4" />
+      <Eye className="w-4 h-4 shrink-0" />
     </button>
   );
 
@@ -54,8 +57,9 @@ export function RowActions({
       disabled={editDisabled}
       className={actionClass}
       title={editTitle || undefined}
+      aria-label={editTitle}
     >
-      <Edit className="w-4 h-4" />
+      <Edit className="w-4 h-4 shrink-0" />
     </button>
   );
 
@@ -66,8 +70,9 @@ export function RowActions({
       disabled={deleteDisabled}
       className={deleteButtonClass}
       title={deleteTitle || undefined}
+      aria-label={deleteTitle}
     >
-      <DeleteIcon className="w-4 h-4" />
+      <DeleteIcon className="w-4 h-4 shrink-0" />
     </button>
   );
 

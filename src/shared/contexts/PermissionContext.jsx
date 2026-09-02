@@ -10,7 +10,7 @@ export const mockPermisos = [
   { id_permiso: 7, modulo: 'usuarios', accion: 'crear', estado: 'activo' },
   { id_permiso: 8, modulo: 'usuarios', accion: 'editar', estado: 'activo' },
   { id_permiso: 9, modulo: 'usuarios', accion: 'eliminar', estado: 'activo' },
-  ...['proveedores', 'clientes', 'compras', 'categorias', 'fichas-tecnicas', 'insumos', 'produccion', 'productos', 'pedidos', 'ventas'].flatMap((modulo, offset) =>
+  ...['proveedores', 'clientes', 'compras', 'categorias', 'fichas-tecnicas', 'insumos', 'produccion', 'productos', 'pedidos', 'ventas', 'configuracion'].flatMap((modulo, offset) =>
     ['ver', 'crear', 'editar', 'eliminar'].map((accion, index) => ({
       id_permiso: 10 + offset * 4 + index,
       modulo,

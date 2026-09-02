@@ -1,6 +1,8 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { ClipboardList, CheckCircle, Truck, DollarSign } from 'lucide-react';
 import { usePedidos } from '../hooks/usePedidos';
+import { mockClientes, getClientes } from '../../clientes/services/clientesService';
+import { mockUsuarios } from '../../usuarios/services/usuariosService';
 import { DataTable } from '../../../shared/components/DataTable';
 import { RowActions } from '../../../shared/components/RowActions';
 import { PedidoFormModal } from '../components/PedidoFormModal';
@@ -35,6 +37,23 @@ export default function PedidosPage() {
   } = usePedidos();
 
   const [selectedPedido, setSelectedPedido] = useState(null);
+  const [clientes, setClientes] = useState(mockClientes);
+
+  useEffect(() => {
+    getClientes().then((data) => {
+      if (data && data.length > 0) setClientes(data);
+    });
+  }, []);
+
+  const clientesNames = useMemo(
+    () => Object.fromEntries(clientes.map((c) => [c.id_cliente, c.nombre])),
+    [clientes]
+  );
+
+  const usuariosNames = useMemo(
+    () => Object.fromEntries(mockUsuarios.map((u) => [u.id_usuario, u.nombre])),
+    []
+  );
 
   const totalPedidos = rawPedidos.length;
   const entregados = rawPedidos.filter((p) => String(p.estado).toLowerCase() === 'entregado').length;
@@ -44,10 +63,14 @@ export default function PedidosPage() {
   const filteredData = useMemo(() => {
     return rawPedidos.filter((p) => {
       const q = searchQuery.toLowerCase().trim();
+      const clienteNombre = (clientesNames[p.id_cliente] || '').toLowerCase();
+      const usuarioNombre = (usuariosNames[p.id_usuario] || '').toLowerCase();
       const matchesSearch =
         !q ||
         String(p.id_pedido).toLowerCase().includes(q) ||
         String(p.id_cliente).toLowerCase().includes(q) ||
+        clienteNombre.includes(q) ||
+        usuarioNombre.includes(q) ||
         (p.observaciones || '').toLowerCase().includes(q);
 
       const isTodosEstado = estadoFilter === 'Todos' || estadoFilter === 'Todos los estados';
@@ -56,46 +79,50 @@ export default function PedidosPage() {
 
       return matchesSearch && matchesEstado;
     });
-  }, [rawPedidos, searchQuery, estadoFilter]);
+  }, [rawPedidos, searchQuery, estadoFilter, clientesNames, usuariosNames]);
 
   const columns = useMemo(
     () => [
       {
         key: 'id_pedido',
         label: 'ID',
-        render: (value) => <span className="font-mono font-medium">{value}</span>,
+        render: (value) => <span className="font-mono font-medium text-xs">#{value}</span>,
       },
       {
         key: 'id_cliente',
-        label: 'Cliente ID',
-        render: (value) => <span>{value}</span>,
+        label: 'Cliente',
+        render: (value) => (
+          <span className="font-semibold text-foreground">
+            {clientesNames[value] || (typeof value === 'string' && isNaN(Number(value)) ? value : `Cliente #${value}`)}
+          </span>
+        ),
       },
       {
         key: 'id_sede',
-        label: 'Sede ID',
-        render: (value) => <span>{value}</span>,
+        label: 'Sede',
+        render: (value) => <span className="text-muted-foreground text-xs">{value === 1 ? 'Sede Principal (Ibagué)' : `Sede #${value}`}</span>,
       },
       {
         key: 'id_usuario',
-        label: 'Usuario ID',
-        render: (value) => <span>{value}</span>,
+        label: 'Asesor',
+        render: (value) => <span className="text-muted-foreground text-xs">{usuariosNames[value] || `Usuario #${value}`}</span>,
       },
       {
         key: 'fecha_pedido',
         label: 'Fecha Pedido',
-        render: (value) => <span className="text-muted-foreground">{value}</span>,
+        render: (value) => <span className="text-muted-foreground text-xs">{value}</span>,
       },
       {
         key: 'fecha_entrega',
         label: 'Fecha Entrega',
-        render: (value) => <span className="text-muted-foreground">{value}</span>,
+        render: (value) => <span className="text-muted-foreground text-xs">{value || 'Por definir'}</span>,
       },
       {
         key: 'valor_total',
         label: 'Valor Total',
-        render: (value) => (
-          <span className="font-semibold">
-            ${Number(value || 0).toLocaleString('es-CO')}
+        render: (value, p) => (
+          <span className="font-semibold text-primary">
+            ${Number(p.totalNum || value || 0).toLocaleString('es-CO')}
           </span>
         ),
       },
@@ -156,6 +183,8 @@ export default function PedidosPage() {
         columns={columns}
         data={filteredData}
         searchPlaceholder="Buscar por número, cliente o observaciones..."
+        searchValue={searchQuery}
+        onSearchChange={setSearchQuery}
         filters={
           <select
             value={estadoFilter}
@@ -174,17 +203,17 @@ export default function PedidosPage() {
       <DetailModal
         isOpen={detailModal.isOpen}
         onClose={() => setDetailModal({ isOpen: false, data: null })}
-        title="Detalle del Pedido"
+        title="Detalle del Pedido de Arepas"
         fields={detailModal.data ? [
-          { label: 'ID', value: detailModal.data.id_pedido },
-          { label: 'Cliente ID', value: detailModal.data.id_cliente },
-          { label: 'Sede ID', value: detailModal.data.id_sede },
-          { label: 'Usuario ID', value: detailModal.data.id_usuario },
-          { label: 'Fecha Pedido', value: detailModal.data.fecha_pedido },
-          { label: 'Fecha Entrega', value: detailModal.data.fecha_entrega },
-          { label: 'Valor Total', value: `$${Number(detailModal.data.valor_total || 0).toLocaleString('es-CO')}` },
-          { label: 'Observaciones', value: detailModal.data.observaciones || 'N/A' },
-          { label: 'Motivo Anulación', value: detailModal.data.motivo_anulacion || 'N/A' },
+          { label: 'ID Pedido', value: `#${detailModal.data.id_pedido}` },
+          { label: 'Cliente', value: clientesNames[detailModal.data.id_cliente] || `Cliente #${detailModal.data.id_cliente}` },
+          { label: 'Sede / Punto de Entrega', value: detailModal.data.id_sede === 1 ? 'Sede Principal (Ibagué)' : `Sede #${detailModal.data.id_sede}` },
+          { label: 'Asesor / Registrado por', value: usuariosNames[detailModal.data.id_usuario] || `Usuario #${detailModal.data.id_usuario}` },
+          { label: 'Fecha de Creación', value: detailModal.data.fecha_pedido },
+          { label: 'Fecha de Entrega Estimada', value: detailModal.data.fecha_entrega || 'Por definir' },
+          { label: 'Valor Total', value: <span className="font-semibold text-primary">{`$${Number(detailModal.data.totalNum || detailModal.data.valor_total || 0).toLocaleString('es-CO')}`}</span> },
+          { label: 'Observaciones', value: detailModal.data.observaciones || 'Sin observaciones' },
+          { label: 'Motivo de Anulación', value: detailModal.data.motivo_anulacion || 'N/A' },
           { label: 'Estado', value: detailModal.data.estado },
         ] : []}
       />

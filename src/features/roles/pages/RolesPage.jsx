@@ -7,7 +7,7 @@ import { MetricCard } from '../../../shared/components/MetricCard';
 import { RoleFormModal } from '../components/RoleFormModal';
 import ConfirmDialog from '../../../shared/components/ConfirmDialog';
 import Toast from '../../../shared/components/Toast';
-import DetailModal from '../../../shared/components/DetailModal';
+import RoleDetailModal from '../components/RoleDetailModal';
 import PageHeader from '../../../shared/components/PageHeader';
 import { usePermissions, mockPermisos } from '../../../shared/contexts/PermissionContext';
 import StatusSwitch from '../../../shared/components/StatusSwitch';
@@ -141,6 +141,8 @@ export default function RolesPage() {
         columns={columns}
         data={filteredData}
         searchPlaceholder="Buscar por nombre o descripción..."
+        searchValue={searchQuery}
+        onSearchChange={setSearchQuery}
         filters={
           <select
             value={estadoFilter}
@@ -154,17 +156,10 @@ export default function RolesPage() {
         }
       />
 
-      <DetailModal
+      <RoleDetailModal
         isOpen={detailModal.isOpen}
         onClose={() => setDetailModal({ isOpen: false, data: null })}
-        title="Detalle del Rol"
-        fields={detailModal.data ? [
-          { label: 'ID', value: detailModal.data.id_rol },
-          { label: 'Nombre', value: detailModal.data.nombre },
-          { label: 'Descripción', value: detailModal.data.descripcion || 'N/A' },
-          { label: 'Estado', value: detailModal.data.estado },
-          { label: 'Fecha de Creación', value: detailModal.data.fecha_creacion },
-        ] : []}
+        role={detailModal.data}
       />
 
       <RoleFormModal
