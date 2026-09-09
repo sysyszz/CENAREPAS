@@ -8,12 +8,12 @@ import { RowActions } from '../../../shared/components/RowActions';
 import { PedidoFormModal } from '../components/PedidoFormModal';
 import { mockDetallesPedido } from '../services/pedidosService';
 import ConfirmDialog from '../../../shared/components/ConfirmDialog';
-import Toast from '../../../shared/components/Toast';
 import DetailModal from '../../../shared/components/DetailModal';
 import PageHeader from '../../../shared/components/PageHeader';
 import { MetricCard } from '../../../shared/components/MetricCard';
 import { usePermissions } from '../../../shared/contexts/PermissionContext';
 import StatusSwitch from '../../../shared/components/StatusSwitch';
+import { CustomSelect } from '../../../shared/components/CustomSelect';
 
 export default function PedidosPage() {
   const { can } = usePermissions();
@@ -31,8 +31,6 @@ export default function PedidosPage() {
     setDeleteDialog,
     isDeleting,
     isSaving,
-    toast,
-    setToast,
     handleSave,
     handleDelete,
   } = usePedidos();
@@ -173,31 +171,40 @@ export default function PedidosPage() {
 
       {/* Tarjetas de Consolidado */}
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
-        <MetricCard title="Total Pedidos" value={totalPedidos} icon={ClipboardList} variant="primary" />
-        <MetricCard title="Entregados" value={entregados} icon={CheckCircle} variant="success" />
-        <MetricCard title="En Camino" value={enCamino} icon={Truck} variant="warning" />
-        <MetricCard title="Valor Facturado" value={`$${totalFacturado.toLocaleString('es-CO')}`} icon={DollarSign} variant="accent" />
+        <MetricCard index={0} title="Total Pedidos" value={totalPedidos} icon={ClipboardList} variant="primary" />
+        <MetricCard index={1} title="Entregados" value={entregados} icon={CheckCircle} variant="success" />
+        <MetricCard index={2} title="En Camino" value={enCamino} icon={Truck} variant="warning" />
+        <MetricCard index={3} title="Valor Facturado" value={`$${totalFacturado.toLocaleString('es-CO')}`} icon={DollarSign} variant="accent" />
       </div>
 
       {/* Tabla con DataTable */}
       <DataTable
         columns={columns}
         data={filteredData}
+        emptyIcon={ClipboardList}
+        entityName="pedidos"
+        onAdd={() => {
+          setSelectedPedido(null);
+          setShowModal(true);
+        }}
+        addLabel="Nuevo Pedido"
+        addDisabled={!can('pedidos', 'crear')}
+        isFiltered={Boolean(searchQuery || estadoFilter !== 'Todos')}
         searchPlaceholder="Buscar por número, cliente o observaciones..."
         searchValue={searchQuery}
         onSearchChange={setSearchQuery}
         filters={
-          <select
+          <CustomSelect
             value={estadoFilter}
             onChange={(e) => setEstadoFilter(e.target.value)}
-            className="px-4 py-2 border border-input bg-input-background rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+            className="w-full sm:w-52"
           >
             <option value="Todos">Todos los estados</option>
             <option value="Entregado">Entregado</option>
             <option value="En Camino">En Camino</option>
             <option value="Pendiente">Pendiente</option>
             <option value="Cancelado">Cancelado</option>
-          </select>
+          </CustomSelect>
         }
       />
 
@@ -251,13 +258,6 @@ export default function PedidosPage() {
         onConfirm={handleDelete}
         onCancel={() => setDeleteDialog({ isOpen: false, id: null, nombre: '' })}
         isLoading={isDeleting}
-      />
-
-      <Toast
-        isOpen={toast.isOpen}
-        type={toast.type}
-        message={toast.message}
-        onClose={() => setToast({ ...toast, isOpen: false })}
       />
     </div>
   );

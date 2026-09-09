@@ -5,7 +5,7 @@ export default function DetailModal({ isOpen, onClose, title, fields = [] }) {
 
   return (
     <div className="fixed inset-0 bg-black/50 backdrop-blur-xs z-50 flex items-center justify-center p-4">
-      <div className="bg-card text-card-foreground p-6 rounded-xl max-w-lg w-full border border-border shadow-2xl space-y-5 max-h-[90vh] flex flex-col animate-in fade-in-50 zoom-in-95 duration-200">
+      <div className="bg-card text-card-foreground p-6 rounded-2xl max-w-lg w-full border border-border shadow-2xl space-y-5 max-h-[90vh] flex flex-col animate-in fade-in-50 zoom-in-95 duration-200">
         {/* Header */}
         <div className="flex items-start justify-between pb-3 border-b border-border shrink-0">
           <div>
@@ -17,7 +17,7 @@ export default function DetailModal({ isOpen, onClose, title, fields = [] }) {
           <button
             type="button"
             onClick={onClose}
-            className="p-1.5 rounded-lg hover:bg-muted text-muted-foreground hover:text-foreground transition-colors"
+            className="p-1.5 rounded-full hover:bg-muted text-muted-foreground hover:text-foreground transition-colors"
             aria-label="Cerrar modal"
           >
             <X className="w-5 h-5" />
@@ -35,7 +35,7 @@ export default function DetailModal({ isOpen, onClose, title, fields = [] }) {
                 {label}
               </span>
               <div className="text-xs font-medium text-foreground text-left sm:text-right break-words flex-1">
-                {value !== undefined && value !== null && value !== '' ? value : <span className="text-muted-foreground/60">N/A</span>}
+                {value !== undefined && value !== null && value !== '' ? value : <span className="text-muted-foreground/80 font-medium">N/A</span>}
               </div>
             </div>
           ))}

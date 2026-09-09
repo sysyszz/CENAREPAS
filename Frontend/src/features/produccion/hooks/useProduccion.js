@@ -1,5 +1,6 @@
 import { useState, useEffect, useMemo } from 'react';
 import { getLotes, createLote, updateLote, anularLote } from '../services/produccionService';
+import { toast } from '../../../shared/utils/toast';
 
 export function useProduccion() {
   const [lotes, setLotes] = useState([]);
@@ -10,7 +11,6 @@ export function useProduccion() {
   const [deleteDialog, setDeleteDialog] = useState({ isOpen: false, id: null, nombre: '' });
   const [isDeleting, setIsDeleting] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
-  const [toast, setToast] = useState({ isOpen: false, type: 'success', message: '' });
 
   useEffect(() => {
     getLotes().then((data) => setLotes(data));
@@ -38,15 +38,15 @@ export function useProduccion() {
         setLotes((prev) =>
           prev.map((l) => (l.id_lote === formData.id_lote ? { ...l, ...updated } : l))
         );
-        setToast({ isOpen: true, type: 'success', message: 'Lote de producción actualizado correctamente' });
+        toast.success('Cambios guardados');
       } else {
         const created = await createLote(formData);
         setLotes((prev) => [created, ...prev]);
-        setToast({ isOpen: true, type: 'success', message: 'Lote de producción creado correctamente' });
+        toast.success('Lote de producción creado');
       }
       setShowModal(false);
     } catch (error) {
-      setToast({ isOpen: true, type: 'error', message: 'Error al guardar el lote de producción' });
+      toast.error('No se pudo guardar el lote de producción');
     } finally {
       setIsSaving(false);
     }
@@ -58,9 +58,9 @@ export function useProduccion() {
     try {
       await anularLote(deleteDialog.id);
       setLotes((prev) => prev.map((l) => (l.id_lote === deleteDialog.id ? { ...l, estado: 'anulado' } : l)));
-      setToast({ isOpen: true, type: 'success', message: 'Lote de producción anulado correctamente' });
+      toast.success('Lote anulado correctamente');
     } catch (error) {
-      setToast({ isOpen: true, type: 'error', message: 'Error al anular el lote de producción' });
+      toast.error('No se pudo anular el lote de producción');
     } finally {
       setIsDeleting(false);
       setDeleteDialog({ isOpen: false, id: null, nombre: '' });
@@ -82,8 +82,6 @@ export function useProduccion() {
     setDeleteDialog,
     isDeleting,
     isSaving,
-    toast,
-    setToast,
     handleSave,
     handleAnular,
   };

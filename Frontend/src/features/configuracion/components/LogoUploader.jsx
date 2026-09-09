@@ -1,6 +1,6 @@
 import { useRef } from 'react';
 import { Upload, RotateCcw, Image as ImageIcon, Sparkles } from 'lucide-react';
-import defaultLogo from '../../../assets/logo-icon.png';
+import defaultLogo from '../../../assets/cenarepas-icon.svg';
 
 export function LogoUploader({ logoUrl, onChangeLogo, onResetLogo }) {
   const fileInputRef = useRef(null);

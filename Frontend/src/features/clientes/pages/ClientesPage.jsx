@@ -5,12 +5,12 @@ import { DataTable } from '../../../shared/components/DataTable';
 import { RowActions } from '../../../shared/components/RowActions';
 import { ClienteFormModal } from '../components/ClienteFormModal';
 import ConfirmDialog from '../../../shared/components/ConfirmDialog';
-import Toast from '../../../shared/components/Toast';
 import DetailModal from '../../../shared/components/DetailModal';
 import PageHeader from '../../../shared/components/PageHeader';
 import { MetricCard } from '../../../shared/components/MetricCard';
 import { usePermissions } from '../../../shared/contexts/PermissionContext';
 import StatusSwitch from '../../../shared/components/StatusSwitch';
+import { CustomSelect } from '../../../shared/components/CustomSelect';
 
 export default function ClientesPage() {
   const { can } = usePermissions();
@@ -28,8 +28,6 @@ export default function ClientesPage() {
     setDeleteDialog,
     isDeleting,
     isSaving,
-    toast,
-    setToast,
     handleSave,
     handleDelete,
   } = useClientes();
@@ -131,29 +129,38 @@ export default function ClientesPage() {
 
       {/* Tarjetas de Consolidado */}
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
-        <MetricCard title="Total Clientes" value={totalClientes} icon={UserCircle} variant="primary" />
-        <MetricCard title="Clientes Activos" value={activos} icon={CheckCircle} variant="success" />
-        <MetricCard title="Pedidos Históricos" value={totalPedidosHistorico} icon={ShoppingBag} variant="accent" />
-        <MetricCard title="Facturación Total" value={`$${totalFacturadoHistorico.toLocaleString('es-CO')}`} icon={DollarSign} variant="warning" />
+        <MetricCard index={0} title="Total Clientes" value={totalClientes} icon={UserCircle} variant="primary" />
+        <MetricCard index={1} title="Clientes Activos" value={activos} icon={CheckCircle} variant="success" />
+        <MetricCard index={2} title="Pedidos Históricos" value={totalPedidosHistorico} icon={ShoppingBag} variant="accent" />
+        <MetricCard index={3} title="Facturación Total" value={`$${totalFacturadoHistorico.toLocaleString('es-CO')}`} icon={DollarSign} variant="warning" />
       </div>
 
       {/* Tabla con DataTable (usa SearchFilterBar y PaginationControls internamente) */}
       <DataTable
         columns={columns}
         data={filteredData}
+        emptyIcon={UserCircle}
+        entityName="clientes"
+        onAdd={() => {
+          setSelectedCliente(null);
+          setShowModal(true);
+        }}
+        addLabel="Nuevo Cliente"
+        addDisabled={!can('clientes', 'crear')}
+        isFiltered={Boolean(searchQuery || estadoFilter !== 'Todos')}
         searchPlaceholder="Buscar por código, nombre, NIT o ciudad..."
         searchValue={searchQuery}
         onSearchChange={setSearchQuery}
         filters={
-          <select
+          <CustomSelect
             value={estadoFilter}
             onChange={(e) => setEstadoFilter(e.target.value)}
-            className="px-4 py-2 border border-input bg-input-background rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+            className="w-full sm:w-48"
           >
             <option value="Todos">Todos los estados</option>
             <option value="Activo">Activo</option>
             <option value="Inactivo">Inactivo</option>
-          </select>
+          </CustomSelect>
         }
       />
 
@@ -192,13 +199,6 @@ export default function ClientesPage() {
         onConfirm={handleDelete}
         onCancel={() => setDeleteDialog({ isOpen: false, id: null, nombre: '' })}
         isLoading={isDeleting}
-      />
-
-      <Toast
-        isOpen={toast.isOpen}
-        type={toast.type}
-        message={toast.message}
-        onClose={() => setToast({ ...toast, isOpen: false })}
       />
     </div>
   );

@@ -8,12 +8,12 @@ import { RowActions } from '../../../shared/components/RowActions';
 import { CompraFormModal } from '../components/CompraFormModal';
 import { mockDetallesCompra } from '../services/comprasService';
 import ConfirmDialog from '../../../shared/components/ConfirmDialog';
-import Toast from '../../../shared/components/Toast';
 import DetailModal from '../../../shared/components/DetailModal';
 import PageHeader from '../../../shared/components/PageHeader';
 import { MetricCard } from '../../../shared/components/MetricCard';
 import { usePermissions } from '../../../shared/contexts/PermissionContext';
 import StatusSwitch from '../../../shared/components/StatusSwitch';
+import { CustomSelect } from '../../../shared/components/CustomSelect';
 
 export default function ComprasPage() {
   const { can } = usePermissions();
@@ -31,8 +31,6 @@ export default function ComprasPage() {
     setDeleteDialog,
     isDeleting,
     isSaving,
-    toast,
-    setToast,
     handleSave,
     handleAnular,
   } = useCompras();
@@ -183,30 +181,39 @@ export default function ComprasPage() {
 
       {/* Tarjetas de Consolidado */}
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
-        <MetricCard title="Total Compras" value={totalCompras} icon={ShoppingCart} variant="primary" />
-        <MetricCard title="Recibidas" value={recibidas} icon={CheckCircle} variant="success" />
-        <MetricCard title="Pendientes" value={pendientes} icon={Clock} variant="warning" />
-        <MetricCard title="Total Invertido" value={`$${totalInvertido.toLocaleString('es-CO')}`} icon={DollarSign} variant="accent" />
+        <MetricCard index={0} title="Total Compras" value={totalCompras} icon={ShoppingCart} variant="primary" />
+        <MetricCard index={1} title="Recibidas" value={recibidas} icon={CheckCircle} variant="success" />
+        <MetricCard index={2} title="Pendientes" value={pendientes} icon={Clock} variant="warning" />
+        <MetricCard index={3} title="Total Invertido" value={`$${totalInvertido.toLocaleString('es-CO')}`} icon={DollarSign} variant="accent" />
       </div>
 
       {/* Tabla con DataTable */}
       <DataTable
         columns={columns}
         data={filteredData}
+        emptyIcon={ShoppingCart}
+        entityName="compras"
+        onAdd={() => {
+          setSelectedCompra(null);
+          setShowModal(true);
+        }}
+        addLabel="Nueva Compra"
+        addDisabled={!can('compras', 'crear')}
+        isFiltered={Boolean(searchQuery || estadoFilter !== 'Todos')}
         searchPlaceholder="Buscar por código, proveedor o insumo..."
         searchValue={searchQuery}
         onSearchChange={setSearchQuery}
         filters={
-          <select
+          <CustomSelect
             value={estadoFilter}
             onChange={(e) => setEstadoFilter(e.target.value)}
-            className="px-4 py-2 border border-input bg-input-background rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+            className="w-full sm:w-52"
           >
             <option value="Todos">Todos los estados</option>
             <option value="Recibida">Recibida</option>
             <option value="Pendiente">Pendiente</option>
             <option value="Anulada">Anulada</option>
-          </select>
+          </CustomSelect>
         }
       />
 
@@ -273,13 +280,6 @@ export default function ComprasPage() {
         onConfirm={handleAnular}
         onCancel={() => setDeleteDialog({ isOpen: false, id: null, nombre: '' })}
         isLoading={isDeleting}
-      />
-
-      <Toast
-        isOpen={toast.isOpen}
-        type={toast.type}
-        message={toast.message}
-        onClose={() => setToast({ ...toast, isOpen: false })}
       />
     </div>
   );

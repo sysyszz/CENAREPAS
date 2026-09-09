@@ -5,12 +5,12 @@ import { DataTable } from '../../../shared/components/DataTable';
 import { RowActions } from '../../../shared/components/RowActions';
 import { CategoriaFormModal } from '../components/CategoriaFormModal';
 import ConfirmDialog from '../../../shared/components/ConfirmDialog';
-import Toast from '../../../shared/components/Toast';
 import DetailModal from '../../../shared/components/DetailModal';
 import PageHeader from '../../../shared/components/PageHeader';
 import { MetricCard } from '../../../shared/components/MetricCard';
 import { usePermissions } from '../../../shared/contexts/PermissionContext';
 import StatusSwitch from '../../../shared/components/StatusSwitch';
+import { CustomSelect } from '../../../shared/components/CustomSelect';
 
 export default function CategoriasPage() {
   const { can } = usePermissions();
@@ -28,8 +28,6 @@ export default function CategoriasPage() {
     setDeleteDialog,
     isDeleting,
     isSaving,
-    toast,
-    setToast,
     handleSave,
     handleDelete,
   } = useCategorias();
@@ -119,29 +117,38 @@ export default function CategoriasPage() {
 
       {/* Tarjetas de Consolidado */}
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
-        <MetricCard title="Total Categorías" value={totalCategorias} icon={FolderTree} variant="primary" />
-        <MetricCard title="Categorías Activas" value={activas} icon={CheckCircle} variant="success" />
-        <MetricCard title="Prod. Clasificados" value={totalProductosAsignados} icon={Package} variant="accent" />
-        <MetricCard title="Promedio Prod/Cat" value={promedioProductos} icon={Layers} variant="warning" />
+        <MetricCard index={0} title="Total Categorías" value={totalCategorias} icon={FolderTree} variant="primary" />
+        <MetricCard index={1} title="Categorías Activas" value={activas} icon={CheckCircle} variant="success" />
+        <MetricCard index={2} title="Prod. Clasificados" value={totalProductosAsignados} icon={Package} variant="accent" />
+        <MetricCard index={3} title="Promedio Prod/Cat" value={promedioProductos} icon={Layers} variant="warning" />
       </div>
 
       {/* Tabla con DataTable y RowActions */}
       <DataTable
         columns={columns}
         data={filteredData}
+        emptyIcon={FolderTree}
+        entityName="categorías"
+        onAdd={() => {
+          setSelectedCategoria(null);
+          setShowModal(true);
+        }}
+        addLabel="Nueva Categoría"
+        addDisabled={!can('categorias', 'crear')}
+        isFiltered={Boolean(searchQuery || estadoFilter !== 'Todos')}
         searchPlaceholder="Buscar por código, nombre o descripción..."
         searchValue={searchQuery}
         onSearchChange={setSearchQuery}
         filters={
-          <select
+          <CustomSelect
             value={estadoFilter}
             onChange={(e) => setEstadoFilter(e.target.value)}
-            className="px-4 py-2 border border-input bg-input-background rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+            className="w-full sm:w-48"
           >
             <option value="Todos">Todos los estados</option>
             <option value="Activo">Activo</option>
             <option value="Inactivo">Inactivo</option>
-          </select>
+          </CustomSelect>
         }
       />
 
@@ -176,13 +183,6 @@ export default function CategoriasPage() {
         onConfirm={handleDelete}
         onCancel={() => setDeleteDialog({ isOpen: false, id: null, nombre: '' })}
         isLoading={isDeleting}
-      />
-
-      <Toast
-        isOpen={toast.isOpen}
-        type={toast.type}
-        message={toast.message}
-        onClose={() => setToast({ ...toast, isOpen: false })}
       />
     </div>
   );

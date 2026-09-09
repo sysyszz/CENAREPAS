@@ -12,12 +12,12 @@ import {
   Check,
 } from 'lucide-react';
 import PageHeader from '../../../shared/components/PageHeader';
-import Toast from '../../../shared/components/Toast';
 import ConfirmDialog from '../../../shared/components/ConfirmDialog';
 import { useConfiguracionPage } from '../hooks/useConfiguracionPage';
 import { LogoUploader } from '../components/LogoUploader';
 import { BannerManager } from '../components/BannerManager';
-import defaultLogo from '../../../assets/logo-icon.png';
+import defaultLogo from '../../../assets/cenarepas-icon.svg';
+import { CustomSelect } from '../../../shared/components/CustomSelect';
 
 export default function ConfiguracionPage() {
   const {
@@ -31,8 +31,6 @@ export default function ConfiguracionPage() {
     isSaving,
     showResetDialog,
     setShowResetDialog,
-    toast,
-    setToast,
   } = useConfiguracionPage();
 
   const [newSedeInput, setNewSedeInput] = useState('');
@@ -115,17 +113,17 @@ export default function ConfiguracionPage() {
                   Sede Predeterminada
                 </label>
                 <div className="flex gap-2">
-                  <select
+                  <CustomSelect
                     value={formData.sede}
                     onChange={(e) => handleChange('sede', e.target.value)}
-                    className="flex-1 px-4 py-2 border border-input bg-input-background rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-ring transition-all"
+                    className="flex-1"
                   >
                     {formData.sedesDisponibles.map((s) => (
                       <option key={s} value={s}>
                         {s}
                       </option>
                     ))}
-                  </select>
+                  </CustomSelect>
                   <button
                     type="button"
                     onClick={() => setShowAddSede(!showAddSede)}
@@ -272,14 +270,6 @@ export default function ConfiguracionPage() {
         onConfirm={handleReset}
         onCancel={() => setShowResetDialog(false)}
         isLoading={isSaving}
-      />
-
-      {/* Toast Notification */}
-      <Toast
-        isOpen={toast.isOpen}
-        type={toast.type}
-        message={toast.message}
-        onClose={() => setToast({ ...toast, isOpen: false })}
       />
     </div>
   );

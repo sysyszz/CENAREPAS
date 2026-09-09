@@ -9,12 +9,12 @@ import { DataTable } from '../../../shared/components/DataTable';
 import { RowActions } from '../../../shared/components/RowActions';
 import { ProduccionFormModal } from '../components/ProduccionFormModal';
 import ConfirmDialog from '../../../shared/components/ConfirmDialog';
-import Toast from '../../../shared/components/Toast';
 import DetailModal from '../../../shared/components/DetailModal';
 import PageHeader from '../../../shared/components/PageHeader';
 import { MetricCard } from '../../../shared/components/MetricCard';
 import { usePermissions } from '../../../shared/contexts/PermissionContext';
 import StatusSwitch from '../../../shared/components/StatusSwitch';
+import { CustomSelect } from '../../../shared/components/CustomSelect';
 
 export default function ProduccionPage() {
   const { can } = usePermissions();
@@ -32,8 +32,6 @@ export default function ProduccionPage() {
     setDeleteDialog,
     isDeleting,
     isSaving,
-    toast,
-    setToast,
     handleSave,
     handleAnular,
   } = useProduccion();
@@ -192,31 +190,40 @@ export default function ProduccionPage() {
 
       {/* Tarjetas de Consolidado */}
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
-        <MetricCard title="Total Lotes" value={totalLotes} icon={Factory} variant="primary" />
-        <MetricCard title="Finalizados" value={finalizados} icon={CheckCircle} variant="success" />
-        <MetricCard title="En Proceso" value={enProceso} icon={Clock} variant="warning" />
-        <MetricCard title="Programados" value={programados} icon={Calendar} variant="accent" />
+        <MetricCard index={0} title="Total Lotes" value={totalLotes} icon={Factory} variant="primary" />
+        <MetricCard index={1} title="Finalizados" value={finalizados} icon={CheckCircle} variant="success" />
+        <MetricCard index={2} title="En Proceso" value={enProceso} icon={Clock} variant="warning" />
+        <MetricCard index={3} title="Programados" value={programados} icon={Calendar} variant="accent" />
       </div>
 
       {/* Tabla con DataTable y RowActions */}
       <DataTable
         columns={columns}
         data={filteredData}
+        emptyIcon={Factory}
+        entityName="órdenes de producción"
+        onAdd={() => {
+          setSelectedProduccion(null);
+          setShowModal(true);
+        }}
+        addLabel="Nueva Orden"
+        addDisabled={!can('produccion', 'crear')}
+        isFiltered={Boolean(searchQuery || estadoFilter !== 'Todos')}
         searchPlaceholder="Buscar por código de lote, receta o responsable..."
         searchValue={searchQuery}
         onSearchChange={setSearchQuery}
         filters={
-          <select
+          <CustomSelect
             value={estadoFilter}
             onChange={(e) => setEstadoFilter(e.target.value)}
-            className="px-4 py-2 border border-input bg-input-background rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+            className="w-full sm:w-52"
           >
             <option value="Todos">Todos los estados</option>
             <option value="Finalizado">Finalizado</option>
             <option value="En Proceso">En Proceso</option>
             <option value="Programado">Programado</option>
             <option value="Anulado">Anulado</option>
-          </select>
+          </CustomSelect>
         }
       />
 
@@ -273,13 +280,6 @@ export default function ProduccionPage() {
         onConfirm={handleAnular}
         onCancel={() => setDeleteDialog({ isOpen: false, id: null, nombre: '' })}
         isLoading={isDeleting}
-      />
-
-      <Toast
-        isOpen={toast.isOpen}
-        type={toast.type}
-        message={toast.message}
-        onClose={() => setToast({ ...toast, isOpen: false })}
       />
     </div>
   );

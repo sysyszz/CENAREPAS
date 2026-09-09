@@ -20,36 +20,25 @@ export function VentaFormModal({ open, onClose, venta = null, onSave, isLoading 
   const [comprobanteUrl, setComprobanteUrl] = useState('');
   const [estado, setEstado] = useState('completada');
 
-  // Catálogos
   const [clientes, setClientes] = useState(mockClientes);
   const [pedidos, setPedidos] = useState(mockPedidos);
   const [availableProductos, setAvailableProductos] = useState(mockProductos);
 
-  // Detalle de Venta (detalle_venta)
   const [detalles, setDetalles] = useState([]);
   const [selectedProductoId, setSelectedProductoId] = useState('');
   const [cantidadProducto, setCantidadProducto] = useState('');
   const [precioUnitario, setPrecioUnitario] = useState('');
 
   useEffect(() => {
-    getClientes().then((data) => {
-      if (data && data.length > 0) setClientes(data);
-    });
-    getPedidos().then((data) => {
-      if (data && data.length > 0) setPedidos(data);
-    });
-    getProductos().then((data) => {
-      if (data && data.length > 0) setAvailableProductos(data);
-    });
+    getClientes().then((data) => { if (data?.length) setClientes(data); });
+    getPedidos().then((data) => { if (data?.length) setPedidos(data); });
+    getProductos().then((data) => { if (data?.length) setAvailableProductos(data); });
   }, []);
 
-  // Al seleccionar un producto, precargar su precio_venta
   useEffect(() => {
     if (selectedProductoId) {
       const prod = availableProductos.find((p) => String(p.id_producto) === String(selectedProductoId));
-      if (prod) {
-        setPrecioUnitario(String(prod.precio_venta || ''));
-      }
+      setPrecioUnitario(prod ? String(prod.precio_venta || '') : '');
     } else {
       setPrecioUnitario('');
     }
@@ -64,8 +53,7 @@ export function VentaFormModal({ open, onClose, venta = null, onSave, isLoading 
       setMedioPago(venta.medio_pago || 'transferencia');
       setComprobanteUrl(venta.comprobante_url || '');
       setEstado(venta.estado || 'completada');
-
-      // Cargar detalles existentes
+      
       const existingDetalles = mockDetallesVenta.filter((d) => d.id_venta === venta.id_venta);
       if (existingDetalles.length > 0) {
         setDetalles(
@@ -100,7 +88,6 @@ export function VentaFormModal({ open, onClose, venta = null, onSave, isLoading 
     setPrecioUnitario('');
   }, [venta, open, clientes, availableProductos]);
 
-  // Cálculo automático del valor total
   const valorTotalCalculado = useMemo(() => {
     return detalles.reduce((acc, item) => acc + (Number(item.subtotal) || 0), 0);
   }, [detalles]);
@@ -111,37 +98,22 @@ export function VentaFormModal({ open, onClose, venta = null, onSave, isLoading 
     if (!selectedProductoId || !cantidadProducto || Number(cantidadProducto) <= 0 || !precioUnitario || Number(precioUnitario) <= 0) {
       return;
     }
-
     const prod = availableProductos.find((p) => String(p.id_producto) === String(selectedProductoId));
     if (!prod) return;
-
     const cant = Number(cantidadProducto);
     const unitPrice = Number(precioUnitario);
     const subtotal = cant * unitPrice;
-
     const existingIndex = detalles.findIndex((d) => String(d.id_producto) === String(selectedProductoId));
     if (existingIndex >= 0) {
       const updated = [...detalles];
-      updated[existingIndex] = {
-        ...updated[existingIndex],
-        cantidad: cant,
-        precio_unitario: unitPrice,
-        subtotal,
-      };
+      updated[existingIndex] = { ...updated[existingIndex], cantidad: cant, precio_unitario: unitPrice, subtotal };
       setDetalles(updated);
     } else {
       setDetalles([
         ...detalles,
-        {
-          id_producto: prod.id_producto,
-          nombre_producto: prod.nombre,
-          cantidad: cant,
-          precio_unitario: unitPrice,
-          subtotal,
-        },
+        { id_producto: prod.id_producto, nombre_producto: prod.nombre, cantidad: cant, precio_unitario: unitPrice, subtotal },
       ]);
     }
-
     setSelectedProductoId('');
     setCantidadProducto('');
     setPrecioUnitario('');
@@ -157,13 +129,12 @@ export function VentaFormModal({ open, onClose, venta = null, onSave, isLoading 
       alert('Debes agregar al menos un producto a la venta.');
       return;
     }
-
     const payload = venta
       ? {
           ...venta,
           id_cliente: Number(idCliente) || 1,
           id_sede: Number(idSede) || 1,
-          id_usuario: venta.id_usuario || 1, // Asignado por contexto
+          id_usuario: venta.id_usuario || 1,
           id_pedido: idPedido ? Number(idPedido) : null,
           fecha_venta: fechaVenta ? new Date(fechaVenta).toISOString() : new Date().toISOString(),
           medio_pago: medioPago || 'transferencia',
@@ -175,7 +146,7 @@ export function VentaFormModal({ open, onClose, venta = null, onSave, isLoading 
       : {
           id_cliente: Number(idCliente) || 1,
           id_sede: Number(idSede) || 1,
-          id_usuario: 1, // Asignado por contexto de sesión activa
+          id_usuario: 1,
           id_pedido: idPedido ? Number(idPedido) : null,
           fecha_venta: fechaVenta ? new Date(fechaVenta).toISOString() : new Date().toISOString(),
           medio_pago: medioPago || 'transferencia',
@@ -184,12 +155,8 @@ export function VentaFormModal({ open, onClose, venta = null, onSave, isLoading 
           estado: estado || 'completada',
           detalles,
         };
-
-    if (onSave) {
-      onSave(payload);
-    } else {
-      onClose();
-    }
+    if (onSave) onSave(payload);
+    else onClose();
   };
 
   return (
@@ -211,7 +178,6 @@ export function VentaFormModal({ open, onClose, venta = null, onSave, isLoading 
             <X className="w-5 h-5" />
           </button>
         </div>
-
         <form onSubmit={handleSubmit} className="modal-form-grid space-y-4">
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
@@ -247,7 +213,6 @@ export function VentaFormModal({ open, onClose, venta = null, onSave, isLoading 
               </select>
             </div>
           </div>
-
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <label htmlFor="venta_id_pedido" className="block mb-1.5 text-sm font-medium">Pedido Asociado (Opcional)</label>
@@ -261,7 +226,7 @@ export function VentaFormModal({ open, onClose, venta = null, onSave, isLoading 
                 <option value="">Venta directa en mostrador (Sin pedido)</option>
                 {pedidos.map((p) => (
                   <option key={p.id_pedido} value={String(p.id_pedido)}>
-                    Pedido #{p.id_pedido} — ${Number(p.valor_total).toLocaleString('es-CO')}
+                    Pedido #{p.id_pedido} - ${Number(p.valor_total).toLocaleString('es-CO')}
                   </option>
                 ))}
               </select>
@@ -278,7 +243,6 @@ export function VentaFormModal({ open, onClose, venta = null, onSave, isLoading 
               />
             </div>
           </div>
-
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <label htmlFor="venta_medio_pago" className="block mb-1.5 text-sm font-medium">Medio de Pago</label>
@@ -308,7 +272,6 @@ export function VentaFormModal({ open, onClose, venta = null, onSave, isLoading 
               </select>
             </div>
           </div>
-
           <div className="modal-field-wide">
             <label htmlFor="venta_comprobante_url" className="block mb-1.5 text-sm font-medium">URL de Comprobante / Voucher</label>
             <input
@@ -322,8 +285,6 @@ export function VentaFormModal({ open, onClose, venta = null, onSave, isLoading 
               className="w-full px-4 py-2 border border-input bg-input-background rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-ring"
             />
           </div>
-
-          {/* Sección Detalle de Venta (detalle_venta) */}
           <div className="modal-field-wide space-y-3 p-4 rounded-xl border border-border bg-muted/20">
             <div>
               <h4 className="text-sm font-semibold text-foreground flex items-center gap-1.5">
@@ -334,7 +295,6 @@ export function VentaFormModal({ open, onClose, venta = null, onSave, isLoading 
                 Agrega los productos entregados, cantidades y precio de venta
               </p>
             </div>
-
             <div className="grid grid-cols-1 sm:grid-cols-12 gap-2">
               <div className="sm:col-span-5">
                 <select
@@ -352,7 +312,6 @@ export function VentaFormModal({ open, onClose, venta = null, onSave, isLoading 
                   ))}
                 </select>
               </div>
-
               <div className="sm:col-span-3">
                 <input
                   id="detalle_venta_cantidad"
@@ -365,7 +324,6 @@ export function VentaFormModal({ open, onClose, venta = null, onSave, isLoading 
                   className="w-full px-3 py-2 border border-input bg-input-background rounded-lg text-xs focus:outline-none focus:ring-2 focus:ring-ring"
                 />
               </div>
-
               <div className="sm:col-span-3">
                 <input
                   id="detalle_venta_precio_unitario"
@@ -378,7 +336,6 @@ export function VentaFormModal({ open, onClose, venta = null, onSave, isLoading 
                   className="w-full px-3 py-2 border border-input bg-input-background rounded-lg text-xs focus:outline-none focus:ring-2 focus:ring-ring"
                 />
               </div>
-
               <div className="sm:col-span-1">
                 <button
                   type="button"
@@ -391,8 +348,6 @@ export function VentaFormModal({ open, onClose, venta = null, onSave, isLoading 
                 </button>
               </div>
             </div>
-
-            {/* Listado de productos vendidos agregados */}
             {detalles.length > 0 ? (
               <div className="divide-y divide-border border border-border rounded-lg bg-card overflow-hidden">
                 <div className="grid grid-cols-12 gap-2 p-2 bg-muted/60 text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">
@@ -435,15 +390,12 @@ export function VentaFormModal({ open, onClose, venta = null, onSave, isLoading 
               </div>
             )}
           </div>
-
-          {/* Campo Calculado: Valor Total */}
           <div className="flex items-center justify-between p-3.5 rounded-xl bg-primary/10 border border-primary/20">
             <span className="text-sm font-semibold text-foreground">Valor Total de la Venta (Calculado):</span>
             <span className="text-lg font-bold font-mono text-primary">
               ${valorTotalCalculado.toLocaleString('es-CO')}
             </span>
           </div>
-
           <div className="flex gap-2 pt-4 border-t border-border">
             <button
               type="button"
@@ -466,4 +418,3 @@ export function VentaFormModal({ open, onClose, venta = null, onSave, isLoading 
     </div>
   );
 }
-

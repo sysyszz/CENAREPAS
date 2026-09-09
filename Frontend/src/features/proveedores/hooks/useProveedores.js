@@ -1,5 +1,6 @@
 import { useState, useEffect, useMemo } from 'react';
 import { getProveedores, createProveedor, updateProveedor, deleteProveedor } from '../services/proveedoresService';
+import { toast } from '../../../shared/utils/toast';
 
 export function useProveedores() {
   const [proveedores, setProveedores] = useState([]);
@@ -10,7 +11,6 @@ export function useProveedores() {
   const [deleteDialog, setDeleteDialog] = useState({ isOpen: false, id: null, nombre: '' });
   const [isDeleting, setIsDeleting] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
-  const [toast, setToast] = useState({ isOpen: false, type: 'success', message: '' });
 
   useEffect(() => {
     getProveedores().then((data) => setProveedores(data));
@@ -38,15 +38,15 @@ export function useProveedores() {
         setProveedores((prev) =>
           prev.map((p) => (p.id_proveedor === formData.id_proveedor ? { ...p, ...updated } : p))
         );
-        setToast({ isOpen: true, type: 'success', message: 'Proveedor actualizado correctamente' });
+        toast.success('Cambios guardados');
       } else {
         const created = await createProveedor(formData);
         setProveedores((prev) => [created, ...prev]);
-        setToast({ isOpen: true, type: 'success', message: 'Proveedor creado correctamente' });
+        toast.success('Proveedor registrado');
       }
       setShowModal(false);
     } catch (error) {
-      setToast({ isOpen: true, type: 'error', message: 'Error al guardar el proveedor' });
+      toast.error('No se pudo guardar el proveedor');
     } finally {
       setIsSaving(false);
     }
@@ -58,9 +58,9 @@ export function useProveedores() {
     try {
       await deleteProveedor(deleteDialog.id);
       setProveedores((prev) => prev.filter((p) => p.id_proveedor !== deleteDialog.id));
-      setToast({ isOpen: true, type: 'success', message: 'Proveedor eliminado correctamente' });
+      toast.success('Proveedor eliminado');
     } catch (error) {
-      setToast({ isOpen: true, type: 'error', message: 'Error al eliminar el proveedor' });
+      toast.error('No se pudo eliminar el proveedor');
     } finally {
       setIsDeleting(false);
       setDeleteDialog({ isOpen: false, id: null, nombre: '' });
@@ -82,8 +82,6 @@ export function useProveedores() {
     setDeleteDialog,
     isDeleting,
     isSaving,
-    toast,
-    setToast,
     handleSave,
     handleDelete,
   };

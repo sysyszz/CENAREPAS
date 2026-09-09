@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useConfiguracion } from '../../../shared/contexts/ConfiguracionContext';
 import { saveConfiguracion, resetConfiguracion } from '../services/configuracionService';
+import { toast } from '../../../shared/utils/toast';
 
 export function useConfiguracionPage() {
   const {
@@ -28,7 +29,6 @@ export function useConfiguracionPage() {
 
   const [isSaving, setIsSaving] = useState(false);
   const [showResetDialog, setShowResetDialog] = useState(false);
-  const [toast, setToast] = useState({ isOpen: false, type: 'success', message: '' });
 
   useEffect(() => {
     if (config) {
@@ -93,17 +93,9 @@ export function useConfiguracionPage() {
     try {
       await saveConfiguracion(formData);
       updateConfig(formData);
-      setToast({
-        isOpen: true,
-        type: 'success',
-        message: 'Configuración guardada y aplicada exitosamente',
-      });
+      toast.success('Configuración guardada');
     } catch (err) {
-      setToast({
-        isOpen: true,
-        type: 'error',
-        message: 'Error al guardar la configuración',
-      });
+      toast.error('Error al guardar la configuración');
     } finally {
       setIsSaving(false);
     }
@@ -114,17 +106,9 @@ export function useConfiguracionPage() {
     try {
       await resetConfiguracion();
       resetContextConfig();
-      setToast({
-        isOpen: true,
-        type: 'success',
-        message: 'Configuración restablecida a los valores predeterminados',
-      });
+      toast.success('Configuración restablecida');
     } catch (err) {
-      setToast({
-        isOpen: true,
-        type: 'error',
-        message: 'Error al restablecer la configuración',
-      });
+      toast.error('Error al restablecer la configuración');
     } finally {
       setIsSaving(false);
       setShowResetDialog(false);
@@ -142,7 +126,5 @@ export function useConfiguracionPage() {
     isSaving,
     showResetDialog,
     setShowResetDialog,
-    toast,
-    setToast,
   };
 }

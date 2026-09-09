@@ -1,7 +1,6 @@
 import { useProfile } from '../hooks/useProfile';
 import { ProfilePersonalForm } from '../components/ProfilePersonalForm';
 import { ProfileSecurityTab } from '../components/ProfileSecurityTab';
-import Toast from '../../../shared/components/Toast';
 
 export default function ProfilePage() {
   const {
@@ -9,8 +8,6 @@ export default function ProfilePage() {
     setActiveTab,
     isEditing,
     setIsEditing,
-    toast,
-    setToast,
     profileData,
     setProfileData,
     passwordData,
@@ -68,13 +65,6 @@ export default function ProfilePage() {
           sessions={sessions}
         />
       )}
-
-      <Toast
-        isOpen={toast.isOpen}
-        type={toast.type}
-        message={toast.message}
-        onClose={() => setToast({ ...toast, isOpen: false })}
-      />
     </div>
   );
 }

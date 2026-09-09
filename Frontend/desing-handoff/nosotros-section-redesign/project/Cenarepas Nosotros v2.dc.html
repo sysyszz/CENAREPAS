@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Sora:wght@500;600;700&family=Fraunces:ital,opsz,wght@1,9..144,500;1,9..144,600&family=Plus+Jakarta+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    body{margin:0;background:#fff}
+    @keyframes cnp-dot{0%,80%,100%{opacity:.25}40%{opacity:1}}
+    @keyframes cnp-glow{0%,100%{opacity:.6;transform:scale(1)}50%{opacity:1;transform:scale(1.07)}}
+    @keyframes cnp-ring{0%{transform:scale(.85);opacity:.55}100%{transform:scale(1.35);opacity:0}}
+    @keyframes cnp-live{0%,100%{opacity:1}50%{opacity:.3}}
+  </style>
+</helmet>
+
+<section style="background:#ffffff;color:#22201c;font-family:'Plus Jakarta Sans',sans-serif;padding:130px 80px 150px;box-sizing:border-box;position:relative;overflow:hidden">
+
+  <div style="max-width:1280px;margin:0 auto;position:relative;z-index:1">
+
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:20px">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#c65a2b" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2c-1.5 3-4 5-4 8a4 4 0 0 0 8 0c0-3-2.5-5-4-8z"></path><path d="M12 14v8"></path></svg>
+      <span style="font-size:12.5px;letter-spacing:.16em;font-weight:600;color:#c65a2b;text-transform:uppercase;white-space:nowrap">¿Quiénes somos?</span>
+    </div>
+
+    <h2 style="font-family:'Sora',sans-serif;font-weight:600;font-size:56px;line-height:1.08;letter-spacing:-0.02em;color:#1b1815;max-width:740px;margin:0 0 24px">Tradición y calidad en cada arepa</h2>
+
+    <p style="font-size:17.5px;line-height:1.65;color:#6b6259;max-width:600px;margin:0 0 60px">Somos una fábrica dedicada a la producción de arepas de alta calidad, hechas cada día con maíz seleccionado para llevar a tu mesa un producto fresco, tradicional y nutritivo.</p>
+
+    <div style="display:flex;gap:0;border-top:1px solid #eae4dc;border-bottom:1px solid #eae4dc;margin-bottom:84px">
+      <div style="flex:1;padding:32px 32px 32px 0;border-right:1px solid #eae4dc">
+        <div style="display:flex;align-items:baseline;gap:8px">
+          <span style="font-family:'Sora',sans-serif;font-weight:600;font-size:48px;color:#1b1815;letter-spacing:-.02em">15+</span>
+          <span style="font-family:'Fraunces',serif;font-style:italic;font-size:19px;color:#c65a2b">años</span>
+        </div>
+        <div style="font-size:13.5px;color:#8a8079;margin-top:8px">de tradición artesanal</div>
+      </div>
+      <div style="flex:1;padding:32px 32px;border-right:1px solid #eae4dc">
+        <div style="display:flex;align-items:baseline;gap:8px">
+          <span style="font-family:'Sora',sans-serif;font-weight:600;font-size:48px;color:#c65a2b;letter-spacing:-.02em">100%</span>
+          <span style="font-family:'Fraunces',serif;font-style:italic;font-size:19px;color:#dc9a2e">maíz</span>
+        </div>
+        <div style="font-size:13.5px;color:#8a8079;margin-top:8px">natural, sin conservantes</div>
+      </div>
+      <div style="flex:1;padding:32px 0 32px 32px">
+        <div style="display:flex;align-items:baseline;gap:8px">
+          <span style="font-family:'Sora',sans-serif;font-weight:600;font-size:48px;color:#1b1815;letter-spacing:-.02em">24h</span>
+          <span style="font-family:'Fraunces',serif;font-style:italic;font-size:19px;color:#5f8148">frescura</span>
+        </div>
+        <div style="font-size:13.5px;color:#8a8079;margin-top:8px">producción diaria continua</div>
+      </div>
+    </div>
+
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:56px;align-items:start">
+
+      <div>
+        <div style="display:flex;align-items:center;gap:12px;margin-bottom:14px">
+          <div style="width:36px;height:36px;border-radius:10px;background:#fbe4d6;display:flex;align-items:center;justify-content:center;flex:none">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#c65a2b" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2c-1.5 3-4 5-4 8a4 4 0 0 0 8 0c0-3-2.5-5-4-8z"></path><path d="M12 14v8"></path><path d="M8 22h8"></path></svg>
+          </div>
+          <h3 style="font-family:'Sora',sans-serif;font-weight:600;font-size:23px;letter-spacing:-.01em;color:#1b1815;margin:0">Elaboración</h3>
+        </div>
+        <p style="font-size:15px;line-height:1.6;color:#8a8079;max-width:420px;margin:0 0 22px">Cada arepa se amasa a mano con maíz 100% natural, siguiendo la misma receta familiar desde el primer día.</p>
+
+        <div style="display:flex;flex-direction:column;gap:12px;margin-bottom:18px">
+          <div style="display:flex;align-items:center;gap:14px;background:#faf7f2;border:1px solid #ece5db;border-radius:14px;padding:15px 18px;box-shadow:0 8px 22px -14px rgba(40,30,20,0.18);transition:transform .2s,box-shadow .2s" style-hover="transform:translateY(-3px);box-shadow:0 14px 28px -12px rgba(198,90,43,0.24);border-color:#e6b394">
+            <div style="width:38px;height:38px;border-radius:10px;background:#fbe4d6;display:flex;align-items:center;justify-content:center;flex:none">
+              <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#c65a2b" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"></circle><path d="M8 12h8M12 8v8"></path></svg>
+            </div>
+            <div style="flex:1;min-width:0">
+              <div style="font-weight:600;font-size:14.5px;color:#22201c">Amasado de la masa</div>
+              <div style="font-size:12.5px;color:#8a8079;margin-top:2px;display:flex;align-items:center;gap:6px">Producción de hoy · en proceso <span style="width:6px;height:6px;border-radius:50%;background:#dc9a2e;display:inline-block;animation:cnp-live 1.4s ease-in-out infinite"></span></div>
+            </div>
+          </div>
+          <div style="display:flex;align-items:center;gap:14px;background:#faf7f2;border:1px solid #ece5db;border-radius:14px;padding:15px 18px;box-shadow:0 8px 22px -14px rgba(40,30,20,0.18);transition:transform .2s,box-shadow .2s" style-hover="transform:translateY(-3px);box-shadow:0 14px 28px -12px rgba(95,129,72,0.22);border-color:#c3d3ab">
+            <div style="width:38px;height:38px;border-radius:10px;background:#e7eedd;display:flex;align-items:center;justify-content:center;flex:none">
+              <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#5f8148" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2l8 3v6c0 5-3.5 8.5-8 11-4.5-2.5-8-6-8-11V5z"></path><path d="M9 12l2 2 4-4"></path></svg>
+            </div>
+            <div style="flex:1;min-width:0">
+              <div style="font-weight:600;font-size:14.5px;color:#22201c">Control de calidad aprobado</div>
+              <div style="font-size:12.5px;color:#8a8079;margin-top:2px">Lote #204 · hace 2 horas</div>
+            </div>
+          </div>
+        </div>
+
+        <div style="background:#faf7f2;border:1px solid #ece5db;border-radius:14px;overflow:hidden;box-shadow:0 20px 44px -22px rgba(40,30,20,0.22)">
+          <div style="display:flex;align-items:center;gap:8px;padding:12px 16px;border-bottom:1px solid #ece5db">
+            <span style="width:9px;height:9px;border-radius:50%;background:#e26955"></span>
+            <span style="width:9px;height:9px;border-radius:50%;background:#dc9a2e"></span>
+            <span style="width:9px;height:9px;border-radius:50%;background:#7fa26e"></span>
+            <span style="flex:1"></span>
+            <span style="font-size:11.5px;color:#a89c8f;letter-spacing:.04em">Producción</span>
+          </div>
+          <div style="padding:20px 20px 6px">
+            <div style="display:flex;align-items:baseline;gap:8px;margin-bottom:2px">
+              <span style="font-family:'Sora',sans-serif;font-weight:600;font-size:30px;letter-spacing:-.01em;color:#1b1815">1,240</span>
+              <span style="font-size:13.5px;color:#8a8079">arepas producidas hoy</span>
+            </div>
+            <div style="font-size:12px;color:#5f8148;font-weight:600">98% de lotes a tiempo</div>
+          </div>
+          <div style="display:flex;align-items:flex-end;gap:7px;padding:18px 20px 4px;height:74px">
+            <div style="flex:1;border-radius:5px 5px 0 0;background:#ece5db;height:38%"></div>
+            <div style="flex:1;border-radius:5px 5px 0 0;background:#ece5db;height:55%"></div>
+            <div style="flex:1;border-radius:5px 5px 0 0;background:#f0d2ba;height:47%"></div>
+            <div style="flex:1;border-radius:5px 5px 0 0;background:#eab180;height:68%"></div>
+            <div style="flex:1;border-radius:5px 5px 0 0;background:#eab180;height:60%"></div>
+            <div style="flex:1;border-radius:5px 5px 0 0;background:#c65a2b;height:88%"></div>
+            <div style="flex:1;border-radius:5px 5px 0 0;background:#c65a2b;height:100%"></div>
+          </div>
+          <div style="display:flex;justify-content:space-between;padding:6px 20px 16px;font-size:10.5px;color:#a89c8f">
+            <span>L</span><span>M</span><span>M</span><span>J</span><span>V</span><span>S</span><span>D</span>
+          </div>
+          <div style="margin:0 20px 20px;background:#fff;border:1px solid #ece5db;border-radius:10px;padding:12px 16px;display:flex;align-items:center;gap:10px">
+            <span style="font-size:13px;color:#6b6259">Analizando lote de producción</span>
+            <span style="display:flex;gap:3px">
+              <span style="width:5px;height:5px;border-radius:50%;background:#c65a2b;animation:cnp-dot 1.2s infinite;animation-delay:0s"></span>
+              <span style="width:5px;height:5px;border-radius:50%;background:#c65a2b;animation:cnp-dot 1.2s infinite;animation-delay:.2s"></span>
+              <span style="width:5px;height:5px;border-radius:50%;background:#c65a2b;animation:cnp-dot 1.2s infinite;animation-delay:.4s"></span>
+            </span>
+          </div>
+        </div>
+      </div>
+
+      <div>
+        <div style="display:flex;align-items:center;gap:12px;margin-bottom:14px">
+          <div style="width:36px;height:36px;border-radius:10px;background:#e7eedd;display:flex;align-items:center;justify-content:center;flex:none">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#5f8148" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2l8 3v6c0 5-3.5 8.5-8 11-4.5-2.5-8-6-8-11V5z"></path></svg>
+          </div>
+          <h3 style="font-family:'Sora',sans-serif;font-weight:600;font-size:23px;letter-spacing:-.01em;color:#1b1815;margin:0">Cuidamos cada detalle</h3>
+        </div>
+        <p style="font-size:15px;line-height:1.6;color:#8a8079;max-width:420px;margin:0 0 22px">Revisamos cada lote antes de que salga de la fábrica, para que solo llegue a tu mesa lo mejor del maíz.</p>
+
+        <div style="background:#fdf6e9;border:1px solid #f0dcae;border-radius:14px;padding:6px;margin-bottom:18px;box-shadow:0 8px 22px -14px rgba(40,30,20,0.18)">
+          <div style="display:flex;align-items:center;gap:12px;padding:13px 14px;border-radius:10px;transition:background .2s" style-hover="background:rgba(220,154,46,0.12)">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#b8791f" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round" style="flex:none"><path d="M12 2L1 21h22z"></path><path d="M12 9v5"></path><path d="M12 17h.01"></path></svg>
+            <span style="font-size:14.5px;color:#5c4a26">Vencimiento de ingrediente próximo</span>
+          </div>
+          <div style="display:flex;align-items:center;gap:12px;padding:13px 14px;border-radius:10px;transition:background .2s" style-hover="background:rgba(220,154,46,0.12)">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#b8791f" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round" style="flex:none"><path d="M12 2L1 21h22z"></path><path d="M12 9v5"></path><path d="M12 17h.01"></path></svg>
+            <span style="font-size:14.5px;color:#5c4a26">Temperatura de horno fuera de rango</span>
+          </div>
+          <div style="display:flex;align-items:center;gap:12px;padding:13px 14px;border-radius:10px;transition:background .2s" style-hover="background:rgba(220,154,46,0.12)">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#b8791f" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round" style="flex:none"><path d="M12 2L1 21h22z"></path><path d="M12 9v5"></path><path d="M12 17h.01"></path></svg>
+            <span style="font-size:14.5px;color:#5c4a26">Lote pendiente de empaque</span>
+          </div>
+        </div>
+
+        <div style="background:#faf7f2;border:1px solid #ece5db;border-radius:14px;overflow:hidden;box-shadow:0 20px 44px -22px rgba(40,30,20,0.22)">
+          <div style="display:flex;align-items:center;gap:8px;padding:12px 16px;border-bottom:1px solid #ece5db">
+            <span style="width:9px;height:9px;border-radius:50%;background:#e26955"></span>
+            <span style="width:9px;height:9px;border-radius:50%;background:#dc9a2e"></span>
+            <span style="width:9px;height:9px;border-radius:50%;background:#7fa26e"></span>
+            <span style="flex:1"></span>
+            <span style="font-size:11.5px;color:#a89c8f;letter-spacing:.04em">Calidad</span>
+          </div>
+          <div style="padding:30px 20px 22px;display:flex;align-items:center;justify-content:center;position:relative;height:132px">
+            <span style="position:absolute;width:70px;height:70px;border-radius:50%;border:1px solid rgba(95,129,72,0.4);animation:cnp-ring 2.6s ease-out infinite"></span>
+            <span style="position:absolute;width:70px;height:70px;border-radius:50%;border:1px solid rgba(95,129,72,0.4);animation:cnp-ring 2.6s ease-out infinite;animation-delay:1.3s"></span>
+            <div style="width:56px;height:56px;border-radius:50%;background:radial-gradient(circle,rgba(95,129,72,0.5),rgba(95,129,72,0.08));display:flex;align-items:center;justify-content:center;animation:cnp-glow 2.6s ease-in-out infinite;position:relative;z-index:1">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#3f5a30" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2l8 3v6c0 5-3.5 8.5-8 11-4.5-2.5-8-6-8-11V5z"></path><path d="M9 12l2 2 4-4"></path></svg>
+            </div>
+          </div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;padding:0 20px 20px">
+            <div style="background:#fff;border:1px solid #ece5db;border-radius:10px;padding:12px 14px">
+              <div style="font-family:'Sora',sans-serif;font-weight:600;font-size:20px;color:#3f5a30;letter-spacing:-.01em">99.2%</div>
+              <div style="font-size:11.5px;color:#8a8079;margin-top:2px">Lotes aprobados</div>
+            </div>
+            <div style="background:#fff;border:1px solid #ece5db;border-radius:10px;padding:12px 14px">
+              <div style="font-family:'Sora',sans-serif;font-weight:600;font-size:20px;color:#1b1815;letter-spacing:-.01em">0</div>
+              <div style="font-size:11.5px;color:#8a8079;margin-top:2px">Incidentes este mes</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:1440,&quot;height&quot;:1400}}"></script>
+</body>
+</html>

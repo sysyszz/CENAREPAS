@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,600;1,500;1,600&family=Poppins:wght@400;500;600;700;800&display=swap">
+<style>
+body{margin:0}
+a{color:#C2542E}
+a:hover{color:#8A3418}
+</style>
+</helmet>
+<section style="background:#FDF6ED;padding:96px 24px 104px;position:relative;overflow:hidden;font-family:'Poppins',system-ui,sans-serif;">
+  <div style="position:absolute;inset:0;background-image:repeating-linear-gradient(100deg, rgba(43,27,18,0.03) 0px, rgba(43,27,18,0.03) 2px, transparent 2px, transparent 26px);pointer-events:none;"></div>
+  <div style="max-width:1200px;margin:0 auto;position:relative;z-index:1;">
+    <div style="max-width:640px;margin-bottom:64px;">
+      <span style="display:inline-flex;align-items:center;gap:6px;border-radius:999px;border:1px solid rgba(194,84,46,0.18);background:rgba(194,84,46,0.1);padding:6px 14px;font-size:12px;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;color:#C2542E;">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2c-2 3-2 5 0 8 2-3 2-5 0-8Z"></path><path d="M12 10v12"></path><path d="M8 22h8"></path></svg>
+        Nuestros Productos
+      </span>
+      <h2 style="font-size:44px;line-height:1.12;font-weight:800;color:#2B1B12;margin:16px 0 0;">
+        Esto sale de nuestro horno <span style="font-family:'Playfair Display',serif;font-style:italic;font-weight:600;color:#4F7942;">cada día</span>
+      </h2>
+      <p style="font-size:17px;line-height:1.65;color:#6b5842;margin-top:18px;">
+        Detrás de cada pedido que administra CENAREPAS hay una arepa real, amasada y asada a mano en la planta de Masarepas, en Medellín.
+      </p>
+    </div>
+
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:44px 32px;align-items:start;padding-top:8px;">
+      <sc-for list="{{ products }}" as="item" hint-placeholder-count="4">
+        <div ref="{{ item.setRef }}" style="{{ item.style }}">
+          <div style="border-radius:16px;overflow:hidden;background:#FFFDF8;box-shadow:0 14px 30px -12px rgba(43,27,18,0.3);border:1px solid rgba(43,27,18,0.06);">
+            <div style="position:relative;">
+              <img src="{{ item.img }}" alt="{{ item.name }}" style="width:100%;aspect-ratio:{{ item.ratio }};object-fit:cover;display:block;">
+              <sc-if value="{{ showStamp }}" hint-placeholder-val="{{ true }}">
+                <div style="position:absolute;top:10px;left:10px;width:32px;height:32px;border-radius:50%;border:1.5px solid rgba(253,246,237,0.85);background:rgba(43,27,18,0.55);color:#FDF6ED;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;font-family:'Playfair Display',serif;font-style:italic;">
+                  {{ item.number }}
+                </div>
+              </sc-if>
+              <div style="{{ item.badgeStyle }}">
+                {{ item.badge }}
+              </div>
+            </div>
+            <div style="position:relative;height:0;">
+              <div style="position:absolute;top:-9px;left:22px;transform:rotate(-3deg);width:58px;height:18px;background:rgba(232,163,61,0.45);border-radius:2px;box-shadow:0 1px 2px rgba(43,27,18,0.15);"></div>
+            </div>
+            <div style="padding:18px 18px 20px;">
+              <div style="font-size:17px;font-weight:700;color:#2B1B12;margin-bottom:6px;">{{ item.name }}</div>
+              <p style="font-size:13.5px;line-height:1.6;color:#6b5842;margin:0 0 16px;">{{ item.desc }}</p>
+              <a href="#" style="display:inline-flex;align-items:center;gap:5px;font-size:12.5px;font-weight:600;color:#C2542E;text-decoration:none;border-bottom:1px dashed rgba(194,84,46,0.5);padding-bottom:2px;">
+                Ver ficha técnica
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"></path><path d="M13 6l6 6-6 6"></path></svg>
+              </a>
+            </div>
+          </div>
+        </div>
+      </sc-for>
+    </div>
+  </div>
+</section>
+
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;: {&quot;width&quot;: 1200, &quot;height&quot;: 900}, &quot;tiltIntensity&quot;: {&quot;editor&quot;: &quot;range&quot;, &quot;default&quot;: 1, &quot;tsType&quot;: &quot;number&quot;, &quot;min&quot;: 0, &quot;max&quot;: 1.6, &quot;step&quot;: 0.1, &quot;section&quot;: &quot;Comportamiento&quot;}, &quot;showStampNumbers&quot;: {&quot;editor&quot;: &quot;boolean&quot;, &quot;default&quot;: true, &quot;tsType&quot;: &quot;boolean&quot;, &quot;section&quot;: &quot;Comportamiento&quot;}}">
+class Component extends DCLogic {
+  state = { revealed: {} };
+  cardRefs = {};
+
+  componentDidMount() {
+    this.observer = new IntersectionObserver((entries) => {
+      entries.forEach((entry) => {
+        if (entry.isIntersecting) {
+          const id = entry.target.dataset.cardId;
+          this.setState((s) => ({ revealed: { ...s.revealed, [id]: true } }));
+          this.observer.unobserve(entry.target);
+        }
+      });
+    }, { threshold: 0.01, rootMargin: '0px 0px 200px 0px' });
+    Object.keys(this.cardRefs).forEach((id) => {
+      const el = this.cardRefs[id];
+      if (el) {
+        const r = el.getBoundingClientRect();
+        if (r.top < window.innerHeight && r.bottom > 0) {
+          this.setState((s) => ({ revealed: { ...s.revealed, [id]: true } }));
+        } else {
+          this.observer.observe(el);
+        }
+      }
+    });
+  }
+
+  componentWillUnmount() {
+    if (this.observer) this.observer.disconnect();
+  }
+
+  setCardRef(id, el) {
+    if (!el) return;
+    this.cardRefs[id] = el;
+    el.dataset.cardId = id;
+    if (this.observer) this.observer.observe(el);
+  }
+
+  renderVals() {
+    const tilt = this.props.tiltIntensity ?? 1;
+    const showStamp = this.props.showStampNumbers ?? true;
+
+    const RAW = [
+      { id: 'amarilla', name: 'Arepa Amarilla', desc: 'Hecha con maíz amarillo seleccionado, suave por dentro y ligeramente tostada por fuera.', badge: '100% maíz', badgeBg: '#E8A33D', badgeText: '#2B1B12', img: 'assets/arepa-amarilla.png', rotate: -2.5, lift: -8, ratio: '4 / 5' },
+      { id: 'blancas5', name: 'Arepas Blancas x5', desc: 'Cinco arepas frescas, perfectas para compartir en familia.', badge: 'Sin conservantes', badgeBg: '#4F7942', badgeText: '#FDF6ED', img: 'assets/arepas-x5.png', rotate: 1.8, lift: 14, ratio: '1 / 1' },
+      { id: 'amarillas5', name: 'Arepas Amarillas x5', desc: 'Cinco arepas amarillas artesanales, llenas de sabor y tradición.', badge: 'Hecho a mano', badgeBg: '#C2542E', badgeText: '#FDF6ED', img: 'assets/arepas-amarillas-x5.png', rotate: -1.5, lift: 6, ratio: '5 / 4' },
+      { id: 'surtido', name: 'Surtido Masarepas', desc: 'Nuestra selección variada, recién salida del asador.', badge: 'Recién horneadas', badgeBg: '#E8A33D', badgeText: '#2B1B12', img: 'assets/arepas-basket.png', rotate: 2.2, lift: -12, ratio: '4 / 5' },
+    ];
+
+    const products = RAW.map((p, i) => {
+      const revealed = !!this.state.revealed[p.id];
+      const finalRotate = p.rotate * tilt;
+      const style = {
+        transform: revealed
+          ? `translateY(${p.lift}px) rotate(${finalRotate}deg) scale(1)`
+          : `translateY(${p.lift + 46}px) rotate(${finalRotate + (i % 2 === 0 ? -10 : 10)}deg) scale(0.94)`,
+        opacity: revealed ? 1 : 0,
+        transition: `transform 0.85s cubic-bezier(0.22,1,0.36,1) ${i * 90}ms, opacity 0.7s ease-out ${i * 90}ms`,
+      };
+      const badgeStyle = {
+        position: 'absolute',
+        top: '14px',
+        right: '10px',
+        background: p.badgeBg,
+        color: p.badgeText,
+        fontSize: '11px',
+        fontWeight: 700,
+        letterSpacing: '0.03em',
+        padding: '5px 12px',
+        borderRadius: '4px',
+        boxShadow: '0 4px 10px rgba(0,0,0,0.18)',
+        transform: 'rotate(4deg)',
+      };
+      return { ...p, index: i, number: String(i + 1).padStart(2, '0'), revealed, style, badgeStyle, setRef: (el) => this.setCardRef(p.id, el) };
+    });
+
+    return { products, showStamp };
+  }
+}
+</script>
+</body>
+</html>

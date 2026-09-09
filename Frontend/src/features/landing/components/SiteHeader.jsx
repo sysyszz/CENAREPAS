@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react';
+import { motion } from 'framer-motion';
 import { LogIn, Menu, X } from 'lucide-react';
 import { useConfiguracion } from '../../../shared/contexts/ConfiguracionContext';
+import cenarepasLogo from '../../../assets/cenarepas-icon.svg';
 
 const NAV_LINKS = [
   { label: 'Inicio', href: '#inicio' },
@@ -11,9 +13,10 @@ const NAV_LINKS = [
 ];
 
 export function SiteHeader() {
-  const { nombreProyecto, logoUrl, eslogan } = useConfiguracion();
+  const { nombreProyecto } = useConfiguracion();
   const [scrolled, setScrolled] = useState(false);
   const [open, setOpen] = useState(false);
+  const [activeSection, setActiveSection] = useState('inicio');
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 20);
@@ -22,41 +25,133 @@ export function SiteHeader() {
     return () => window.removeEventListener('scroll', onScroll);
   }, []);
 
+  useEffect(() => {
+    const sections = NAV_LINKS
+      .map((link) => document.getElementById(link.href.slice(1)))
+      .filter(Boolean);
+    if (!sections.length) return undefined;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) setActiveSection(entry.target.id);
+        });
+      },
+      { rootMargin: '-45% 0px -50% 0px', threshold: 0 },
+    );
+    sections.forEach((section) => observer.observe(section));
+    return () => observer.disconnect();
+  }, []);
+
+  const isHero = activeSection === 'inicio';
+
+  const linkClass = (isActive) => {
+    if (isActive) {
+      return 'relative rounded-full px-3.5 py-1.5 text-xs font-semibold tracking-wide bg-[#c1502d] text-white shadow-xs transition-colors duration-200';
+    }
+    if (isHero) {
+      return 'relative rounded-full px-3.5 py-1.5 text-xs font-semibold tracking-wide text-white/90 hover:bg-white/15 hover:text-white transition-colors duration-200';
+    }
+    return 'relative rounded-full px-3.5 py-1.5 text-xs font-semibold tracking-wide text-slate-700 hover:bg-black/5 hover:text-slate-900 transition-colors duration-200';
+  };
+
   return (
-    <header className={`fixed inset-x-0 top-0 z-50 transition-all duration-300 ${scrolled ? 'bg-background/80 shadow-md shadow-brand/5 backdrop-blur-md' : 'bg-background'}`}>
-      <div className="mx-auto flex h-20 max-w-6xl items-center justify-between gap-4 px-4 sm:px-6">
-        <a href="#inicio" className="flex items-center gap-3">
+    <header className="fixed inset-x-0 top-0 z-50 px-4 pt-3 sm:px-6 sm:pt-4">
+      <div
+        className={`mx-auto flex h-14 max-w-6xl items-center justify-between gap-3 rounded-full border px-3 transition-all duration-300 sm:h-16 sm:px-5 ${
+          isHero
+            ? 'bg-transparent border-white/15 backdrop-blur-[2px] shadow-none hover:bg-white/[0.04]'
+            : 'bg-white/40 border-[#e8dcc0] shadow-sm backdrop-blur-md hover:bg-white/55'
+        }`}
+      >
+        {/* Logo */}
+        <a href="#inicio" className="group flex shrink-0 items-center gap-2.5">
           <img
-            src={logoUrl}
+            src={cenarepasLogo}
             alt={nombreProyecto}
-            className="h-12 w-12 shrink-0 object-contain drop-shadow-md sm:h-[3.25rem] sm:w-[3.25rem]"
+            className="h-8 w-8 shrink-0 object-contain drop-shadow-sm transition-transform group-hover:scale-105 sm:h-9 sm:w-9"
           />
-          <span className="flex flex-col leading-tight">
-            <span className="text-base font-extrabold tracking-tight text-brand-dark sm:text-lg">{nombreProyecto}</span>
-            <span className="text-[10px] font-medium tracking-[0.18em] text-muted-foreground uppercase">FÁBRICA DE AREPAS</span>
+          <span className="hidden flex-col leading-tight sm:flex">
+            <span className={`text-sm font-extrabold tracking-tight transition-colors ${isHero ? 'text-white' : 'text-slate-900'}`}>
+              {nombreProyecto}
+            </span>
+            <span className={`text-[10px] font-semibold tracking-[0.16em] uppercase transition-colors ${isHero ? 'text-white/85' : 'text-slate-600'}`}>
+              FÁBRICA DE AREPAS
+            </span>
           </span>
         </a>
 
-        <nav className="hidden items-center gap-8 lg:flex">
-          {NAV_LINKS.map((link) => <a key={link.href} href={link.href} className="landing-nav-link rounded-md px-2 py-1 text-sm font-semibold tracking-wide transition-colors duration-200 ease-out">{link.label}</a>)}
+        {/* Navegación Desktop */}
+        <nav className="hidden items-center gap-1 lg:flex">
+          {NAV_LINKS.map((link) => {
+            const isActive = activeSection === link.href.slice(1);
+            return (
+              <motion.a
+                key={link.href}
+                href={link.href}
+                className={linkClass(isActive)}
+                whileHover={{ scale: 1.04 }}
+                whileTap={{ scale: 0.97 }}
+                transition={{ type: 'spring', stiffness: 400, damping: 25 }}
+              >
+                {link.label}
+              </motion.a>
+            );
+          })}
         </nav>
 
-        <div className="flex items-center gap-3">
-          <a href="/admin/login" className="inline-flex items-center gap-2 rounded-full bg-brand px-5 py-2.5 text-sm font-semibold text-white shadow-md shadow-brand/30 transition-all hover:-translate-y-0.5 hover:bg-brand-dark hover:shadow-lg">
-            <LogIn className="size-4" aria-hidden />
-            <span className="hidden sm:inline">Ingresar</span>
+        {/* Acciones */}
+        <div className="flex shrink-0 items-center gap-2">
+          <a
+            href="/admin/login"
+            className="inline-flex items-center gap-1.5 rounded-full bg-[#C1502D] px-4 py-1.5 text-xs font-semibold text-white shadow-md shadow-[#C1502D]/25 transition-all hover:-translate-y-0.5 hover:bg-[#8A3418] active:translate-y-0 active:scale-95"
+          >
+            <LogIn className="size-3.5" aria-hidden />
+            <span>Ingresar</span>
           </a>
-          <button type="button" onClick={() => setOpen((value) => !value)} className="flex size-10 items-center justify-center rounded-full text-brand-dark transition-colors hover:bg-brand/10 lg:hidden" aria-label={open ? 'Cerrar menú' : 'Abrir menú'} aria-expanded={open}>
-            {open ? <X className="size-6" /> : <Menu className="size-6" />}
+          <button
+            type="button"
+            onClick={() => setOpen((value) => !value)}
+            className={`flex size-9 items-center justify-center rounded-full transition-colors lg:hidden ${
+              isHero ? 'text-white hover:bg-white/15' : 'text-slate-900 hover:bg-black/5'
+            }`}
+            aria-label={open ? 'Cerrar menú' : 'Abrir menú'}
+            aria-expanded={open}
+          >
+            {open ? <X className="size-5" /> : <Menu className="size-5" />}
           </button>
         </div>
       </div>
 
-      <div className={`overflow-hidden border-t border-border/60 bg-background/95 backdrop-blur-md transition-all duration-300 lg:hidden ${open ? 'max-h-80 opacity-100' : 'max-h-0 opacity-0'}`}>
-        <nav className="mx-auto flex max-w-6xl flex-col px-4 py-2 sm:px-6">
-          {NAV_LINKS.map((link) => <a key={link.href} href={link.href} onClick={() => setOpen(false)} className="landing-nav-link rounded-lg px-3 py-3 text-sm font-semibold transition-colors duration-200 ease-out">{link.label}</a>)}
+      {/* Menú Mobile Desplegable */}
+      <div
+        className={`mx-auto mt-2 max-w-6xl overflow-hidden rounded-2xl border backdrop-blur-xl transition-all duration-300 lg:hidden ${
+          open ? 'max-h-80 opacity-100' : 'max-h-0 opacity-0'
+        } ${isHero ? 'border-white/15 bg-[#120b07]/80' : 'border-[#e8dcc0] bg-white/95'}`}
+      >
+        <nav className="flex flex-col gap-1 px-3 py-3">
+          {NAV_LINKS.map((link) => {
+            const isActive = activeSection === link.href.slice(1);
+            return (
+              <a
+                key={link.href}
+                href={link.href}
+                onClick={() => setOpen(false)}
+                className={`rounded-full px-4 py-2.5 text-sm font-semibold transition-colors duration-200 ${
+                  isActive
+                    ? 'bg-[#c1502d] text-white'
+                    : isHero
+                    ? 'text-white/80 hover:bg-white/10 hover:text-white'
+                    : 'text-slate-700 hover:bg-black/5 hover:text-slate-900'
+                }`}
+              >
+                {link.label}
+              </a>
+            );
+          })}
         </nav>
       </div>
     </header>
   );
 }
+

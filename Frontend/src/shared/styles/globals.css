@@ -1,26 +1,29 @@
 :root {
-  --background: #ffffff;
-  --foreground: #0a0a0a;
+  --background: #FDFBF7;
+  --foreground: #2D2926;
 
-  --card: #ffffff;
-  --card-foreground: #0a0a0a;
+  --card: #FFFFFF;
+  --card-foreground: #2D2926;
 
-  --primary: #6d28d9;
-  --primary-foreground: #ffffff;
+  --primary: #C1502D;
+  --primary-foreground: #FFFFFF;
 
-  --secondary: #f4f4f5;
-  --secondary-foreground: #0a0a0a;
+  --secondary: #FFFBF0;
+  --secondary-foreground: #2D2926;
 
-  --muted: #f4f4f5;
-  --muted-foreground: #71717a;
+  --muted: #F7F1E7;
+  --muted-foreground: #756F6A;
 
-  --accent: #f4f4f5;
-  --accent-foreground: #0a0a0a;
+  --accent: #E8B23D;
+  --accent-foreground: #2D2926;
 
-  --border: #e4e4e7;
-  --input: #e4e4e7;
-  --input-background: #ffffff;
-  --ring: #6d28d9;
+  --success: #5A7A3A;
+  --success-foreground: #FFFFFF;
+
+  --border: #E8E1D7;
+  --input: #E8E1D7;
+  --input-background: #FFFFFF;
+  --ring: #C1502D;
 
   --radius: 0.5rem;
 }
@@ -80,49 +83,6 @@
   margin-top: 0;
 }
 
-.status-switch {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.45rem;
-  min-width: 5.25rem;
-  height: 2rem;
-  padding: 0.2rem 0.55rem 0.2rem 0.25rem;
-  border: 1px solid transparent;
-  border-radius: 999px;
-  cursor: pointer;
-  font-size: 0.75rem;
-  font-weight: 600;
-  transition: background-color 150ms ease, border-color 150ms ease;
-}
-
-.status-switch-thumb {
-  width: 1.35rem;
-  height: 1.35rem;
-  border-radius: 999px;
-  background: #fff;
-  box-shadow: 0 1px 3px rgb(15 23 42 / 0.2);
-  transition: transform 150ms ease;
-}
-
-.status-switch-on {
-  border-color: rgb(34 197 94 / 0.25);
-  background: rgb(34 197 94 / 0.14);
-  color: #15803d;
-}
-
-.status-switch-off {
-  border-color: rgb(100 116 139 / 0.25);
-  background: rgb(100 116 139 / 0.12);
-  color: #64748b;
-}
-
-.status-switch-off .status-switch-thumb {
-  transform: translateX(0);
-}
-
-.status-switch-on .status-switch-thumb {
-  transform: translateX(0.05rem);
-}
 
 .modal-form-grid > div {
   min-width: 0;
@@ -344,28 +304,28 @@
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --background: #0a0a0a;
-    --foreground: #fafafa;
+    --background: #1A1412;
+    --foreground: #FDFBF7;
 
-    --card: #18181b;
-    --card-foreground: #fafafa;
+    --card: #251B15;
+    --card-foreground: #FDFBF7;
 
-    --primary: #a78bfa;
-    --primary-foreground: #0a0a0a;
+    --primary: #C1502D;
+    --primary-foreground: #FFFFFF;
 
-    --secondary: #27272a;
-    --secondary-foreground: #fafafa;
+    --secondary: #382920;
+    --secondary-foreground: #FDFBF7;
 
-    --muted: #27272a;
-    --muted-foreground: #a1a1aa;
+    --muted: #382920;
+    --muted-foreground: #A89F91;
 
-    --accent: #27272a;
-    --accent-foreground: #fafafa;
+    --accent: #E8B23D;
+    --accent-foreground: #2D2926;
 
-    --border: #27272a;
-    --input: #27272a;
-    --input-background: #18181b;
-    --ring: #a78bfa;
+    --border: #382920;
+    --input: #382920;
+    --input-background: #251B15;
+    --ring: #C1502D;
   }
 }
 
@@ -397,15 +357,24 @@
 }
 
 .custom-scrollbar::-webkit-scrollbar {
-  width: 5px;
+  width: 6px;
+  height: 6px;
 }
 .custom-scrollbar::-webkit-scrollbar-track {
   background: transparent;
 }
 .custom-scrollbar::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.15);
+  background: rgba(193, 80, 45, 0.35);
   border-radius: 9999px;
+  border: 1px solid transparent;
+  background-clip: padding-box;
 }
 .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-  background: rgba(255, 255, 255, 0.3);
+  background: rgba(193, 80, 45, 0.75);
+}
+.dark .custom-scrollbar::-webkit-scrollbar-thumb {
+  background: rgba(232, 178, 61, 0.35);
+}
+.dark .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: rgba(232, 178, 61, 0.75);
 }

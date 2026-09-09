@@ -16,10 +16,10 @@ export default function Toast({ isOpen, type, message, onClose, duration = 3000 
   return (
     <div className="fixed top-4 right-4 z-50 animate-slideInRight">
       <div
-        className={`flex items-center gap-3 px-4 py-3 rounded-lg shadow-lg min-w-[300px] ${
+        className={`flex items-center gap-3 px-4 py-3 rounded-xl shadow-xl min-w-[300px] border ${
           type === 'success'
-            ? 'bg-emerald-600 text-white'
-            : 'bg-red-600 text-white'
+            ? 'bg-[#5A7A3A] text-white border-[#5A7A3A] shadow-[#5A7A3A]/25'
+            : 'bg-[#C1502D] text-white border-[#C1502D] shadow-[#C1502D]/25'
         }`}
       >
         {type === 'success' ? (

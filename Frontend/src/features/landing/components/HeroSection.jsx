@@ -1,135 +1,140 @@
-import { useState, useEffect } from 'react';
-import { Leaf, Heart, ChevronLeft, ChevronRight, Sparkles } from 'lucide-react';
+import React from 'react';
+import { motion } from 'framer-motion';
+import { ArrowRight, CheckCircle2 } from 'lucide-react';
 import { useConfiguracion } from '../../../shared/contexts/ConfiguracionContext';
 import defaultBasketImage from '../assets/arepas-basket.png';
 
 export function HeroSection() {
-  const { nombreProyecto, eslogan, bannerImages } = useConfiguracion();
-  const [currentSlide, setCurrentSlide] = useState(0);
+  const { nombreProyecto, bannerImages, heroVideoUrl } = useConfiguracion();
 
-  const slides = bannerImages && bannerImages.length > 0
-    ? bannerImages
-    : [{ id: 'default', url: defaultBasketImage, titulo: 'Arepas Tradicionales' }];
-
-  // Auto-play slideshow if multiple slides exist
-  useEffect(() => {
-    if (slides.length <= 1) return;
-    const interval = setInterval(() => {
-      setCurrentSlide((prev) => (prev + 1) % slides.length);
-    }, 5000);
-    return () => clearInterval(interval);
-  }, [slides.length]);
-
-  const activeSlide = slides[currentSlide] || slides[0];
-
-  const prevSlide = () => {
-    setCurrentSlide((prev) => (prev - 1 + slides.length) % slides.length);
-  };
-
-  const nextSlide = () => {
-    setCurrentSlide((prev) => (prev + 1) % slides.length);
-  };
+  const showVideo = Boolean(heroVideoUrl);
+  const posterImage = bannerImages && bannerImages.length > 0 ? bannerImages[0].url : defaultBasketImage;
 
   return (
-    <section id="inicio" className="relative overflow-hidden bg-gradient-to-br from-brand-light via-brand to-brand-dark pt-20">
-      <div className="mx-auto grid max-w-6xl items-center gap-8 px-4 pb-28 pt-12 sm:px-6 md:pb-36 lg:grid-cols-2 lg:gap-12 lg:pt-16">
-        <div className="animate-fade-left text-white">
-          <p className="text-sm font-semibold uppercase tracking-[0.3em] text-white/80">Fábrica de Arepas</p>
-          <h1 className="mt-1 font-script text-6xl leading-none drop-shadow-sm sm:text-7xl lg:text-8xl">
-            {nombreProyecto}
-          </h1>
-          <p className="mt-4 max-w-md text-lg font-medium uppercase leading-relaxed tracking-wide text-white/90">
-            {eslogan || 'Frescas, deliciosas y hechas con ingredientes de calidad'}
-          </p>
-          <div className="mt-6 h-1 w-16 rounded-full bg-accent-gold" />
-          <div className="mt-8 flex flex-wrap gap-8">
-            <div className="flex items-center gap-3">
-              <span className="flex size-11 items-center justify-center rounded-full bg-white/15 ring-1 ring-white/30 backdrop-blur-sm">
-                <Leaf className="size-5 text-white" aria-hidden />
-              </span>
-              <span className="text-sm font-semibold">100% Naturales</span>
-            </div>
-            <div className="flex items-center gap-3">
-              <span className="flex size-11 items-center justify-center rounded-full bg-white/15 ring-1 ring-white/30 backdrop-blur-sm">
-                <Heart className="size-5 text-white" aria-hidden />
-              </span>
-              <span className="text-sm font-semibold">Hechas con amor</span>
-            </div>
-          </div>
-        </div>
-
-        {/* Carousel / Banner Container */}
-        <div className="animate-fade-right [animation-delay:200ms] relative">
-          <div className="relative mx-auto max-w-lg">
-            <div className="absolute -inset-4 rounded-[2.5rem] bg-white/10 blur-2xl pointer-events-none" />
-            
-            <div className="relative rounded-[2rem] overflow-hidden shadow-2xl shadow-brand-dark/40 aspect-square bg-brand-dark/30 border border-white/10">
-              <img
-                key={activeSlide.url}
-                src={activeSlide.url}
-                alt={activeSlide.titulo || nombreProyecto}
-                width="720"
-                height="720"
-                className="w-full h-full object-cover transition-all duration-700 animate-in fade-in zoom-in-95"
-              />
-
-              {/* Caption Tag */}
-              {activeSlide.titulo && (
-                <div className="absolute bottom-0 inset-x-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent p-6 text-white">
-                  <p className="font-bold text-base drop-shadow-md">{activeSlide.titulo}</p>
-                  {activeSlide.subtitulo && (
-                    <p className="text-xs text-white/80 mt-0.5">{activeSlide.subtitulo}</p>
-                  )}
-                </div>
-              )}
-
-              {/* Navigation Arrows for Multiple Slides */}
-              {slides.length > 1 && (
-                <>
-                  <button
-                    type="button"
-                    onClick={prevSlide}
-                    aria-label="Slide anterior"
-                    className="absolute left-3 top-1/2 -translate-y-1/2 size-9 rounded-full bg-black/40 hover:bg-black/70 text-white flex items-center justify-center backdrop-blur-xs transition-all border border-white/20 cursor-pointer"
-                  >
-                    <ChevronLeft className="size-5" />
-                  </button>
-                  <button
-                    type="button"
-                    onClick={nextSlide}
-                    aria-label="Siguiente slide"
-                    className="absolute right-3 top-1/2 -translate-y-1/2 size-9 rounded-full bg-black/40 hover:bg-black/70 text-white flex items-center justify-center backdrop-blur-xs transition-all border border-white/20 cursor-pointer"
-                  >
-                    <ChevronRight className="size-5" />
-                  </button>
-
-                  {/* Indicator Dots */}
-                  <div className="absolute bottom-3 right-4 flex items-center gap-1.5 z-20">
-                    {slides.map((_, idx) => (
-                      <button
-                        key={idx}
-                        type="button"
-                        onClick={() => setCurrentSlide(idx)}
-                        aria-label={`Ir al slide ${idx + 1}`}
-                        className={`transition-all rounded-full ${
-                          idx === currentSlide
-                            ? 'w-6 h-2 bg-accent-gold'
-                            : 'w-2 h-2 bg-white/50 hover:bg-white/80'
-                        }`}
-                      />
-                    ))}
-                  </div>
-                </>
-              )}
-            </div>
-          </div>
-        </div>
+    <section
+      id="inicio"
+      className="relative w-full min-h-screen flex flex-col justify-end overflow-hidden bg-[var(--landing-cine)]"
+    >
+      <div className="absolute inset-0 w-full h-full overflow-hidden">
+        {showVideo ? (
+          <video
+            key={heroVideoUrl}
+            src={heroVideoUrl}
+            poster={posterImage}
+            autoPlay
+            muted
+            loop
+            playsInline
+            preload="auto"
+            className="w-full h-full object-cover scale-[1.02] transform transition-transform duration-1000 ease-out"
+          />
+        ) : (
+          <img
+            src={posterImage}
+            alt={nombreProyecto}
+            className="w-full h-full object-cover scale-[1.02]"
+          />
+        )}
       </div>
 
-      <div className="absolute inset-x-0 bottom-0 leading-[0]">
-        <svg viewBox="0 0 1440 120" preserveAspectRatio="none" className="h-16 w-full sm:h-24" aria-hidden>
-          <path fill="var(--background)" d="M0,64 C240,120 480,120 720,90 C960,60 1200,10 1440,48 L1440,120 L0,120 Z" />
-        </svg>
+      {/* ─── ZONA 1: Overlay Sutil de Legibilidad para el Video (15-20% opacidad) ─── */}
+      <div className="absolute inset-0 bg-black/15 pointer-events-none z-0" />
+      <div
+        aria-hidden="true"
+        className="absolute inset-0 pointer-events-none z-0"
+        style={{
+          background: 'linear-gradient(to right, rgba(0, 0, 0, 0.35) 0%, rgba(0, 0, 0, 0.1) 50%, transparent 100%)'
+        }}
+      />
+
+
+      <div className="relative z-10 w-full max-w-7xl mx-auto px-6 sm:px-10 lg:px-14 pb-10 sm:pb-12 lg:pb-16">
+        <div className="max-w-xl flex flex-col items-start text-left">
+
+          <motion.div
+            initial={{ opacity: 0, y: 14 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.55, ease: [0.22, 1, 0.36, 1] }}
+            className="mb-4 inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-white/10 hover:bg-white/15 backdrop-blur-md border border-white/15 shadow-sm transition-all duration-200 cursor-default select-none"
+          >
+            <span className="relative flex h-2 w-2">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#E8B23D] opacity-75"></span>
+              <span className="relative inline-flex rounded-full h-2 w-2 bg-[#E8B23D]"></span>
+            </span>
+            <span className="landing-eyebrow text-[#FFFBF0] italic font-serif tracking-wide">
+              • Sistema de gestión • <span className="not-italic font-sans">para fábricas de alimentos</span>
+            </span>
+          </motion.div>
+
+          <motion.h1
+            initial={{ opacity: 0, y: 18 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.65, delay: 0.1, ease: [0.22, 1, 0.36, 1] }}
+            className="landing-display text-3xl sm:text-4xl md:text-5xl lg:text-[3.1rem] font-bold text-white mb-3 drop-shadow-sm"
+          >
+            <span className="block font-sans font-bold text-white">
+              Gestiona tu <span className="landing-accent-serif font-normal text-[#FDF5E2]">fábrica</span>
+            </span>
+            <span className="block font-sans font-bold text-[#FDF5E2] text-[0.95em] tracking-tight mt-1">
+              de principio a fin
+            </span>
+          </motion.h1>
+
+          <motion.p
+            initial={{ opacity: 0, y: 14 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 0.18, ease: [0.22, 1, 0.36, 1] }}
+            className="text-[#FFFBF0]/85 text-sm sm:text-[15px] font-normal max-w-lg leading-relaxed mb-6"
+          >
+            CENAREPAS centraliza pedidos, producción, inventario y ventas de tu fábrica de alimentos
+            en un solo sistema — con Masarepas, una fábrica de arepas real, como <span className="landing-accent-serif text-[#FDF5E2]">caso de uso</span>.
+          </motion.p>
+
+          <motion.div
+            initial={{ opacity: 0, y: 16 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.65, delay: 0.26, ease: [0.22, 1, 0.36, 1] }}
+            className="flex flex-wrap items-center gap-3.5"
+          >
+            <a
+              href="#contacto"
+              className="inline-flex items-center justify-between gap-2.5 pl-5 pr-2 py-2 rounded-full bg-[#C1502D] hover:bg-[#8A3418] text-white font-semibold text-xs tracking-wide shadow-md shadow-[#C1502D]/20 hover:-translate-y-0.5 active:translate-y-0 active:scale-[0.98] transition-all duration-200 group cursor-pointer"
+            >
+              <span>Solicitar demo</span>
+              <span className="w-6 h-6 rounded-full bg-white text-[#C1502D] flex items-center justify-center transition-transform duration-200 group-hover:translate-x-0.5 shadow-xs">
+                <ArrowRight className="w-3 h-3 stroke-[2.5]" />
+              </span>
+            </a>
+
+            <a
+              href="#nosotros"
+              className="inline-flex items-center justify-center px-5 py-2.5 rounded-full bg-white/10 hover:bg-white/20 text-[#FFFBF0] hover:text-white font-medium text-xs tracking-wide backdrop-blur-md border border-white/20 shadow-sm hover:-translate-y-0.5 active:translate-y-0 active:scale-[0.98] transition-all duration-200 cursor-pointer"
+            >
+              <span>Ver el sistema en acción</span>
+            </a>
+          </motion.div>
+
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.7, delay: 0.45 }}
+            className="flex flex-wrap items-center gap-5 mt-6 pt-4 border-t border-white/15 text-[11px] text-white/85 font-medium"
+          >
+            <div className="flex items-center gap-1.5">
+              <CheckCircle2 className="w-3.5 h-3.5 text-[#5A7A3A]" />
+              <span>Pedidos en tiempo real</span>
+            </div>
+            <div className="flex items-center gap-1.5">
+              <CheckCircle2 className="w-3.5 h-3.5 text-[#E8B23D]" />
+              <span>Producción trazable</span>
+            </div>
+            <div className="flex items-center gap-1.5">
+              <CheckCircle2 className="w-3.5 h-3.5 text-[#5A7A3A]" />
+              <span>Reportes automáticos</span>
+            </div>
+          </motion.div>
+
+        </div>
       </div>
     </section>
   );

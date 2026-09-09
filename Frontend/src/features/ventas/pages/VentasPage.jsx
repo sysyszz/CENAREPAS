@@ -8,17 +8,16 @@ import { RowActions } from '../../../shared/components/RowActions';
 import { VentaFormModal } from '../components/VentaFormModal';
 import { mockDetallesVenta } from '../services/ventasService';
 import ConfirmDialog from '../../../shared/components/ConfirmDialog';
-import Toast from '../../../shared/components/Toast';
 import DetailModal from '../../../shared/components/DetailModal';
 import PageHeader from '../../../shared/components/PageHeader';
 import { MetricCard } from '../../../shared/components/MetricCard';
 import { usePermissions } from '../../../shared/contexts/PermissionContext';
 import StatusSwitch from '../../../shared/components/StatusSwitch';
+import { CustomSelect } from '../../../shared/components/CustomSelect';
 
 export default function VentasPage() {
   const { can } = usePermissions();
   const {
-    ventas,
     rawVentas,
     searchQuery,
     setSearchQuery,
@@ -32,12 +31,9 @@ export default function VentasPage() {
     setDeleteDialog,
     isDeleting,
     isSaving,
-    toast,
-    setToast,
     handleSave,
     handleAnular,
   } = useVentas();
-
   const [selectedVenta, setSelectedVenta] = useState(null);
   const [clientes, setClientes] = useState(mockClientes);
 
@@ -51,7 +47,6 @@ export default function VentasPage() {
     () => Object.fromEntries(clientes.map((c) => [c.id_cliente, c.nombre])),
     [clientes]
   );
-
   const usuariosNames = useMemo(
     () => Object.fromEntries(mockUsuarios.map((u) => [u.id_usuario, u.nombre])),
     []
@@ -77,7 +72,6 @@ export default function VentasPage() {
         usuarioNombre.includes(q) ||
         String(v.id_sede).toLowerCase().includes(q) ||
         (v.medio_pago || '').toLowerCase().includes(q);
-
       const isTodosEstado = estadoFilter === 'Todos' || estadoFilter === 'Todos los estados';
       const matchesEstado = isTodosEstado || String(v.estado).toLowerCase() === String(estadoFilter).toLowerCase();
       return matchesSearch && matchesEstado;
@@ -174,35 +168,39 @@ export default function VentasPage() {
           setShowModal(true);
         }}
       />
-
-      {/* Tarjetas de consolidado */}
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
-        <MetricCard title="Ventas Totales ($)" value={`$${ventasHoy.toLocaleString('es-CO')}`} icon={DollarSign} variant="success" />
-        <MetricCard title="Total Registros" value={`${totalVentas} ventas`} icon={BarChart3} variant="primary" />
-        <MetricCard title="Promedio Ticket" value={`$${Math.round(promedioVentas).toLocaleString('es-CO')}`} icon={TrendingUp} variant="accent" />
-        <MetricCard title="Completadas" value={rawVentas.filter((v) => String(v.estado).toLowerCase() === 'completada').length} icon={ShoppingBag} variant="warning" />
+        <MetricCard index={0} title="Ventas Totales ($)" value={`$${ventasHoy.toLocaleString('es-CO')}`} icon={DollarSign} variant="success" />
+        <MetricCard index={1} title="Total Registros" value={`${totalVentas} ventas`} icon={BarChart3} variant="primary" />
+        <MetricCard index={2} title="Promedio Ticket" value={`$${Math.round(promedioVentas).toLocaleString('es-CO')}`} icon={TrendingUp} variant="accent" />
+        <MetricCard index={3} title="Completadas" value={rawVentas.filter((v) => String(v.estado).toLowerCase() === 'completada').length} icon={ShoppingBag} variant="warning" />
       </div>
-
-      {/* Tabla con DataTable */}
       <DataTable
         columns={columns}
         data={filteredData}
+        emptyIcon={DollarSign}
+        entityName="ventas"
+        onAdd={() => {
+          setSelectedVenta(null);
+          setShowModal(true);
+        }}
+        addLabel="Nueva Venta"
+        addDisabled={!can('ventas', 'crear')}
+        isFiltered={Boolean(searchQuery || estadoFilter !== 'Todos')}
         searchPlaceholder="Buscar por ID, cliente, sede o medio de pago..."
         searchValue={searchQuery}
         onSearchChange={setSearchQuery}
         filters={
-          <select
+          <CustomSelect
             value={estadoFilter}
             onChange={(e) => setEstadoFilter(e.target.value)}
-            className="px-4 py-2 border border-input bg-input-background rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+            className="w-full sm:w-48"
           >
             <option value="Todos">Todos los estados</option>
             <option value="completada">Completada</option>
             <option value="anulada">Anulada</option>
-          </select>
+          </CustomSelect>
         }
       />
-
       <DetailModal
         isOpen={detailModal.isOpen}
         onClose={() => setDetailModal({ isOpen: false, data: null })}
@@ -247,7 +245,6 @@ export default function VentasPage() {
           { label: 'Estado', value: detailModal.data.estado },
         ] : []}
       />
-
       <VentaFormModal
         open={showModal}
         venta={selectedVenta}
@@ -258,7 +255,6 @@ export default function VentasPage() {
           setSelectedVenta(null);
         }}
       />
-
       <ConfirmDialog
         isOpen={deleteDialog.isOpen}
         title="Anular Venta"
@@ -268,14 +264,6 @@ export default function VentasPage() {
         onCancel={() => setDeleteDialog({ isOpen: false, id: null, nombre: '' })}
         isLoading={isDeleting}
       />
-
-      <Toast
-        isOpen={toast.isOpen}
-        type={toast.type}
-        message={toast.message}
-        onClose={() => setToast({ ...toast, isOpen: false })}
-      />
     </div>
   );
 }
-

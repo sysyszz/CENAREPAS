@@ -19,6 +19,7 @@ import ProductosPage from './features/productos/pages/ProductosPage';
 import PedidosPage from './features/pedidos/pages/PedidosPage';
 import VentasPage from './features/ventas/pages/VentasPage';
 import ConfiguracionPage from './features/configuracion/pages/ConfiguracionPage';
+import NotFoundPage from './features/error/pages/NotFoundPage';
 import { usePermissions } from './shared/contexts/PermissionContext';
 
 function ProtectedModule({ modulo, children }) {
@@ -36,7 +37,7 @@ export function AppRoutes({ isAuthenticated, setIsAuthenticated }) {
       />
       <Route path="/admin/forgot-password" element={<ForgotPassword />} />
       <Route
-        path="/admin/*"
+        path="/admin"
         element={
           isAuthenticated ? (
             <AdminLayout onLogout={() => setIsAuthenticated(false)} />
@@ -61,6 +62,8 @@ export function AppRoutes({ isAuthenticated, setIsAuthenticated }) {
         <Route path="pedidos" element={<ProtectedModule modulo="pedidos"><PedidosPage /></ProtectedModule>} />
         <Route path="ventas" element={<ProtectedModule modulo="ventas"><VentasPage /></ProtectedModule>} />
       </Route>
+      {/* Ruta comodín 404 para cualquier ruta inexistente */}
+      <Route path="*" element={<NotFoundPage isAuthenticated={isAuthenticated} />} />
     </Routes>
   );
 }

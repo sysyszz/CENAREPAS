@@ -7,12 +7,12 @@ import { DataTable } from '../../../shared/components/DataTable';
 import { RowActions } from '../../../shared/components/RowActions';
 import { FichaTecnicaFormModal } from '../components/FichaTecnicaFormModal';
 import ConfirmDialog from '../../../shared/components/ConfirmDialog';
-import Toast from '../../../shared/components/Toast';
 import DetailModal from '../../../shared/components/DetailModal';
 import PageHeader from '../../../shared/components/PageHeader';
 import { MetricCard } from '../../../shared/components/MetricCard';
 import { usePermissions } from '../../../shared/contexts/PermissionContext';
 import StatusSwitch from '../../../shared/components/StatusSwitch';
+import { CustomSelect } from '../../../shared/components/CustomSelect';
 
 export default function FichasTecnicasPage() {
   const { can } = usePermissions();
@@ -30,8 +30,6 @@ export default function FichasTecnicasPage() {
     setDeleteDialog,
     isDeleting,
     isSaving,
-    toast,
-    setToast,
     handleSave,
     handleDelete,
   } = useFichasTecnicas();
@@ -151,29 +149,38 @@ export default function FichasTecnicasPage() {
 
       {/* Tarjetas de Consolidado */}
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
-        <MetricCard title="Total Recetas" value={totalFichas} icon={BookOpen} variant="primary" />
-        <MetricCard title="Fichas Vigentes" value={vigentes} icon={CheckCircle} variant="success" />
-        <MetricCard title="Versión Actual" value="v3.0 Max" icon={FileText} variant="accent" />
-        <MetricCard title="Última Revisión" value="Hace 15 días" icon={Clock} variant="warning" />
+        <MetricCard index={0} title="Total Recetas" value={totalFichas} icon={BookOpen} variant="primary" />
+        <MetricCard index={1} title="Fichas Vigentes" value={vigentes} icon={CheckCircle} variant="success" />
+        <MetricCard index={2} title="Versión Actual" value="v3.0 Max" icon={FileText} variant="accent" />
+        <MetricCard index={3} title="Última Revisión" value="Hace 15 días" icon={Clock} variant="warning" />
       </div>
 
       {/* Tabla con DataTable */}
       <DataTable
         columns={columns}
         data={filteredData}
+        emptyIcon={BookOpen}
+        entityName="fichas técnicas"
+        onAdd={() => {
+          setSelectedFicha(null);
+          setShowModal(true);
+        }}
+        addLabel="Nueva Ficha"
+        addDisabled={!can('fichas-tecnicas', 'crear')}
+        isFiltered={Boolean(searchQuery || estadoFilter !== 'Todos')}
         searchPlaceholder="Buscar por código, producto o insumos..."
         searchValue={searchQuery}
         onSearchChange={setSearchQuery}
         filters={
-          <select
+          <CustomSelect
             value={estadoFilter}
             onChange={(e) => setEstadoFilter(e.target.value)}
-            className="px-4 py-2 border border-input bg-input-background rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+            className="w-full sm:w-48"
           >
             <option value="Todos">Todos los estados</option>
             <option value="Vigente">Vigente / Activo</option>
             <option value="Inactivo">Inactivo / En Revisión</option>
-          </select>
+          </CustomSelect>
         }
       />
 
@@ -230,13 +237,6 @@ export default function FichasTecnicasPage() {
         onConfirm={handleDelete}
         onCancel={() => setDeleteDialog({ isOpen: false, id: null, nombre: '' })}
         isLoading={isDeleting}
-      />
-
-      <Toast
-        isOpen={toast.isOpen}
-        type={toast.type}
-        message={toast.message}
-        onClose={() => setToast({ ...toast, isOpen: false })}
       />
     </div>
   );

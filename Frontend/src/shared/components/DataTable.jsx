@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { motion } from 'framer-motion';
 import { usePagination } from '../hooks/usePagination';
 import { PaginationControls } from './PaginationControls';
 import { SearchFilterBar } from './SearchFilterBar';
@@ -12,12 +13,17 @@ import {
   TableHeader,
   TableRow,
 } from '../ui/table';
+import { EmptyState } from './EmptyState';
+import { TableSkeletonRows } from './Skeleton';
 import { Plus } from 'lucide-react';
 
 export function DataTable({
   columns,
   data = [],
+  isLoading = false,
   onAdd,
+  addLabel = 'Nuevo Registro',
+  addDisabled = false,
   onEdit,
   onDelete,
   onView,
@@ -26,6 +32,11 @@ export function DataTable({
   filters,
   searchValue,
   onSearchChange,
+  emptyIcon,
+  emptyTitle,
+  emptyDescription,
+  entityName = 'registros',
+  isFiltered,
 }) {
   const [internalSearchTerm, setInternalSearchTerm] = useState('');
   const [deleteDialog, setDeleteDialog] = useState({ isOpen: false, row: null });
@@ -54,6 +65,8 @@ export function DataTable({
 
   const hasRowActions = Boolean(onEdit || onDelete || onView);
 
+  const computedIsFiltered = isFiltered !== undefined ? isFiltered : Boolean(searchTerm && searchTerm.trim() !== '');
+
   const handleConfirmDelete = () => {
     if (onDelete && deleteDialog.row) {
       onDelete(deleteDialog.row);
@@ -78,42 +91,55 @@ export function DataTable({
           <button
             type="button"
             onClick={onAdd}
-            className="flex items-center justify-center gap-2 px-4 py-2.5 bg-primary text-primary-foreground rounded-lg hover:opacity-90 text-sm font-medium transition-colors shrink-0 shadow-xs h-10"
+            disabled={addDisabled}
+            className="flex items-center justify-center gap-2 px-4 py-2.5 bg-primary text-primary-foreground rounded-lg hover:opacity-90 text-sm font-medium transition-colors shrink-0 shadow-xs h-10 disabled:opacity-50"
           >
             <Plus className="w-4 h-4" />
-            Agregar
+            {addLabel}
           </button>
         )}
       </div>
 
       {/* Table */}
-      <div className="records-table-shell bg-card rounded-lg border border-border overflow-hidden">
-        <Table>
+      <div className="records-table-shell bg-card rounded-xl border border-border overflow-hidden shadow-xs">
+        <Table className="min-w-[600px] w-full">
           <TableHeader>
             <TableRow className="bg-muted text-muted-foreground font-semibold">
               {columns.map((column) => (
-                <TableHead key={column.key} className="px-6 py-3 font-semibold text-foreground">
+                <TableHead key={column.key} className="px-3 sm:px-6 py-3 font-semibold text-foreground">
                   {column.label}
                 </TableHead>
               ))}
               {hasRowActions && (
-                <TableHead className="px-6 py-3 font-semibold text-foreground">Acciones</TableHead>
+                <TableHead className="px-3 sm:px-6 py-3 font-semibold text-foreground">Acciones</TableHead>
               )}
             </TableRow>
           </TableHeader>
           <TableBody className="divide-y divide-border">
-            {pagination.paginatedData.length > 0 ? (
+            {isLoading ? (
+              <TableSkeletonRows
+                columnsCount={columns.length}
+                rowsCount={5}
+                hasRowActions={hasRowActions}
+              />
+            ) : pagination.paginatedData.length > 0 ? (
               pagination.paginatedData.map((row, index) => (
-                <TableRow key={index} className="hover:bg-muted/50 transition-colors">
+                <motion.tr
+                  key={index}
+                  initial={{ opacity: 0, y: 8 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.25, delay: index * 0.04, ease: 'easeOut' }}
+                  className="hover:bg-[#C1502D]/[0.04] dark:hover:bg-[#C1502D]/10 transition-colors duration-150 border-b border-border/80"
+                >
                   {columns.map((column) => (
-                    <TableCell key={column.key} className="px-6 py-4">
+                    <TableCell key={column.key} className="px-3 sm:px-6 py-3 sm:py-4 text-xs sm:text-sm">
                       {column.render
                         ? column.render(row[column.key], row)
                         : row[column.key]}
                     </TableCell>
                   ))}
                   {hasRowActions && (
-                    <TableCell className="px-6 py-4">
+                    <TableCell className="px-3 sm:px-6 py-3 sm:py-4">
                       <RowActions
                         onView={onView ? () => onView(row) : undefined}
                         onEdit={onEdit ? () => onEdit(row) : undefined}
@@ -125,15 +151,24 @@ export function DataTable({
                       />
                     </TableCell>
                   )}
-                </TableRow>
+                </motion.tr>
               ))
             ) : (
               <TableRow>
                 <TableCell
                   colSpan={columns.length + (hasRowActions ? 1 : 0)}
-                  className="px-6 py-8 text-center text-muted-foreground"
+                  className="p-0"
                 >
-                  No se encontraron resultados
+                  <EmptyState
+                    icon={emptyIcon}
+                    title={emptyTitle}
+                    description={emptyDescription}
+                    isFiltered={computedIsFiltered}
+                    entityName={entityName}
+                    onAdd={onAdd}
+                    addLabel={addLabel}
+                    addDisabled={addDisabled}
+                  />
                 </TableCell>
               </TableRow>
             )}

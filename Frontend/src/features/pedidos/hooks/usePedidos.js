@@ -1,5 +1,6 @@
 import { useState, useEffect, useMemo } from 'react';
 import { getPedidos, createPedido, updatePedido, deletePedido } from '../services/pedidosService';
+import { toast } from '../../../shared/utils/toast';
 
 export function usePedidos() {
   const [pedidos, setPedidos] = useState([]);
@@ -10,7 +11,6 @@ export function usePedidos() {
   const [deleteDialog, setDeleteDialog] = useState({ isOpen: false, id: null, nombre: '' });
   const [isDeleting, setIsDeleting] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
-  const [toast, setToast] = useState({ isOpen: false, type: 'success', message: '' });
 
   useEffect(() => {
     getPedidos().then((data) => setPedidos(data));
@@ -38,15 +38,15 @@ export function usePedidos() {
         setPedidos((prev) =>
           prev.map((p) => (p.id_pedido === formData.id_pedido ? { ...p, ...updated } : p))
         );
-        setToast({ isOpen: true, type: 'success', message: 'Pedido actualizado correctamente' });
+        toast.success('Cambios guardados');
       } else {
         const created = await createPedido(formData);
         setPedidos((prev) => [created, ...prev]);
-        setToast({ isOpen: true, type: 'success', message: 'Pedido creado correctamente' });
+        toast.success('Pedido creado');
       }
       setShowModal(false);
     } catch (error) {
-      setToast({ isOpen: true, type: 'error', message: 'Error al guardar el pedido' });
+      toast.error('No se pudo guardar el pedido');
     } finally {
       setIsSaving(false);
     }
@@ -58,9 +58,9 @@ export function usePedidos() {
     try {
       await deletePedido(deleteDialog.id);
       setPedidos((prev) => prev.filter((p) => p.id_pedido !== deleteDialog.id));
-      setToast({ isOpen: true, type: 'success', message: 'Pedido eliminado correctamente' });
+      toast.success('Pedido eliminado');
     } catch (error) {
-      setToast({ isOpen: true, type: 'error', message: 'Error al eliminar el pedido' });
+      toast.error('No se pudo eliminar el pedido');
     } finally {
       setIsDeleting(false);
       setDeleteDialog({ isOpen: false, id: null, nombre: '' });
@@ -82,8 +82,6 @@ export function usePedidos() {
     setDeleteDialog,
     isDeleting,
     isSaving,
-    toast,
-    setToast,
     handleSave,
     handleDelete,
   };

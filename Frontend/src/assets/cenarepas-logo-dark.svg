@@ -1,0 +1,21 @@
+<svg width="520" height="160" viewBox="0 0 520 160" xmlns="http://www.w3.org/2000/svg">
+  <rect width="520" height="160" fill="#1C130D"/>
+
+  <!-- Icon, translated + scaled into place -->
+  <g transform="translate(22,20) scale(0.75)">
+    <circle cx="102" cy="60"  r="6" fill="#C4622D"/>
+    <circle cx="89.7" cy="89.7" r="6" fill="#C4622D"/>
+    <circle cx="60"  cy="102" r="6" fill="#C4622D"/>
+    <circle cx="30.3" cy="89.7" r="6" fill="#C4622D"/>
+    <circle cx="18"  cy="60"  r="6" fill="#C4622D"/>
+    <circle cx="30.3" cy="30.3" r="6" fill="#C4622D"/>
+    <circle cx="60"  cy="18"  r="6" fill="#C4622D"/>
+    <circle cx="89.7" cy="30.3" r="9" fill="#E8A33D"/>
+  </g>
+
+  <!-- Wordmark -->
+  <text x="150" y="88" font-family="Arial, Helvetica, sans-serif" font-weight="800"
+        font-size="42" letter-spacing="1" fill="#F5EDE4">CENAREPAS</text>
+  <text x="151" y="112" font-family="Arial, Helvetica, sans-serif" font-weight="600"
+        font-size="13" letter-spacing="3" fill="#C4622D">SISTEMA DE GESTIÓN</text>
+</svg>

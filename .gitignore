@@ -1,0 +1,36 @@
+# Dependencies
+node_modules/
+Frontend/node_modules/
+
+# Production build
+dist/
+Frontend/dist/
+dist-ssr/
+Frontend/dist-ssr/
+
+# Environment and local files
+*.local
+.env
+.env.*
+!.env.example
+
+# IDE / Agent caches
+.gemini/
+.claude/
+.cursor/
+.agent/
+.agents/
+.impeccable/
+Frontend/.gemini/
+Frontend/.claude/
+Frontend/.cursor/
+Frontend/.agent/
+Frontend/.agents/
+Frontend/.impeccable/
+.vscode/
+.idea/
+
+# OS files
+.DS_Store
+Thumbs.db
+*.log

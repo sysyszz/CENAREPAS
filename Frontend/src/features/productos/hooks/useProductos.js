@@ -1,5 +1,6 @@
 import { useState, useEffect, useMemo } from 'react';
 import { getProductos, createProducto, updateProducto, deleteProducto } from '../services/productosService';
+import { toast } from '../../../shared/utils/toast';
 
 export function useProductos() {
   const [searchTerm, setSearchTerm] = useState('');
@@ -10,7 +11,6 @@ export function useProductos() {
   const [deleteDialog, setDeleteDialog] = useState({ isOpen: false, id: null, nombre: '' });
   const [isDeleting, setIsDeleting] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
-  const [toast, setToast] = useState({ isOpen: false, type: 'success', message: '' });
   const [productos, setProductos] = useState([]);
 
   useEffect(() => {
@@ -45,15 +45,15 @@ export function useProductos() {
         setProductos((prev) =>
           prev.map((p) => (p.id_producto === formData.id_producto ? { ...p, ...updated } : p))
         );
-        setToast({ isOpen: true, type: 'success', message: 'Producto actualizado correctamente' });
+        toast.success('Cambios guardados');
       } else {
         const created = await createProducto(formData);
         setProductos((prev) => [created, ...prev]);
-        setToast({ isOpen: true, type: 'success', message: 'Producto creado correctamente' });
+        toast.success('Producto creado');
       }
       setShowModal(false);
     } catch (error) {
-      setToast({ isOpen: true, type: 'error', message: 'Error al guardar el producto' });
+      toast.error('No se pudo guardar el producto');
     } finally {
       setIsSaving(false);
     }
@@ -65,9 +65,9 @@ export function useProductos() {
     try {
       await deleteProducto(deleteDialog.id);
       setProductos((prev) => prev.filter((p) => p.id_producto !== deleteDialog.id));
-      setToast({ isOpen: true, type: 'success', message: 'Producto eliminado correctamente' });
+      toast.success('Producto eliminado');
     } catch (error) {
-      setToast({ isOpen: true, type: 'error', message: 'Error al eliminar el producto' });
+      toast.error('No se pudo eliminar el producto');
     } finally {
       setIsDeleting(false);
       setDeleteDialog({ isOpen: false, id: null, nombre: '' });
@@ -89,8 +89,6 @@ export function useProductos() {
     setDeleteDialog,
     isDeleting,
     isSaving,
-    toast,
-    setToast,
     productos,
     filteredProductos,
     handleSave,

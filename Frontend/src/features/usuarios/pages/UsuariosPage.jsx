@@ -7,11 +7,11 @@ import { RowActions } from '../../../shared/components/RowActions';
 import { MetricCard } from '../../../shared/components/MetricCard';
 import { UsuarioFormModal } from '../components/UsuarioFormModal';
 import ConfirmDialog from '../../../shared/components/ConfirmDialog';
-import Toast from '../../../shared/components/Toast';
 import UsuarioDetailModal from '../components/UsuarioDetailModal';
 import PageHeader from '../../../shared/components/PageHeader';
 import { usePermissions } from '../../../shared/contexts/PermissionContext';
 import StatusSwitch from '../../../shared/components/StatusSwitch';
+import { CustomSelect } from '../../../shared/components/CustomSelect';
 
 export default function UsuariosPage() {
   const { can } = usePermissions();
@@ -32,8 +32,6 @@ export default function UsuariosPage() {
     setDeleteDialog,
     isDeleting,
     isSaving,
-    toast,
-    setToast,
     handleSave,
     handleDelete,
   } = useUsuarios();
@@ -106,7 +104,7 @@ export default function UsuariosPage() {
             deleteDisabled={!can('usuarios', 'eliminar')}
             extra={
               <button
-                className="p-1.5 hover:bg-muted rounded-lg text-muted-foreground hover:text-foreground transition-colors"
+                className="p-1.5 rounded-full text-muted-foreground hover:text-foreground hover:bg-black/5 dark:hover:bg-white/10 transition-all duration-150"
                 title="Cambiar contraseña"
                 onClick={() => {
                   setSelectedUsuario(usuario);
@@ -138,25 +136,34 @@ export default function UsuariosPage() {
 
       {/* Tarjetas de Consolidado */}
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
-        <MetricCard title="Total Usuarios" value={totalUsuarios} icon={Users} variant="primary" />
-        <MetricCard title="Roles Asignados" value={rolesAsignados} icon={ShieldCheck} variant="accent" />
-        <MetricCard title="Credenciales Configuradas" value={credencialesConfiguradas} icon={KeyRound} variant="warning" />
-        <MetricCard title="Usuarios Activos" value={usuariosActivos} icon={UserCheck} variant="success" />
+        <MetricCard index={0} title="Total Usuarios" value={totalUsuarios} icon={Users} variant="primary" />
+        <MetricCard index={1} title="Roles Asignados" value={rolesAsignados} icon={ShieldCheck} variant="accent" />
+        <MetricCard index={2} title="Credenciales Configuradas" value={credencialesConfiguradas} icon={KeyRound} variant="warning" />
+        <MetricCard index={3} title="Usuarios Activos" value={usuariosActivos} icon={UserCheck} variant="success" />
       </div>
 
       {/* Tabla con DataTable */}
       <DataTable
         columns={columns}
         data={usuarios}
+        emptyIcon={Users}
+        entityName="usuarios"
+        onAdd={() => {
+          setSelectedUsuario(null);
+          setShowModal(true);
+        }}
+        addLabel="Nuevo Usuario"
+        addDisabled={!can('usuarios', 'crear')}
+        isFiltered={Boolean(searchTerm || filterRol !== 'Todos los roles' || filterEstado !== 'Todos los estados')}
         searchPlaceholder="Buscar usuario por nombre o correo..."
         searchValue={searchTerm}
         onSearchChange={setSearchTerm}
         filters={
           <>
-            <select
+            <CustomSelect
               value={filterRol}
               onChange={(e) => setFilterRol(e.target.value)}
-              className="px-4 py-2 border border-input bg-input-background rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+              className="w-full sm:w-56"
             >
               <option value="Todos los roles">Todos los roles</option>
               <option value="1">Administrador de Planta</option>
@@ -164,16 +171,16 @@ export default function UsuariosPage() {
               <option value="3">Gestor de Compras y Proveedores</option>
               <option value="4">Vendedor y Distribución</option>
               <option value="5">Auditor de Calidad</option>
-            </select>
-            <select
+            </CustomSelect>
+            <CustomSelect
               value={filterEstado}
               onChange={(e) => setFilterEstado(e.target.value)}
-              className="px-4 py-2 border border-input bg-input-background rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+              className="w-full sm:w-48"
             >
               <option value="Todos los estados">Todos los estados</option>
               <option value="activo">Activo</option>
               <option value="inactivo">Inactivo</option>
-            </select>
+            </CustomSelect>
           </>
         }
       />
@@ -203,13 +210,6 @@ export default function UsuariosPage() {
         onConfirm={handleDelete}
         onCancel={() => setDeleteDialog({ isOpen: false, id: null, nombre: '' })}
         isLoading={isDeleting}
-      />
-
-      <Toast
-        isOpen={toast.isOpen}
-        type={toast.type}
-        message={toast.message}
-        onClose={() => setToast({ ...toast, isOpen: false })}
       />
     </div>
   );

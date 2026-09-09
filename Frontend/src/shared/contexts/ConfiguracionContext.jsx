@@ -1,5 +1,6 @@
 import { createContext, useContext, useState, useEffect } from 'react';
-import defaultLogo from '../../assets/logo-icon.png';
+import defaultLogo from '../../assets/cenarepas-icon.svg';
+import defaultHeroVideo from '../../features/landing/assets/hero-kneading.mp4';
 import defaultBannerBasket from '../../features/landing/assets/arepas-basket.png';
 import defaultBannerX10 from '../../features/landing/assets/arepas-x10.png';
 import defaultBannerAmarillas from '../../features/landing/assets/arepas-amarillas-x5.png';
@@ -17,6 +18,7 @@ export const DEFAULT_CONFIG = {
     'Sede Girardot',
     'Planta de Producción Zona Industrial',
   ],
+  heroVideoUrl: defaultHeroVideo,
   bannerImages: [
     {
       id: 'banner-1',
@@ -50,9 +52,14 @@ export function ConfiguracionProvider({ children }) {
       const saved = localStorage.getItem(STORAGE_KEY);
       if (saved) {
         const parsed = JSON.parse(saved);
+        // Migrar logos antiguos (azules u otros) al logo terracota oficial actual
+        const isStaleLogo = !parsed.logoUrl || 
+          parsed.logoUrl.includes('logo-icon') ||
+          parsed.logoUrl.includes('cenarepas-logo');
         return {
           ...DEFAULT_CONFIG,
           ...parsed,
+          logoUrl: isStaleLogo ? DEFAULT_CONFIG.logoUrl : parsed.logoUrl,
           bannerImages: Array.isArray(parsed.bannerImages) && parsed.bannerImages.length > 0
             ? parsed.bannerImages
             : DEFAULT_CONFIG.bannerImages,
@@ -153,10 +160,12 @@ export function ConfiguracionProvider({ children }) {
         sede: config.sede || DEFAULT_CONFIG.sede,
         sedesDisponibles: config.sedesDisponibles || DEFAULT_CONFIG.sedesDisponibles,
         bannerImages: config.bannerImages || DEFAULT_CONFIG.bannerImages,
+        heroVideoUrl: config.heroVideoUrl ?? DEFAULT_CONFIG.heroVideoUrl,
         updateConfig,
         resetConfig,
         setNombreProyecto,
         setLogoUrl,
+        setHeroVideoUrl: (heroVideoUrl) => updateConfig({ heroVideoUrl }),
         setSede,
         setBannerImages,
         addBannerImage,

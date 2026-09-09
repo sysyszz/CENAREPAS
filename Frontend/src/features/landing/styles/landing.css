@@ -1,12 +1,8 @@
-@import url('https://fonts.googleapis.com/css2?family=Dancing+Script:wght@600;700&family=Poppins:wght@400;500;600;700;800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Dancing+Script:wght@600;700&family=Playfair+Display:ital,wght@1,400;1,500;1,600&family=Poppins:wght@400;500;600;700;800&display=swap');
 
 @theme inline {
   --font-sans: 'Poppins', ui-sans-serif, system-ui, sans-serif;
   --font-script: 'Dancing Script', cursive;
-  --color-brand: var(--landing-brand);
-  --color-brand-dark: var(--landing-brand-dark);
-  --color-brand-light: var(--landing-brand-light);
-  --color-accent-gold: var(--landing-accent-gold);
   --animate-fade-left: landing-fade-left 0.6s ease-out both;
   --animate-fade-right: landing-fade-right 0.6s ease-out both;
 }
@@ -22,25 +18,76 @@
 }
 
 .landing-page {
-  --background: #ffffff;
-  --foreground: #18223a;
-  --card: #ffffff;
-  --muted: #f3f6fb;
-  --muted-foreground: #64708a;
-  --border: #dfe6f0;
-  --landing-brand: #3158b7;
-  --landing-brand-dark: #1d377f;
-  --landing-brand-light: #5d83df;
-  --landing-accent-gold: #e7b94f;
+  /* Neutros cálidos: crema / marrón oscuro */
+  --background: #fffbf0;
+  --foreground: #3d2a17;
+  --card: #fffbf0;
+  --muted: #f5ecd8;
+  --muted-foreground: #6b5842;
+  --border: #e8dcc0;
+
+  /* Marca: terracota, amarillo maíz, verde hoja */
+  --landing-brand: #c1502d;
+  --landing-brand-dark: #8a3418;
+  --landing-brand-light: #e2895f;
+  --landing-accent-gold: #e8b23d;
+  --landing-accent-green: #5a7a3a;
+
+  /* Badges temáticos */
+  --landing-badge-green-bg: #e3ecd8;
+  --landing-badge-green-text: #3d5424;
+  --landing-badge-gold-bg: #fce9c6;
+  --landing-badge-gold-text: #8a5a14;
+
+  /* Tintes suaves para alternar fondos de sección */
+  --landing-tint-green: color-mix(in srgb, var(--landing-accent-green) 8%, var(--background));
+  --landing-tint-gold: color-mix(in srgb, var(--landing-accent-gold) 10%, var(--background));
+
+  /* Rampa negro-cálido cinematográfico */
+  --landing-cine: #120b07;
+  --landing-cine-deep: #100904;
+  --landing-cine-deepest: #0a0603;
+
   min-height: 100vh;
   overflow-x: hidden;
-  background: var(--background);
-  color: var(--foreground);
+  background: var(--background) !important;
+  color: var(--foreground) !important;
+  color-scheme: light;
   font-family: 'Poppins', ui-sans-serif, system-ui, sans-serif;
 }
 
+/* ─────────────── Disciplina Tipográfica & Eyebrows ─────────────── */
+.landing-page .landing-eyebrow {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  line-height: 1;
+}
+
+.landing-page .landing-display {
+  letter-spacing: -0.035em;
+  line-height: 1.06;
+}
+
+.landing-page .landing-heading {
+  letter-spacing: -0.025em;
+  line-height: 1.12;
+}
+
+/* Acento tipográfico puntual: serif itálica fina, solo para una palabra o
+   frase corta dentro de un título/subtítulo. Nunca en párrafos, botones o
+   labels — ver "The One Serif Line Rule" en DESIGN.md. Clase local de la
+   landing: no la reutilices en login/dashboard. */
+.landing-page .landing-accent-serif {
+  font-family: 'Playfair Display', Georgia, 'Times New Roman', serif;
+  font-style: italic;
+  font-weight: 500;
+  letter-spacing: normal;
+}
+
 .landing-page .landing-logo {
-  background: linear-gradient(135deg, #3158b7, #1d377f);
+  background: linear-gradient(135deg, var(--landing-brand), var(--landing-brand-dark));
   color: #ffffff;
 }
 
@@ -50,36 +97,68 @@
   stroke: currentColor;
 }
 
-.landing-page .landing-nav-link {
-  color: #4b5563;
+/* ─────────────── Hero: capas de fondo ─────────────── */
+
+/* Oscurecimiento sutil y neutro: conserva el color natural del video, solo da contraste al texto */
+.landing-page .hero-overlay {
+  background:
+    linear-gradient(180deg, rgba(8, 10, 14, 0.32) 0%, rgba(8, 10, 14, 0.02) 26%, rgba(8, 10, 14, 0.06) 58%, rgba(8, 10, 14, 0.4) 100%),
+    linear-gradient(100deg, rgba(8, 10, 14, 0.3) 0%, rgba(8, 10, 14, 0) 46%);
 }
 
-.landing-page .landing-nav-link:hover {
-  background-color: #eef2ff;
-  color: #1d377f;
+/* Bordes difuminados: el centro del video queda nítido */
+.landing-page .hero-edge-blur {
+  backdrop-filter: blur(18px) saturate(1.08);
+  -webkit-backdrop-filter: blur(18px) saturate(1.08);
+  -webkit-mask-image: radial-gradient(68% 62% at 46% 48%, transparent 42%, #000 100%);
+  mask-image: radial-gradient(68% 62% at 46% 48%, transparent 42%, #000 100%);
 }
 
-.landing-page #inicio,
-.landing-page #ventajas {
-  background: linear-gradient(135deg, var(--landing-brand-light), var(--landing-brand), var(--landing-brand-dark));
-  color: #ffffff;
+/* Viñeta neutra y sutil en las esquinas, apenas perceptible */
+.landing-page .hero-vignette {
+  background: radial-gradient(82% 78% at 46% 46%, rgba(8, 10, 14, 0) 52%, rgba(8, 10, 14, 0.18) 84%, rgba(8, 10, 14, 0.34) 100%);
 }
 
-.landing-page #inicio h1,
-.landing-page #inicio p,
-.landing-page #inicio span,
-.landing-page #ventajas h2,
-.landing-page #ventajas span {
-  color: inherit;
+/* Disolución del Hero hacia "¿Por qué CENAREPAS?": negro semi-transparente
+   (oscurece la foto) hacia grises neutros acromáticos (sin matiz) y termina
+   exactamente en #FFFBF0, el hex real del fondo de la siguiente sección
+   (AboutSection usa bg-[#fffbf0]) — ningún color de la paleta en medio. */
+.landing-page .hero-organic-fade {
+  background: linear-gradient(
+    to bottom,
+    rgba(0, 0, 0, 0.55) 0%,
+    rgba(40, 40, 40, 0.8) 25%,
+    rgba(110, 110, 110, 0.95) 50%,
+    rgba(190, 190, 190, 1) 75%,
+    #fffbf0 100%
+  );
 }
 
-.landing-page a[href='/admin/login'] {
-  background-color: var(--landing-brand);
-  color: #ffffff;
+/* Punto animado del badge */
+@keyframes landing-hero-pulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.45; transform: scale(0.68); }
 }
 
-.landing-page a[href='/admin/login']:hover {
-  background-color: var(--landing-brand-dark);
+@keyframes landing-hero-halo {
+  0% { opacity: 0.55; transform: scale(0.9); }
+  70%, 100% { opacity: 0; transform: scale(2.4); }
+}
+
+.landing-page .hero-dot {
+  animation: landing-hero-pulse 2.4s ease-in-out infinite;
+}
+
+.landing-page .hero-dot-halo {
+  animation: landing-hero-halo 2.4s ease-out infinite;
+}
+
+.landing-page .hero-balance {
+  text-wrap: balance;
+}
+
+.landing-page section[id] {
+  scroll-margin-top: 5.5rem;
 }
 
 .landing-page .reveal {
@@ -104,5 +183,14 @@
     opacity: 1;
     transform: none;
     transition: none;
+  }
+
+  .landing-page .hero-dot,
+  .landing-page .hero-dot-halo {
+    animation: none;
+  }
+
+  .landing-page .hero-dot-halo {
+    opacity: 0;
   }
 }

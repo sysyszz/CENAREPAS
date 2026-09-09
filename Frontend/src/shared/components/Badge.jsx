@@ -7,10 +7,12 @@ function Badge({
   ...props
 }) {
   const variantStyles = {
-    default: "border-transparent bg-blue-600 text-white hover:bg-blue-700",
-    secondary: "border-transparent bg-slate-100 text-slate-900 hover:bg-slate-200",
-    destructive: "border-transparent bg-red-600 text-white hover:bg-red-700",
-    outline: "text-slate-900 border-slate-200 hover:bg-slate-100",
+    default: "border-transparent bg-[#C1502D] text-white hover:bg-[#8A3418]",
+    secondary: "bg-[#FFFBF0] text-[#2D2926] border-[#E8B23D]/40 hover:bg-[#F7F1E7]",
+    destructive: "border-transparent bg-[#C1502D] text-white hover:bg-[#8A3418]",
+    success: "border-transparent bg-[#5A7A3A] text-white hover:bg-[#48632E]",
+    warning: "border-transparent bg-[#E8B23D] text-[#2D2926] hover:bg-[#D99B26]",
+    outline: "text-[#2D2926] border-[#E8E1D7] hover:bg-[#FFFBF0]",
   };
 
   return (

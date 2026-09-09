@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { getCompras, createCompra, updateCompra, anularCompra } from '../services/comprasService';
+import { toast } from '../../../shared/utils/toast';
 
 export function useCompras() {
   const [compras, setCompras] = useState([]);
@@ -10,7 +11,6 @@ export function useCompras() {
   const [deleteDialog, setDeleteDialog] = useState({ isOpen: false, id: null, nombre: '' });
   const [isDeleting, setIsDeleting] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
-  const [toast, setToast] = useState({ isOpen: false, type: 'success', message: '' });
 
   useEffect(() => {
     getCompras().then((data) => setCompras(data));
@@ -33,15 +33,15 @@ export function useCompras() {
         setCompras((prev) =>
           prev.map((c) => (c.id_compra === formData.id_compra ? { ...c, ...updated } : c))
         );
-        setToast({ isOpen: true, type: 'success', message: 'Orden de compra actualizada correctamente' });
+        toast.success('Cambios guardados');
       } else {
         const created = await createCompra(formData);
         setCompras((prev) => [created, ...prev]);
-        setToast({ isOpen: true, type: 'success', message: 'Orden de compra creada correctamente' });
+        toast.success('Orden de compra creada');
       }
       setShowModal(false);
     } catch (error) {
-      setToast({ isOpen: true, type: 'error', message: 'Error al guardar la compra' });
+      toast.error('No se pudo guardar la compra');
     } finally {
       setIsSaving(false);
     }
@@ -55,9 +55,9 @@ export function useCompras() {
       setCompras((prev) =>
         prev.map((c) => (c.id_compra === deleteDialog.id ? { ...c, estado: 'Anulada' } : c))
       );
-      setToast({ isOpen: true, type: 'success', message: 'Orden de compra anulada correctamente' });
+      toast.success('Orden de compra anulada');
     } catch (error) {
-      setToast({ isOpen: true, type: 'error', message: 'Error al anular la compra' });
+      toast.error('No se pudo anular la compra');
     } finally {
       setIsDeleting(false);
       setDeleteDialog({ isOpen: false, id: null, nombre: '' });
@@ -79,8 +79,6 @@ export function useCompras() {
     setDeleteDialog,
     isDeleting,
     isSaving,
-    toast,
-    setToast,
     handleSave,
     handleAnular,
   };

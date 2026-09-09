@@ -1,0 +1,15 @@
+@import url('https://fonts.googleapis.com/css2?family=Oswald:wght@500;600;700&family=IBM+Plex+Mono:wght@400;500;600&family=Poppins:wght@400;500;600;700&display=swap');
+
+/* Identidad CENAREPAS aplicada al panel de datos: mismos tokens de marca que la
+   landing (terracota/maíz/verde hoja), extendidos con Oswald (rótulos de sección)
+   e IBM Plex Mono (todo valor numérico/tabular), sin tocar el font-mono/-sans
+   global del resto del admin. */
+.dashboard-panel {
+  --font-sans: 'Poppins', ui-sans-serif, system-ui, sans-serif;
+  --font-mono: 'IBM Plex Mono', ui-monospace, monospace;
+  font-family: var(--font-sans);
+}
+
+.dashboard-panel ::selection {
+  background: rgba(193, 80, 45, 0.22);
+}

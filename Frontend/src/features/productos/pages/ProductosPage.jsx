@@ -1,19 +1,18 @@
 import { useState, useMemo, useEffect } from 'react';
+import { motion } from 'framer-motion';
 import { Box, CheckCircle, AlertTriangle, DollarSign, Calendar } from 'lucide-react';
 import { useProductos } from '../hooks/useProductos';
 import { mockCategorias, getCategorias } from '../../categorias/services/categoriasService';
 import { mockFichasTecnicas, getFichasTecnicas } from '../../fichas-tecnicas/services/fichasTecnicasService';
 import { mockProveedores, getProveedores } from '../../proveedores/services/proveedoresService';
-import { DataTable } from '../../../shared/components/DataTable';
-import { RowActions } from '../../../shared/components/RowActions';
-import { MetricCard } from '../../../shared/components/MetricCard';
+import { ProductosTable } from '../components/ProductosTable';
 import { ProductoFormModal } from '../components/ProductoFormModal';
 import ConfirmDialog from '../../../shared/components/ConfirmDialog';
-import Toast from '../../../shared/components/Toast';
 import DetailModal from '../../../shared/components/DetailModal';
 import PageHeader from '../../../shared/components/PageHeader';
 import { usePermissions } from '../../../shared/contexts/PermissionContext';
 import StatusSwitch from '../../../shared/components/StatusSwitch';
+import { CustomSelect } from '../../../shared/components/CustomSelect';
 
 export default function ProductosPage() {
   const { can } = usePermissions();
@@ -32,8 +31,6 @@ export default function ProductosPage() {
     setDeleteDialog,
     isDeleting,
     isSaving,
-    toast,
-    setToast,
     productos,
     filteredProductos,
     handleSave,
@@ -86,7 +83,7 @@ export default function ProductosPage() {
 
   const formatVencimiento = (dateStr) => {
     if (!dateStr) {
-      return <span className="text-muted-foreground/50 text-xs select-none">N/A</span>;
+      return <span className="text-muted-foreground/80 text-xs font-medium select-none">N/A</span>;
     }
 
     const expDate = new Date(dateStr);
@@ -197,7 +194,7 @@ export default function ProductosPage() {
         key: 'id_categoria',
         label: 'Categoría',
         render: (value) => (
-          <span className="px-2.5 py-0.5 bg-primary/10 text-primary rounded-full text-xs font-medium border border-primary/20 whitespace-nowrap">
+          <span className="px-2.5 py-0.5 bg-primary/10 text-primary rounded-full text-xs font-medium border border-primary/20 whitespace-nowrap transition-all duration-200">
             {categoryNames[value] || (typeof value === 'string' && isNaN(Number(value)) ? value : `Categoría #${value}`)}
           </span>
         ),
@@ -240,31 +237,21 @@ export default function ProductosPage() {
         label: 'Estado',
         render: (value) => <StatusSwitch value={value} />,
       },
-      {
-        key: 'acciones',
-        label: 'Acciones',
-        render: (_, producto) => (
-          <RowActions
-            onView={() => setDetailModal({ isOpen: true, data: producto })}
-            onEdit={() => {
-              setSelectedProducto(producto);
-              setShowModal(true);
-            }}
-            editDisabled={!can('productos', 'editar')}
-            onDelete={() =>
-              setDeleteDialog({
-                isOpen: true,
-                id: producto.id_producto,
-                nombre: producto.nombre,
-              })
-            }
-            deleteDisabled={!can('productos', 'eliminar')}
-          />
-        ),
-      },
     ],
-    [can, categoryNames, setDetailModal, setShowModal, setDeleteDialog]
+    [categoryNames]
   );
+
+  const kpiCards = [
+    { title: 'Total Productos', value: totalProductos, icon: Box, iconStyle: 'bg-primary/10 text-primary' },
+    { title: 'Disponibles', value: disponibles, icon: CheckCircle, iconStyle: 'bg-success/10 text-success' },
+    { title: 'Bajo Stock', value: bajoStock, icon: AlertTriangle, iconStyle: 'bg-warning/10 text-warning' },
+    {
+      title: 'Valor Inventario',
+      value: `$${valorInventario.toLocaleString('es-CO')}`,
+      icon: DollarSign,
+      iconStyle: 'bg-accent/10 text-primary',
+    },
+  ];
 
   return (
     <div className="space-y-6">
@@ -279,32 +266,66 @@ export default function ProductosPage() {
         }}
       />
 
-      {/* Tarjetas de Consolidado */}
+      {/* Tarjetas de Consolidado con animación en cascada, sombra sutil y elevación al hover */}
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
-        <MetricCard title="Total Productos" value={totalProductos} icon={Box} variant="primary" />
-        <MetricCard title="Disponibles" value={disponibles} icon={CheckCircle} variant="success" />
-        <MetricCard title="Bajo Stock" value={bajoStock} icon={AlertTriangle} variant="warning" />
-        <MetricCard
-          title="Valor Inventario"
-          value={`$${valorInventario.toLocaleString('es-CO')}`}
-          icon={DollarSign}
-          variant="accent"
-        />
+        {kpiCards.map((card, idx) => {
+          const Icon = card.icon;
+          return (
+            <motion.div
+              key={card.title}
+              initial={{ opacity: 0, y: 14 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.35, delay: idx * 0.08, ease: 'easeOut' }}
+              className="bg-card p-4 rounded-xl border border-border flex items-center gap-3 shadow-xs hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 cursor-default"
+            >
+              <div className={`p-3 rounded-lg ${card.iconStyle} shrink-0 transition-transform duration-200`}>
+                <Icon className="w-5 h-5" />
+              </div>
+              <div>
+                <p className="text-sm text-muted-foreground">{card.title}</p>
+                <h3 className="text-xl font-bold text-foreground">{card.value}</h3>
+              </div>
+            </motion.div>
+          );
+        })}
       </div>
 
-      {/* Tabla con DataTable */}
-      <DataTable
+      {/* Tabla exclusiva de Productos con animaciones escalonadas y botones de acción circulares */}
+      <ProductosTable
         columns={columns}
         data={filteredProductos}
+        emptyIcon={Box}
+        entityName="productos"
+        onAdd={() => {
+          setSelectedProducto(null);
+          setShowModal(true);
+        }}
+        addLabel="Nuevo Producto"
+        addDisabled={!can('productos', 'crear')}
+        onView={(producto) => setDetailModal({ isOpen: true, data: producto })}
+        onEdit={(producto) => {
+          setSelectedProducto(producto);
+          setShowModal(true);
+        }}
+        editDisabled={!can('productos', 'editar')}
+        onDelete={(producto) =>
+          setDeleteDialog({
+            isOpen: true,
+            id: producto.id_producto,
+            nombre: producto.nombre,
+          })
+        }
+        deleteDisabled={!can('productos', 'eliminar')}
+        isFiltered={Boolean(searchTerm || filterCategoria !== 'Todas las categorías' || filterEstado !== 'Todos los estados')}
         searchPlaceholder="Buscar por código o producto..."
         searchValue={searchTerm}
         onSearchChange={setSearchTerm}
         filters={
           <>
-            <select
+            <CustomSelect
               value={filterCategoria}
               onChange={(e) => setFilterCategoria(e.target.value)}
-              className="px-4 py-2 border border-input bg-input-background rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+              className="w-full sm:w-52"
             >
               <option value="Todas las categorías">Todas las categorías</option>
               {categorias.map((cat) => (
@@ -312,16 +333,16 @@ export default function ProductosPage() {
                   {cat.nombre}
                 </option>
               ))}
-            </select>
-            <select
+            </CustomSelect>
+            <CustomSelect
               value={filterEstado}
               onChange={(e) => setFilterEstado(e.target.value)}
-              className="px-4 py-2 border border-input bg-input-background rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+              className="w-full sm:w-48"
             >
               <option value="Todos los estados">Todos los estados</option>
               <option value="activo">Activo / Disponible</option>
               <option value="inactivo">Inactivo / Bajo Stock</option>
-            </select>
+            </CustomSelect>
           </>
         }
       />
@@ -403,13 +424,6 @@ export default function ProductosPage() {
         onConfirm={handleDelete}
         onCancel={() => setDeleteDialog({ isOpen: false, id: null, nombre: '' })}
         isLoading={isDeleting}
-      />
-
-      <Toast
-        isOpen={toast.isOpen}
-        type={toast.type}
-        message={toast.message}
-        onClose={() => setToast({ ...toast, isOpen: false })}
       />
     </div>
   );

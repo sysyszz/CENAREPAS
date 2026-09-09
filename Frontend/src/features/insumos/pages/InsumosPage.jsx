@@ -6,12 +6,12 @@ import { DataTable } from '../../../shared/components/DataTable';
 import { RowActions } from '../../../shared/components/RowActions';
 import { InsumoFormModal } from '../components/InsumoFormModal';
 import ConfirmDialog from '../../../shared/components/ConfirmDialog';
-import Toast from '../../../shared/components/Toast';
 import DetailModal from '../../../shared/components/DetailModal';
 import PageHeader from '../../../shared/components/PageHeader';
 import { MetricCard } from '../../../shared/components/MetricCard';
 import { usePermissions } from '../../../shared/contexts/PermissionContext';
 import StatusSwitch from '../../../shared/components/StatusSwitch';
+import { CustomSelect } from '../../../shared/components/CustomSelect';
 
 export default function InsumosPage() {
   const { can } = usePermissions();
@@ -31,8 +31,6 @@ export default function InsumosPage() {
     setDeleteDialog,
     isDeleting,
     isSaving,
-    toast,
-    setToast,
     handleSave,
     handleDelete,
   } = useInsumos();
@@ -173,41 +171,50 @@ export default function InsumosPage() {
 
       {/* Tarjetas de Consolidado */}
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
-        <MetricCard title="Total Insumos" value={totalInsumos} icon={Package} variant="primary" />
-        <MetricCard title="Disponibles" value={disponibles} icon={CheckCircle} variant="success" />
-        <MetricCard title="Bajo Stock" value={bajoStock} icon={AlertTriangle} variant="warning" />
-        <MetricCard title="Proveedores Activos" value={proveedoresCount} icon={Truck} variant="accent" />
+        <MetricCard index={0} title="Total Insumos" value={totalInsumos} icon={Package} variant="primary" />
+        <MetricCard index={1} title="Disponibles" value={disponibles} icon={CheckCircle} variant="success" />
+        <MetricCard index={2} title="Bajo Stock" value={bajoStock} icon={AlertTriangle} variant="warning" />
+        <MetricCard index={3} title="Proveedores Activos" value={proveedoresCount} icon={Truck} variant="accent" />
       </div>
 
       {/* Tabla con DataTable */}
       <DataTable
         columns={columns}
         data={filteredData}
+        emptyIcon={Package}
+        entityName="insumos"
+        onAdd={() => {
+          setSelectedInsumo(null);
+          setShowModal(true);
+        }}
+        addLabel="Nuevo Insumo"
+        addDisabled={!can('insumos', 'crear')}
+        isFiltered={Boolean(searchQuery || categoriaFilter !== 'Todas' || estadoFilter !== 'Todos')}
         searchPlaceholder="Buscar por código, nombre o proveedor..."
         searchValue={searchQuery}
         onSearchChange={setSearchQuery}
         filters={
           <>
-            <select
+            <CustomSelect
               value={categoriaFilter}
               onChange={(e) => setCategoriaFilter(e.target.value)}
-              className="px-4 py-2 border border-input bg-input-background rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+              className="w-full sm:w-52"
             >
               <option value="Todas">Todas las categorías</option>
               <option value="Granos y Cereales">Granos y Cereales</option>
               <option value="Lácteos y Quesos">Lácteos y Quesos</option>
               <option value="Lácteos y Grasas">Lácteos y Grasas</option>
               <option value="Empaques y Embalajes">Empaques y Embalajes</option>
-            </select>
-            <select
+            </CustomSelect>
+            <CustomSelect
               value={estadoFilter}
               onChange={(e) => setEstadoFilter(e.target.value)}
-              className="px-4 py-2 border border-input bg-input-background rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+              className="w-full sm:w-48"
             >
               <option value="Todos">Todos los estados</option>
               <option value="Disponible">Disponible / Activo</option>
               <option value="Bajo Stock">Bajo Stock / Inactivo</option>
-            </select>
+            </CustomSelect>
           </>
         }
       />
@@ -260,13 +267,6 @@ export default function InsumosPage() {
         onConfirm={handleDelete}
         onCancel={() => setDeleteDialog({ isOpen: false, id: null, nombre: '' })}
         isLoading={isDeleting}
-      />
-
-      <Toast
-        isOpen={toast.isOpen}
-        type={toast.type}
-        message={toast.message}
-        onClose={() => setToast({ ...toast, isOpen: false })}
       />
     </div>
   );

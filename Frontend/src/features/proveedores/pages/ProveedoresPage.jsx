@@ -1,16 +1,17 @@
-import { useState, useMemo } from 'react';
-import { Truck, CheckCircle } from 'lucide-react';
+import { useState, useMemo, useEffect } from 'react';
+import { Truck, CheckCircle, Clock, Package } from 'lucide-react';
 import { useProveedores } from '../hooks/useProveedores';
+import { mockInsumos, getInsumos } from '../../insumos/services/insumosService';
 import { DataTable } from '../../../shared/components/DataTable';
 import { RowActions } from '../../../shared/components/RowActions';
 import { MetricCard } from '../../../shared/components/MetricCard';
 import { ProveedorFormModal } from '../components/ProveedorFormModal';
 import ConfirmDialog from '../../../shared/components/ConfirmDialog';
-import Toast from '../../../shared/components/Toast';
 import DetailModal from '../../../shared/components/DetailModal';
 import PageHeader from '../../../shared/components/PageHeader';
 import { usePermissions } from '../../../shared/contexts/PermissionContext';
 import StatusSwitch from '../../../shared/components/StatusSwitch';
+import { CustomSelect } from '../../../shared/components/CustomSelect';
 
 export default function ProveedoresPage() {
   const { can } = usePermissions();
@@ -29,16 +30,22 @@ export default function ProveedoresPage() {
     setDeleteDialog,
     isDeleting,
     isSaving,
-    toast,
-    setToast,
     handleSave,
     handleDelete,
   } = useProveedores();
 
   const [selectedProveedor, setSelectedProveedor] = useState(null);
+  const [insumosCount, setInsumosCount] = useState(mockInsumos.length);
+
+  useEffect(() => {
+    getInsumos().then((data) => {
+      if (data && data.length > 0) setInsumosCount(data.length);
+    });
+  }, []);
 
   const totalProveedores = rawProveedores.length;
   const activos = rawProveedores.filter((p) => String(p.estado).toLowerCase() === 'activo').length;
+  const inactivos = totalProveedores - activos;
 
   const columns = useMemo(
     () => [
@@ -123,27 +130,38 @@ export default function ProveedoresPage() {
 
       {/* Tarjetas de Consolidado */}
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
-        <MetricCard title="Total Proveedores" value={totalProveedores} icon={Truck} variant="primary" />
-        <MetricCard title="Proveedores Activos" value={activos} icon={CheckCircle} variant="success" />
+        <MetricCard index={0} title="Total Proveedores" value={totalProveedores} icon={Truck} variant="primary" />
+        <MetricCard index={1} title="Proveedores Activos" value={activos} icon={CheckCircle} variant="success" />
+        <MetricCard index={2} title="Inactivos" value={inactivos} icon={Clock} variant="warning" />
+        <MetricCard index={3} title="Insumos Suministrados" value={insumosCount} icon={Package} variant="accent" />
       </div>
 
       {/* Tabla con DataTable */}
       <DataTable
         columns={columns}
         data={proveedores}
+        emptyIcon={Truck}
+        entityName="proveedores"
+        onAdd={() => {
+          setSelectedProveedor(null);
+          setShowModal(true);
+        }}
+        addLabel="Nuevo Proveedor"
+        addDisabled={!can('proveedores', 'crear')}
+        isFiltered={Boolean(searchTerm || filterEstado !== 'Todos los estados')}
         searchPlaceholder="Buscar por nombre, NIT o correo..."
         searchValue={searchTerm}
         onSearchChange={setSearchTerm}
         filters={
-          <select
+          <CustomSelect
             value={filterEstado}
             onChange={(e) => setFilterEstado(e.target.value)}
-            className="px-4 py-2 border border-input bg-input-background rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+            className="w-full sm:w-48"
           >
             <option value="Todos los estados">Todos los estados</option>
             <option value="activo">Activo</option>
             <option value="inactivo">Inactivo</option>
-          </select>
+          </CustomSelect>
         }
       />
 
@@ -182,13 +200,6 @@ export default function ProveedoresPage() {
         onConfirm={handleDelete}
         onCancel={() => setDeleteDialog({ isOpen: false, id: null, nombre: '' })}
         isLoading={isDeleting}
-      />
-
-      <Toast
-        isOpen={toast.isOpen}
-        type={toast.type}
-        message={toast.message}
-        onClose={() => setToast({ ...toast, isOpen: false })}
       />
     </div>
   );

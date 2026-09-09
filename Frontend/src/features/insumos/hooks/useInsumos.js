@@ -1,5 +1,6 @@
 import { useState, useEffect, useMemo } from 'react';
 import { getInsumos, createInsumo, updateInsumo, deleteInsumo } from '../services/insumosService';
+import { toast } from '../../../shared/utils/toast';
 
 export function useInsumos() {
   const [insumos, setInsumos] = useState([]);
@@ -11,7 +12,6 @@ export function useInsumos() {
   const [deleteDialog, setDeleteDialog] = useState({ isOpen: false, id: null, nombre: '' });
   const [isDeleting, setIsDeleting] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
-  const [toast, setToast] = useState({ isOpen: false, type: 'success', message: '' });
 
   useEffect(() => {
     getInsumos().then((data) => setInsumos(data));
@@ -40,15 +40,15 @@ export function useInsumos() {
         setInsumos((prev) =>
           prev.map((i) => (i.id_insumo === formData.id_insumo ? { ...i, ...updated } : i))
         );
-        setToast({ isOpen: true, type: 'success', message: 'Insumo actualizado correctamente' });
+        toast.success('Cambios guardados');
       } else {
         const created = await createInsumo(formData);
         setInsumos((prev) => [created, ...prev]);
-        setToast({ isOpen: true, type: 'success', message: 'Insumo creado correctamente' });
+        toast.success('Insumo creado');
       }
       setShowModal(false);
     } catch (error) {
-      setToast({ isOpen: true, type: 'error', message: 'Error al guardar el insumo' });
+      toast.error('No se pudo guardar el insumo');
     } finally {
       setIsSaving(false);
     }
@@ -60,9 +60,9 @@ export function useInsumos() {
     try {
       await deleteInsumo(deleteDialog.id);
       setInsumos((prev) => prev.filter((i) => i.id_insumo !== deleteDialog.id));
-      setToast({ isOpen: true, type: 'success', message: 'Insumo eliminado correctamente' });
+      toast.success('Insumo eliminado');
     } catch (error) {
-      setToast({ isOpen: true, type: 'error', message: 'Error al eliminar el insumo' });
+      toast.error('No se pudo eliminar el insumo');
     } finally {
       setIsDeleting(false);
       setDeleteDialog({ isOpen: false, id: null, nombre: '' });
@@ -86,8 +86,6 @@ export function useInsumos() {
     setDeleteDialog,
     isDeleting,
     isSaving,
-    toast,
-    setToast,
     handleSave,
     handleDelete,
   };

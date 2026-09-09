@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import {
   LayoutDashboard,
@@ -19,11 +19,12 @@ import {
   ChevronRight,
   ChevronDown,
   Settings,
+  X,
 } from 'lucide-react';
 import { usePermissions } from '../../../shared/contexts/PermissionContext';
 import { useConfiguracion } from '../../../shared/contexts/ConfiguracionContext';
 
-const menuGroups = [
+export const menuGroups = [
   {
     category: 'Principal',
     items: [
@@ -60,11 +61,15 @@ const menuGroups = [
   },
 ];
 
-export default function Sidebar({ sidebarOpen, setSidebarOpen, onLogout }) {
+export default function Sidebar({ sidebarOpen, setSidebarOpen, mobileOpen, setMobileOpen, onLogout }) {
   const location = useLocation();
   const { can } = usePermissions();
   const { nombreProyecto, logoUrl } = useConfiguracion();
   const [collapsedSections, setCollapsedSections] = useState({});
+  // Nav body is shared between the desktop rail and the mobile drawer: when the
+  // mobile drawer is open it must always show full labels, regardless of the
+  // desktop icon-only collapse preference (which is meaningless off-canvas).
+  const expanded = sidebarOpen || mobileOpen;
 
   const toggleSection = (category) => {
     setCollapsedSections((prev) => ({
@@ -73,32 +78,63 @@ export default function Sidebar({ sidebarOpen, setSidebarOpen, onLogout }) {
     }));
   };
 
+  useEffect(() => {
+    setMobileOpen?.(false);
+  }, [location.pathname, setMobileOpen]);
+
   return (
-    <aside
-      className={`${
-        sidebarOpen ? 'w-64' : 'w-20'
-      } bg-sidebar text-sidebar-foreground transition-all duration-300 flex flex-col h-screen sticky top-0`}
-    >
-      <div className="p-4 flex items-center justify-between border-b border-sidebar-border h-16 shrink-0">
-        {sidebarOpen ? (
+    <>
+      {mobileOpen && (
+        <div
+          className="fixed inset-0 z-40 bg-black/60 backdrop-blur-xs lg:hidden transition-opacity"
+          onClick={() => setMobileOpen?.(false)}
+          aria-hidden="true"
+        />
+      )}
+      <aside
+        className={`${sidebarOpen ? 'lg:w-64' : 'lg:w-20'} ${
+          mobileOpen ? 'translate-x-0' : '-translate-x-full'
+        } fixed inset-y-0 left-0 z-50 w-72 max-w-[85vw] bg-sidebar text-sidebar-foreground transition-all duration-300 flex flex-col h-screen lg:sticky lg:top-0 lg:z-auto lg:translate-x-0 shadow-2xl lg:shadow-none border-r border-sidebar-border`}
+      >
+        {/* Mobile header: always full width, closes the drawer */}
+        <div className="flex items-center justify-between border-b border-sidebar-border h-16 shrink-0 p-4 lg:hidden">
           <div className="flex items-center gap-2.5 min-w-0">
-            <img src={logoUrl} alt={nombreProyecto} className="h-8 w-8 object-contain shrink-0" />
+            <img src={logoUrl} alt={nombreProyecto} className="h-9 w-9 object-contain shrink-0 rounded-lg drop-shadow-sm" />
             <h2 className="text-base font-bold tracking-wide truncate" title={nombreProyecto}>
               {nombreProyecto}
             </h2>
           </div>
-        ) : (
-          <img src={logoUrl} alt={nombreProyecto} className="h-8 w-8 object-contain mx-auto" />
-        )}
-        <button
-          onClick={() => setSidebarOpen(!sidebarOpen)}
-          className="p-2 hover:bg-sidebar-accent rounded-lg text-sidebar-foreground transition-colors cursor-pointer"
-        >
-          {sidebarOpen ? <ChevronLeft className="w-5 h-5" /> : <ChevronRight className="w-5 h-5" />}
-        </button>
-      </div>
+          <button
+            onClick={() => setMobileOpen?.(false)}
+            className="p-2 hover:bg-sidebar-accent rounded-lg text-sidebar-foreground transition-colors cursor-pointer"
+            aria-label="Cerrar menú"
+          >
+            <X className="w-5 h-5" />
+          </button>
+        </div>
 
-      <nav className="flex-1 overflow-y-auto custom-scrollbar scroll-smooth p-3 space-y-3">
+        {/* Desktop header: collapsible icon-only / full width */}
+        <div className="hidden lg:flex p-4 items-center justify-between border-b border-sidebar-border h-16 shrink-0">
+          {sidebarOpen ? (
+            <div className="flex items-center gap-2.5 min-w-0">
+              <img src={logoUrl} alt={nombreProyecto} className="h-9 w-9 object-contain shrink-0 rounded-lg drop-shadow-sm" />
+              <h2 className="text-base font-bold tracking-wide truncate" title={nombreProyecto}>
+                {nombreProyecto}
+              </h2>
+            </div>
+          ) : (
+            <img src={logoUrl} alt={nombreProyecto} className="h-9 w-9 object-contain mx-auto rounded-lg drop-shadow-sm" />
+          )}
+          <button
+            onClick={() => setSidebarOpen(!sidebarOpen)}
+            className="p-2 hover:bg-sidebar-accent rounded-lg text-sidebar-foreground transition-colors cursor-pointer"
+            aria-label={sidebarOpen ? 'Contraer menú' : 'Expandir menú'}
+          >
+            {sidebarOpen ? <ChevronLeft className="w-5 h-5" /> : <ChevronRight className="w-5 h-5" />}
+          </button>
+        </div>
+
+        <nav className="flex-1 overflow-y-auto custom-scrollbar scroll-smooth p-3 space-y-3">
         {menuGroups.map((group, groupIdx) => {
           const isCollapsed = Boolean(collapsedSections[group.category]);
           const visibleItems = group.items.filter((item) =>
@@ -113,11 +149,11 @@ export default function Sidebar({ sidebarOpen, setSidebarOpen, onLogout }) {
 
           return (
             <div key={group.category} className="space-y-1">
-              {sidebarOpen ? (
+              {expanded ? (
                 <button
                   type="button"
                   onClick={() => toggleSection(group.category)}
-                  className="w-full flex items-center justify-between px-3 pt-1.5 pb-1 text-xs font-semibold uppercase tracking-wider text-muted-foreground/70 hover:text-sidebar-foreground transition-colors group cursor-pointer select-none rounded-md"
+                  className="w-full flex items-center justify-between px-3 pt-1.5 pb-1 text-xs font-semibold uppercase tracking-wider text-muted-foreground/90 hover:text-sidebar-foreground transition-colors group cursor-pointer select-none rounded-md"
                   aria-expanded={!isCollapsed}
                 >
                   <span>{group.category}</span>
@@ -131,7 +167,7 @@ export default function Sidebar({ sidebarOpen, setSidebarOpen, onLogout }) {
                 groupIdx > 0 && <div className="border-t border-sidebar-border/50 my-2" />
               )}
 
-              {(!isCollapsed || !sidebarOpen) && (
+              {(!isCollapsed || !expanded) && (
                 <div className="space-y-1">
                   {visibleItems.map((item) => {
                     const Icon = item.icon;
@@ -140,7 +176,7 @@ export default function Sidebar({ sidebarOpen, setSidebarOpen, onLogout }) {
                       <Link
                         key={item.path}
                         to={item.path}
-                        title={!sidebarOpen ? item.label : undefined}
+                        title={!expanded ? item.label : undefined}
                         className={`flex items-center gap-3 h-10 px-3 rounded-lg text-sm font-medium transition-all ${
                           isActive
                             ? 'bg-sidebar-primary text-sidebar-primary-foreground shadow-sm'
@@ -148,7 +184,7 @@ export default function Sidebar({ sidebarOpen, setSidebarOpen, onLogout }) {
                         }`}
                       >
                         <Icon className="w-5 h-5 flex-shrink-0" />
-                        {sidebarOpen && <span>{item.label}</span>}
+                        {expanded && <span>{item.label}</span>}
                       </Link>
                     );
                   })}
@@ -163,12 +199,13 @@ export default function Sidebar({ sidebarOpen, setSidebarOpen, onLogout }) {
         <button
           onClick={onLogout}
           className="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-destructive/10 hover:text-destructive w-full text-left text-sm font-medium transition-colors"
-          title={!sidebarOpen ? 'Cerrar Sesión' : undefined}
+          title={!expanded ? 'Cerrar Sesión' : undefined}
         >
           <LogOut className="w-5 h-5 flex-shrink-0" />
-          {sidebarOpen && <span>Cerrar Sesión</span>}
+          {expanded && <span>Cerrar Sesión</span>}
         </button>
       </div>
-    </aside>
+      </aside>
+    </>
   );
 }

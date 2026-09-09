@@ -2,88 +2,101 @@
 
 :root {
   --font-size: 16px;
-  --background: #F8FAFC;
-  --foreground: #0F172A;
+  --background: #FDFBF7;
+  --foreground: #2D2926;
   --card: #FFFFFF;
-  --card-foreground: #0F172A;
-  --popover: #FFFFFF;
-  --popover-foreground: #0F172A;
-  --primary: #2563EB;
+  --card-foreground: #2D2926;
+  --popover: #FFFBF0;
+  --popover-foreground: #2D2926;
+  --primary: #C1502D;
   --primary-foreground: #FFFFFF;
-  --secondary: #1E293B;
-  --secondary-foreground: #FFFFFF;
-  --muted: #F1F5F9;
-  --muted-foreground: #64748B;
-  --accent: #38BDF8;
-  --accent-foreground: #FFFFFF;
-  --destructive: #EF4444;
+  --secondary: #FFFBF0;
+  --secondary-foreground: #2D2926;
+  --muted: #F7F1E7;
+  --muted-foreground: #756F6A;
+  --accent: #E8B23D;
+  --accent-foreground: #2D2926;
+  --destructive: #C1502D;
   --destructive-foreground: #FFFFFF;
-  --success: #22C55E;
+  --success: #5A7A3A;
   --success-foreground: #FFFFFF;
-  --warning: #F59E0B;
-  --warning-foreground: #FFFFFF;
-  --border: #E2E8F0;
-  --input: #E2E8F0;
+  --warning: #E8B23D;
+  --warning-foreground: #2D2926;
+  --border: #E8E1D7;
+  --input: #E8E1D7;
   --input-background: #FFFFFF;
-  --switch-background: #E2E8F0;
+  --switch-background: #E8E1D7;
   --font-weight-medium: 500;
   --font-weight-normal: 400;
-  --ring: #2563EB;
-  --chart-1: #2563EB;
-  --chart-2: #38BDF8;
-  --chart-3: #22C55E;
-  --chart-4: #F59E0B;
-  --chart-5: #EF4444;
+  --ring: #C1502D;
+  --chart-1: #C1502D;
+  --chart-2: #E8B23D;
+  --chart-3: #5A7A3A;
+  --chart-4: #8A3418;
+  --chart-5: #D99B26;
   --radius: 0.5rem;
-  --sidebar: #1E293B;
-  --sidebar-foreground: #FFFFFF;
-  --sidebar-primary: #2563EB;
+  --sidebar: #FFFFFF;
+  --sidebar-foreground: #2D2926;
+  --sidebar-primary: #C1502D;
   --sidebar-primary-foreground: #FFFFFF;
-  --sidebar-accent: #334155;
-  --sidebar-accent-foreground: #FFFFFF;
-  --sidebar-border: #334155;
-  --sidebar-ring: #2563EB;
+  --sidebar-accent: #FFFBF0;
+  --sidebar-accent-foreground: #2D2926;
+  --sidebar-border: #E8E1D7;
+  --sidebar-ring: #C1502D;
+
+  /* Variables globales de marca CENAREPAS */
+  --landing-brand: #C1502D;
+  --landing-brand-dark: #8A3418;
+  --landing-brand-light: #E2895F;
+  --landing-accent-gold: #E8B23D;
+  --landing-accent-green: #5A7A3A;
 }
 
+/* ─── Modo Oscuro: "Neón de Fábrica" ─── */
 .dark {
-  --background: #0F172A;
-  --foreground: #F8FAFC;
-  --card: #1E293B;
-  --card-foreground: #F8FAFC;
-  --popover: #1E293B;
-  --popover-foreground: #F8FAFC;
-  --primary: #2563EB;
+  --background: #0B0F14;
+  --foreground: #F1F5F9;
+  --card: #111820;
+  --card-foreground: #F1F5F9;
+  --popover: #111820;
+  --popover-foreground: #F1F5F9;
+  --primary: #C1502D;
   --primary-foreground: #FFFFFF;
-  --secondary: #334155;
-  --secondary-foreground: #F8FAFC;
-  --muted: #334155;
+  --secondary: #16202A;
+  --secondary-foreground: #F1F5F9;
+  --muted: #16202A;
   --muted-foreground: #94A3B8;
-  --accent: #38BDF8;
-  --accent-foreground: #FFFFFF;
-  --destructive: #EF4444;
+  --accent: #E8B23D;
+  --accent-foreground: #F1F5F9;
+  --destructive: #E05238;
   --destructive-foreground: #FFFFFF;
-  --success: #22C55E;
+  --success: #5A7A3A;
   --success-foreground: #FFFFFF;
-  --warning: #F59E0B;
-  --warning-foreground: #FFFFFF;
-  --border: #334155;
-  --input: #334155;
-  --input-background: #1E293B;
-  --switch-background: #334155;
-  --ring: #2563EB;
-  --chart-1: #2563EB;
-  --chart-2: #38BDF8;
-  --chart-3: #22C55E;
-  --chart-4: #F59E0B;
-  --chart-5: #EF4444;
-  --sidebar: #1E293B;
-  --sidebar-foreground: #F8FAFC;
-  --sidebar-primary: #2563EB;
+  --warning: #E8B23D;
+  --warning-foreground: #F1F5F9;
+  --border: rgba(148, 163, 184, 0.14);
+  --input: rgba(148, 163, 184, 0.18);
+  --input-background: #0E141B;
+  --switch-background: #1E293B;
+  --ring: #E8B23D;
+  --chart-1: #C1502D;
+  --chart-2: #E8B23D;
+  --chart-3: #5A7A3A;
+  --chart-4: #E2895F;
+  --chart-5: #FBD28A;
+  --sidebar: #0B0F14;
+  --sidebar-foreground: #F1F5F9;
+  --sidebar-primary: #C1502D;
   --sidebar-primary-foreground: #FFFFFF;
-  --sidebar-accent: #334155;
-  --sidebar-accent-foreground: #F8FAFC;
-  --sidebar-border: #334155;
-  --sidebar-ring: #2563EB;
+  --sidebar-accent: #16202A;
+  --sidebar-accent-foreground: #F1F5F9;
+  --sidebar-border: rgba(148, 163, 184, 0.12);
+  --sidebar-ring: #E8B23D;
+
+  /* Resplandores LED / Neón controlados */
+  --glow-gold: 0 0 16px rgba(232, 178, 61, 0.28);
+  --glow-green: 0 0 16px rgba(90, 122, 58, 0.32);
+  --glow-brand: 0 0 16px rgba(193, 80, 45, 0.28);
 }
 
 @theme inline {
@@ -129,6 +142,26 @@
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-ring: var(--sidebar-ring);
+
+  /* Marca de la landing (terracota/maíz/verde hoja). Valores reales en landing.css .landing-page,
+     referenciados aquí vía var() para que Tailwind genere bg-brand/text-brand-dark/etc. */
+  --color-brand: var(--landing-brand);
+  --color-brand-dark: var(--landing-brand-dark);
+  --color-brand-light: var(--landing-brand-light);
+  --color-accent-gold: var(--landing-accent-gold);
+  --color-accent-green: var(--landing-accent-green);
+
+  /* Paleta cálida "masa" del hero de la landing (maíz tostado / horno). */
+  --color-masa-50: #fef6e4;
+  --color-masa-100: #fde8b8;
+  --color-masa-200: #fbd28a;
+  --color-masa-400: #e79a3c;
+  --color-masa-500: #d97706;
+  --color-masa-600: #b45309;
+  --color-masa-700: #92400e;
+  --color-masa-800: #78350f;
+  --color-masa-900: #4a1f07;
+  --color-masa-950: #2a1206;
 
   --animate-fadeIn: fadeIn 0.2s ease-out;
   --animate-scaleIn: scaleIn 0.2s ease-out;
@@ -227,3 +260,46 @@
     line-height: 1.5;
   }
 }
+
+/* ─── Scrollbar Global Personalizado CENAREPAS ─── */
+html,
+body,
+* {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(193, 80, 45, 0.38) transparent;
+}
+
+.dark,
+.dark * {
+  scrollbar-color: rgba(232, 178, 61, 0.38) transparent;
+}
+
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background-color: rgba(193, 80, 45, 0.35);
+  border-radius: 9999px;
+  border: 2px solid transparent;
+  background-clip: padding-box;
+  transition: background-color 0.2s ease;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background-color: rgba(193, 80, 45, 0.75);
+}
+
+.dark ::-webkit-scrollbar-thumb {
+  background-color: rgba(232, 178, 61, 0.35);
+}
+
+.dark ::-webkit-scrollbar-thumb:hover {
+  background-color: rgba(232, 178, 61, 0.75);
+}
+

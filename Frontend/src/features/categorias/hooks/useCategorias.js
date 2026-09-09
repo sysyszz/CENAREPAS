@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { getCategorias, createCategoria, updateCategoria, deleteCategoria } from '../services/categoriasService';
+import { toast } from '../../../shared/utils/toast';
 
 export function useCategorias() {
   const [categorias, setCategorias] = useState([]);
@@ -10,7 +11,6 @@ export function useCategorias() {
   const [deleteDialog, setDeleteDialog] = useState({ isOpen: false, id: null, nombre: '' });
   const [isDeleting, setIsDeleting] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
-  const [toast, setToast] = useState({ isOpen: false, type: 'success', message: '' });
 
   useEffect(() => {
     getCategorias().then((data) => setCategorias(data));
@@ -32,15 +32,15 @@ export function useCategorias() {
         setCategorias((prev) =>
           prev.map((c) => (c.id_categoria === formData.id_categoria ? { ...c, ...updated } : c))
         );
-        setToast({ isOpen: true, type: 'success', message: 'Categoría actualizada correctamente' });
+        toast.success('Cambios guardados');
       } else {
         const created = await createCategoria(formData);
         setCategorias((prev) => [created, ...prev]);
-        setToast({ isOpen: true, type: 'success', message: 'Categoría creada correctamente' });
+        toast.success('Categoría creada');
       }
       setShowModal(false);
     } catch (error) {
-      setToast({ isOpen: true, type: 'error', message: 'Error al guardar la categoría' });
+      toast.error('No se pudo guardar la categoría');
     } finally {
       setIsSaving(false);
     }
@@ -49,12 +49,16 @@ export function useCategorias() {
   const handleDelete = async () => {
     if (!deleteDialog.id) return;
     setIsDeleting(true);
-    await new Promise((resolve) => setTimeout(resolve, 500));
-    await deleteCategoria(deleteDialog.id);
-    setCategorias((prev) => prev.filter((c) => c.id_categoria !== deleteDialog.id));
-    setIsDeleting(false);
-    setDeleteDialog({ isOpen: false, id: null, nombre: '' });
-    setToast({ isOpen: true, type: 'success', message: 'Categoría eliminada correctamente' });
+    try {
+      await deleteCategoria(deleteDialog.id);
+      setCategorias((prev) => prev.filter((c) => c.id_categoria !== deleteDialog.id));
+      toast.success('Categoría eliminada');
+    } catch (error) {
+      toast.error('No se pudo eliminar la categoría');
+    } finally {
+      setIsDeleting(false);
+      setDeleteDialog({ isOpen: false, id: null, nombre: '' });
+    }
   };
 
   return {
@@ -72,8 +76,6 @@ export function useCategorias() {
     setDeleteDialog,
     isDeleting,
     isSaving,
-    toast,
-    setToast,
     handleSave,
     handleDelete,
   };

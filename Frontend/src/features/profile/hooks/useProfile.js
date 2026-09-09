@@ -1,10 +1,10 @@
 import { useState, useEffect } from 'react';
 import { getProfile, updateProfile, changePassword, getActiveSessions } from '../services/profileService';
+import { toast } from '../../../shared/utils/toast';
 
 export function useProfile() {
   const [activeTab, setActiveTab] = useState('profile');
   const [isEditing, setIsEditing] = useState(false);
-  const [toast, setToast] = useState({ isOpen: false, type: 'success', message: '' });
 
   const [profileData, setProfileData] = useState({
     nombre: '',
@@ -29,20 +29,28 @@ export function useProfile() {
   }, []);
 
   const handleSaveProfile = async () => {
-    setIsEditing(false);
-    await updateProfile(profileData);
-    setToast({ isOpen: true, type: 'success', message: 'Perfil actualizado correctamente' });
+    try {
+      setIsEditing(false);
+      await updateProfile(profileData);
+      toast.success('Perfil actualizado');
+    } catch {
+      toast.error('No se pudo actualizar el perfil');
+    }
   };
 
   const handleChangePassword = async (e) => {
     e.preventDefault();
     if (passwordData.newPassword !== passwordData.confirmPassword) {
-      setToast({ isOpen: true, type: 'error', message: 'Las contraseñas no coinciden' });
+      toast.error('Las contraseñas no coinciden');
       return;
     }
-    await changePassword(passwordData);
-    setPasswordData({ currentPassword: '', newPassword: '', confirmPassword: '' });
-    setToast({ isOpen: true, type: 'success', message: 'Contraseña actualizada correctamente' });
+    try {
+      await changePassword(passwordData);
+      setPasswordData({ currentPassword: '', newPassword: '', confirmPassword: '' });
+      toast.success('Contraseña actualizada');
+    } catch {
+      toast.error('No se pudo actualizar la contraseña');
+    }
   };
 
   return {
@@ -50,8 +58,6 @@ export function useProfile() {
     setActiveTab,
     isEditing,
     setIsEditing,
-    toast,
-    setToast,
     profileData,
     setProfileData,
     passwordData,

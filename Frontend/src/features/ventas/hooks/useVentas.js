@@ -1,5 +1,6 @@
 import { useState, useEffect, useMemo } from 'react';
-import { getVentas, createVenta, updateVenta, deleteVenta } from '../services/ventasService';
+import { getVentas, createVenta, updateVenta } from '../services/ventasService';
+import { toast } from '../../../shared/utils/toast';
 
 export function useVentas() {
   const [ventas, setVentas] = useState([]);
@@ -10,7 +11,6 @@ export function useVentas() {
   const [deleteDialog, setDeleteDialog] = useState({ isOpen: false, id: null, nombre: '' });
   const [isDeleting, setIsDeleting] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
-  const [toast, setToast] = useState({ isOpen: false, type: 'success', message: '' });
 
   useEffect(() => {
     getVentas().then((data) => setVentas(data));
@@ -39,15 +39,15 @@ export function useVentas() {
         setVentas((prev) =>
           prev.map((v) => (v.id_venta === formData.id_venta ? { ...v, ...updated } : v))
         );
-        setToast({ isOpen: true, type: 'success', message: 'Venta actualizada correctamente' });
+        toast.success('Cambios guardados');
       } else {
         const created = await createVenta(formData);
         setVentas((prev) => [created, ...prev]);
-        setToast({ isOpen: true, type: 'success', message: 'Venta registrada correctamente' });
+        toast.success('Venta registrada');
       }
       setShowModal(false);
-    } catch (error) {
-      setToast({ isOpen: true, type: 'error', message: 'Error al guardar la venta' });
+    } catch {
+      toast.error('No se pudo guardar la venta');
     } finally {
       setIsSaving(false);
     }
@@ -61,9 +61,9 @@ export function useVentas() {
       setVentas((prev) =>
         prev.map((v) => (v.id_venta === deleteDialog.id ? { ...v, estado: 'anulada' } : v))
       );
-      setToast({ isOpen: true, type: 'success', message: 'Venta anulada correctamente' });
-    } catch (error) {
-      setToast({ isOpen: true, type: 'error', message: 'Error al anular la venta' });
+      toast.success('Venta anulada correctamente');
+    } catch {
+      toast.error('No se pudo anular la venta');
     } finally {
       setIsDeleting(false);
       setDeleteDialog({ isOpen: false, id: null, nombre: '' });
@@ -85,10 +85,7 @@ export function useVentas() {
     setDeleteDialog,
     isDeleting,
     isSaving,
-    toast,
-    setToast,
     handleSave,
     handleAnular,
   };
 }
-

@@ -2,25 +2,20 @@ import { useState, useEffect } from 'react';
 import { getDashboardData } from '../services/dashboardService';
 
 export function useDashboard() {
-  const [data, setData] = useState({
-    kpis: { ventasHoy: '$7,245', pedidosActivos: 24, nuevosClientes: 18, alertasStock: 12 },
-    ventasDiarias: [],
-    ventasMensuales: [],
-    topProductos: [],
-    stockCategoria: [],
-    alertas: [],
-    ultimasVentas: [],
-  });
-  const [isLoading, setIsLoading] = useState(false);
+  const [data, setData] = useState(null);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Carga placeholder de datos
-    setIsLoading(true);
-    getDashboardData().then(res => {
+    let active = true;
+    getDashboardData().then((res) => {
+      if (!active) return;
       setData(res);
-      setIsLoading(false);
+      setLoading(false);
     });
+    return () => {
+      active = false;
+    };
   }, []);
 
-  return { data, isLoading };
+  return { data, loading };
 }

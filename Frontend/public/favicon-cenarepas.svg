@@ -1,0 +1,13 @@
+<svg width="240" height="240" viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg">
+  <!-- Cenarepas icon: a dotted process/workflow ring representing the flow
+       Compras -> Producción -> Pedidos -> Ventas, with one accent node
+       highlighting "current status", in brand colors. -->
+  <circle cx="102" cy="60"  r="6" fill="#C4622D"/>
+  <circle cx="89.7" cy="89.7" r="6" fill="#C4622D"/>
+  <circle cx="60"  cy="102" r="6" fill="#C4622D"/>
+  <circle cx="30.3" cy="89.7" r="6" fill="#C4622D"/>
+  <circle cx="18"  cy="60"  r="6" fill="#C4622D"/>
+  <circle cx="30.3" cy="30.3" r="6" fill="#C4622D"/>
+  <circle cx="60"  cy="18"  r="6" fill="#C4622D"/>
+  <circle cx="89.7" cy="30.3" r="9" fill="#E8A33D"/>
+</svg>

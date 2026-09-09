@@ -1,11 +1,11 @@
 import { Eye, Edit, Trash2, XCircle } from 'lucide-react';
 
 const mutedButtonClass =
-  'inline-flex items-center justify-center p-1.5 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted transition-colors disabled:opacity-40 disabled:pointer-events-none cursor-pointer';
+  'inline-flex items-center justify-center p-1.5 rounded-full text-muted-foreground hover:text-foreground hover:bg-black/5 dark:hover:bg-white/10 transition-all duration-150 disabled:opacity-40 disabled:pointer-events-none cursor-pointer';
 const plainButtonClass =
-  'inline-flex items-center justify-center p-1.5 rounded-lg hover:bg-muted transition-colors disabled:opacity-40 disabled:pointer-events-none cursor-pointer';
+  'inline-flex items-center justify-center p-1.5 rounded-full hover:bg-black/5 dark:hover:bg-white/10 transition-all duration-150 disabled:opacity-40 disabled:pointer-events-none cursor-pointer';
 const deleteButtonClass =
-  'inline-flex items-center justify-center p-1.5 rounded-lg text-destructive hover:bg-destructive/10 transition-colors disabled:opacity-40 disabled:pointer-events-none cursor-pointer';
+  'inline-flex items-center justify-center p-1.5 rounded-full text-destructive hover:bg-destructive/10 transition-all duration-150 disabled:opacity-40 disabled:pointer-events-none cursor-pointer';
 
 function wrapNode(wrapper, node) {
   return wrapper ? wrapper(node) : node;

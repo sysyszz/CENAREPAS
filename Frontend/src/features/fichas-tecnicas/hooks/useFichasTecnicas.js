@@ -1,5 +1,6 @@
 import { useState, useEffect, useMemo } from 'react';
 import { getFichasTecnicas, createFichaTecnica, updateFichaTecnica, deleteFichaTecnica } from '../services/fichasTecnicasService';
+import { toast } from '../../../shared/utils/toast';
 
 export function useFichasTecnicas() {
   const [fichas, setFichas] = useState([]);
@@ -10,7 +11,6 @@ export function useFichasTecnicas() {
   const [deleteDialog, setDeleteDialog] = useState({ isOpen: false, id: null, nombre: '' });
   const [isDeleting, setIsDeleting] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
-  const [toast, setToast] = useState({ isOpen: false, type: 'success', message: '' });
 
   useEffect(() => {
     getFichasTecnicas().then((data) => setFichas(data));
@@ -37,15 +37,15 @@ export function useFichasTecnicas() {
         setFichas((prev) =>
           prev.map((f) => (f.id_ficha === formData.id_ficha ? { ...f, ...updated } : f))
         );
-        setToast({ isOpen: true, type: 'success', message: 'Ficha técnica actualizada correctamente' });
+        toast.success('Cambios guardados');
       } else {
         const created = await createFichaTecnica(formData);
         setFichas((prev) => [created, ...prev]);
-        setToast({ isOpen: true, type: 'success', message: 'Ficha técnica creada correctamente' });
+        toast.success('Ficha técnica creada');
       }
       setShowModal(false);
     } catch (error) {
-      setToast({ isOpen: true, type: 'error', message: 'Error al guardar la ficha técnica' });
+      toast.error('No se pudo guardar la ficha técnica');
     } finally {
       setIsSaving(false);
     }
@@ -57,9 +57,9 @@ export function useFichasTecnicas() {
     try {
       await deleteFichaTecnica(deleteDialog.id);
       setFichas((prev) => prev.filter((f) => f.id_ficha !== deleteDialog.id));
-      setToast({ isOpen: true, type: 'success', message: 'Ficha técnica eliminada correctamente' });
+      toast.success('Ficha técnica eliminada');
     } catch (error) {
-      setToast({ isOpen: true, type: 'error', message: 'Error al eliminar la ficha técnica' });
+      toast.error('No se pudo eliminar la ficha técnica');
     } finally {
       setIsDeleting(false);
       setDeleteDialog({ isOpen: false, id: null, nombre: '' });
@@ -81,8 +81,6 @@ export function useFichasTecnicas() {
     setDeleteDialog,
     isDeleting,
     isSaving,
-    toast,
-    setToast,
     handleSave,
     handleDelete,
   };

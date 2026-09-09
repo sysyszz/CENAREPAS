@@ -1,5 +1,6 @@
 import { useState, useEffect, useMemo } from 'react';
 import { getRoles, createRol, updateRol, deleteRol } from '../services/rolesService';
+import { toast } from '../../../shared/utils/toast';
 
 export function useRoles() {
   const [roles, setRoles] = useState([]);
@@ -11,7 +12,6 @@ export function useRoles() {
   const [deleteDialog, setDeleteDialog] = useState({ isOpen: false, id: null, nombre: '' });
   const [isDeleting, setIsDeleting] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
-  const [toast, setToast] = useState({ isOpen: false, type: 'success', message: '' });
 
   useEffect(() => {
     getRoles().then((data) => setRoles(data));
@@ -38,15 +38,15 @@ export function useRoles() {
         setRoles((prev) =>
           prev.map((r) => (r.id_rol === formData.id_rol ? { ...r, ...updated } : r))
         );
-        setToast({ isOpen: true, type: 'success', message: 'Rol actualizado correctamente' });
+        toast.success('Cambios guardados');
       } else {
         const created = await createRol(formData);
         setRoles((prev) => [created, ...prev]);
-        setToast({ isOpen: true, type: 'success', message: 'Rol creado correctamente' });
+        toast.success('Rol creado');
       }
       setShowModal(false);
     } catch (error) {
-      setToast({ isOpen: true, type: 'error', message: 'Error al guardar el rol' });
+      toast.error('No se pudo guardar el rol');
     } finally {
       setIsSaving(false);
     }
@@ -58,9 +58,9 @@ export function useRoles() {
     try {
       await deleteRol(deleteDialog.id);
       setRoles((prev) => prev.filter((r) => r.id_rol !== deleteDialog.id));
-      setToast({ isOpen: true, type: 'success', message: 'Rol eliminado correctamente' });
+      toast.success('Rol eliminado');
     } catch (error) {
-      setToast({ isOpen: true, type: 'error', message: 'Error al eliminar el rol' });
+      toast.error('No se pudo eliminar el rol');
     } finally {
       setIsDeleting(false);
       setDeleteDialog({ isOpen: false, id: null, nombre: '' });
@@ -84,8 +84,6 @@ export function useRoles() {
     setDeleteDialog,
     isDeleting,
     isSaving,
-    toast,
-    setToast,
     handleSave,
     handleDelete,
   };
