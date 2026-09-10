@@ -102,13 +102,13 @@ function DiaTick({ x, y, payload, data }) {
 
 function ActivityCard({ icon: Icon, iconBg, iconColor, title, subtitle }) {
   return (
-    <div className="flex items-center gap-3 rounded-xl border border-white/10 bg-[#1c0b03] p-3 mb-2.5 shadow-sm">
+    <div className="flex items-center gap-3 rounded-xl border border-white/10 bg-[#1c0b03] p-3 mb-2.5 shadow-sm min-h-[62px]">
       <div className={`flex size-9 shrink-0 items-center justify-center rounded-lg ${iconBg} ${iconColor}`}>
         <Icon className="size-4" aria-hidden />
       </div>
-      <div>
-        <h4 className="text-xs font-semibold text-[#fffbf0]">{title}</h4>
-        <p className={`text-[11px] ${MUTED_ON_DARK}`}>{subtitle}</p>
+      <div className="min-w-0">
+        <h4 className="text-xs font-semibold text-[#fffbf0] truncate">{title}</h4>
+        <p className={`text-[11px] ${MUTED_ON_DARK} truncate`}>{subtitle}</p>
       </div>
     </div>
   );
@@ -177,7 +177,7 @@ export function AboutSection() {
           ))}
         </motion.div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-stretch">
 
           {/* Columna 1: Elaboración */}
           <motion.div
@@ -185,25 +185,28 @@ export function AboutSection() {
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
             transition={{ duration: 0.5 }}
+            className="flex flex-col h-full"
           >
-            <div className="flex items-center gap-2 mb-1.5">
-              <Wheat className="w-5 h-5 text-brand" aria-hidden />
-              <h3 className="text-lg font-bold text-slate-900">Producción</h3>
+            <div className="flex flex-col mb-4 lg:min-h-[115px]">
+              <div className="flex items-center gap-2 mb-1.5">
+                <Wheat className="w-5 h-5 text-brand" aria-hidden />
+                <h3 className="text-lg font-bold text-slate-900">Producción</h3>
+              </div>
+              <p className="text-sm text-slate-600 leading-relaxed max-w-sm">
+                El módulo de producción registra cada etapa en tiempo real. Así lo usa Masarepas
+                para seguir su producción diaria de arepas, del amasado al horneado.
+              </p>
             </div>
-            <p className="text-sm text-slate-500 leading-relaxed mb-4 max-w-sm">
-              El módulo de producción registra cada etapa en tiempo real. Así lo usa Masarepas
-              para seguir su producción diaria de arepas, del amasado al horneado.
-            </p>
 
-            <div className="relative rounded-2xl bg-gradient-to-b from-[#2a1206] to-[#1c0b03] border border-white/10 p-4 overflow-hidden">
-              <ActivityCard
-                icon={Wheat}
-                iconBg="bg-brand/20"
-                iconColor="text-brand-light"
-                title="Amasado de la masa"
-                subtitle="Producción de hoy · en proceso"
-              />
-              <div className="mb-1">
+            <div className="relative rounded-2xl bg-gradient-to-b from-[#2a1206] to-[#1c0b03] border border-white/10 p-4 overflow-hidden flex-1 flex flex-col justify-between">
+              <div>
+                <ActivityCard
+                  icon={Wheat}
+                  iconBg="bg-brand/20"
+                  iconColor="text-brand-light"
+                  title="Amasado de la masa"
+                  subtitle="Producción de hoy · en proceso"
+                />
                 <ActivityCard
                   icon={ShieldCheck}
                   iconBg="bg-accent-green/20"
@@ -215,12 +218,12 @@ export function AboutSection() {
 
               {/* Ventana de app: producción semanal */}
               <motion.div
-                className="rounded-xl bg-gradient-to-b from-[#2a1206] to-[#1c0b03] overflow-hidden shadow-lg"
+                className="rounded-xl bg-gradient-to-b from-[#2a1206] to-[#1c0b03] overflow-hidden shadow-lg flex-1 flex flex-col justify-between mt-auto"
                 whileHover={shouldReduceMotion ? undefined : { y: -3, boxShadow: '0 20px 34px -16px rgba(193,80,45,0.35)' }}
                 transition={{ type: 'spring', stiffness: 340, damping: 26 }}
               >
                 <WindowChrome label="Producción" />
-                <div className="px-3.5 pt-2.5">
+                <div className="px-3.5 pt-2.5 min-h-[44px] flex items-center justify-between">
                   <p className={`text-[11px] ${MUTED_ON_DARK}`}>Unidades esta semana</p>
                 </div>
                 <div className="h-[100px] w-full px-1">
@@ -274,7 +277,7 @@ export function AboutSection() {
                     </BarChart>
                   </ResponsiveContainer>
                 </div>
-                <div className="flex justify-center pb-2.5 pt-1">
+                <div className="flex justify-center pb-2.5 pt-1 mt-auto min-h-[38px] items-center">
                   <span className="inline-flex items-center gap-2 rounded-full bg-white/10 px-3 py-1.5 text-[11px] text-[#c9a97e]">
                     <span className="size-1.5 rounded-full bg-[#e8b23d] animate-pulse" />
                     Horneando en el asador…
@@ -290,25 +293,28 @@ export function AboutSection() {
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
             transition={{ duration: 0.5, delay: 0.08 }}
+            className="flex flex-col h-full"
           >
-            <div className="flex items-center gap-2 mb-1.5">
-              <ShieldCheck className="w-5 h-5 text-accent-green" aria-hidden />
-              <h3 className="text-lg font-bold text-slate-900">Control de calidad</h3>
+            <div className="flex flex-col mb-4 lg:min-h-[115px]">
+              <div className="flex items-center gap-2 mb-1.5">
+                <ShieldCheck className="w-5 h-5 text-accent-green" aria-hidden />
+                <h3 className="text-lg font-bold text-slate-900">Control de calidad</h3>
+              </div>
+              <p className="text-sm text-slate-600 leading-relaxed max-w-sm">
+                Cada lote se registra y aprueba antes de salir de la fábrica. Masarepas lo usa para
+                que ningún lote llegue al cliente sin pasar por control de calidad.
+              </p>
             </div>
-            <p className="text-sm text-slate-600 leading-relaxed mb-4 max-w-sm">
-              Cada lote se registra y aprueba antes de salir de la fábrica. Masarepas lo usa para
-              que ningún lote llegue al cliente sin pasar por control de calidad.
-            </p>
 
-            <div className="relative rounded-2xl bg-gradient-to-b from-[#2a1206] to-[#1c0b03] border border-white/10 p-4 overflow-hidden">
-              <ActivityCard
-                icon={Thermometer}
-                iconBg="bg-accent-gold/20"
-                iconColor="text-[#fbd28a]"
-                title="Temperatura del horno"
-                subtitle="Monitoreada cada hora · en rango"
-              />
-              <div className="mb-1">
+            <div className="relative rounded-2xl bg-gradient-to-b from-[#2a1206] to-[#1c0b03] border border-white/10 p-4 overflow-hidden flex-1 flex flex-col justify-between">
+              <div>
+                <ActivityCard
+                  icon={Thermometer}
+                  iconBg="bg-accent-gold/20"
+                  iconColor="text-[#fbd28a]"
+                  title="Temperatura del horno"
+                  subtitle="Monitoreada cada hora · en rango"
+                />
                 <ActivityCard
                   icon={ClipboardCheck}
                   iconBg="bg-brand/20"
@@ -320,13 +326,13 @@ export function AboutSection() {
 
               {/* Ventana de app: tendencia de calidad */}
               <motion.div
-                className="rounded-xl bg-gradient-to-b from-[#2a1206] to-[#1c0b03] overflow-hidden shadow-lg"
+                className="rounded-xl bg-gradient-to-b from-[#2a1206] to-[#1c0b03] overflow-hidden shadow-lg flex-1 flex flex-col justify-between mt-auto"
                 whileHover={shouldReduceMotion ? undefined : { y: -3, boxShadow: '0 20px 34px -16px rgba(90,122,58,0.4)' }}
                 transition={{ type: 'spring', stiffness: 340, damping: 26 }}
               >
                 <WindowChrome label="Calidad" />
 
-                <div className="flex items-start justify-between gap-2 px-3.5 pt-2.5">
+                <div className="flex items-center justify-between gap-2 px-3.5 pt-2.5 min-h-[44px]">
                   <div>
                     <p className="text-[0.8rem] font-semibold text-[#fffbf0]">Vamos mejorando este mes</p>
                     <p className={`text-[10px] ${MUTED_ON_DARK}`}>% de lotes aprobados</p>
@@ -399,11 +405,11 @@ export function AboutSection() {
                   </motion.div>
                 </div>
 
-                <div className="flex items-center justify-center gap-2 pb-2.5 pt-1">
-                  <span className="flex size-6 items-center justify-center rounded-full bg-[#5a7a3a]/20 text-[#8fc25a]">
+                <div className="flex items-center justify-center gap-2 pb-2.5 pt-1 mt-auto min-h-[38px]">
+                  <span className="inline-flex items-center gap-2 rounded-full bg-[#5a7a3a]/20 px-3 py-1.5 text-[11px] text-[#8fc25a]">
                     <Sparkle className="size-3" aria-hidden />
+                    Control de calidad al día
                   </span>
-                  <span className={`text-[11px] ${MUTED_ON_DARK}`}>Control de calidad al día</span>
                 </div>
               </motion.div>
             </div>
@@ -415,25 +421,28 @@ export function AboutSection() {
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
             transition={{ duration: 0.5, delay: 0.16 }}
+            className="flex flex-col h-full"
           >
-            <div className="flex items-center gap-2 mb-1.5">
-              <Truck className="w-5 h-5 text-accent-gold" aria-hidden />
-              <h3 className="text-lg font-bold text-slate-900">Despacho y logística</h3>
+            <div className="flex flex-col mb-4 lg:min-h-[115px]">
+              <div className="flex items-center gap-2 mb-1.5">
+                <Truck className="w-5 h-5 text-accent-gold" aria-hidden />
+                <h3 className="text-lg font-bold text-slate-900">Despacho y logística</h3>
+              </div>
+              <p className="text-sm text-slate-600 leading-relaxed max-w-sm">
+                El módulo de pedidos conecta producción con entrega. Masarepas lo usa para saber,
+                en todo momento, qué pedido está listo y cuál sigue en ruta.
+              </p>
             </div>
-            <p className="text-sm text-slate-600 leading-relaxed mb-4 max-w-sm">
-              El módulo de pedidos conecta producción con entrega. Masarepas lo usa para saber,
-              en todo momento, qué pedido está listo y cuál sigue en ruta.
-            </p>
 
-            <div className="relative rounded-2xl bg-gradient-to-b from-[#2a1206] to-[#1c0b03] border border-white/10 p-4 overflow-hidden">
-              <ActivityCard
-                icon={Package}
-                iconBg="bg-brand/20"
-                iconColor="text-brand-light"
-                title="Pedidos despachados hoy"
-                subtitle="48 pedidos · a tiempo"
-              />
-              <div className="mb-1">
+            <div className="relative rounded-2xl bg-gradient-to-b from-[#2a1206] to-[#1c0b03] border border-white/10 p-4 overflow-hidden flex-1 flex flex-col justify-between">
+              <div>
+                <ActivityCard
+                  icon={Package}
+                  iconBg="bg-brand/20"
+                  iconColor="text-brand-light"
+                  title="Pedidos despachados hoy"
+                  subtitle="48 pedidos · a tiempo"
+                />
                 <ActivityCard
                   icon={Clock}
                   iconBg="bg-accent-green/20"
@@ -445,12 +454,12 @@ export function AboutSection() {
 
               {/* Ventana de app: pedidos a tiempo */}
               <motion.div
-                className="rounded-xl bg-gradient-to-b from-[#2a1206] to-[#1c0b03] overflow-hidden shadow-lg"
+                className="rounded-xl bg-gradient-to-b from-[#2a1206] to-[#1c0b03] overflow-hidden shadow-lg flex-1 flex flex-col justify-between mt-auto"
                 whileHover={shouldReduceMotion ? undefined : { y: -3, boxShadow: '0 20px 34px -16px rgba(232,178,61,0.4)' }}
                 transition={{ type: 'spring', stiffness: 340, damping: 26 }}
               >
                 <WindowChrome label="Despacho" />
-                <div className="px-3.5 pt-2.5">
+                <div className="px-3.5 pt-2.5 min-h-[44px] flex items-center justify-between">
                   <p className={`text-[11px] ${MUTED_ON_DARK}`}>Pedidos a tiempo hoy</p>
                 </div>
                 <div className="relative h-[100px] w-full">
@@ -497,7 +506,7 @@ export function AboutSection() {
                     <span className={`mt-0.5 text-[9px] leading-none ${MUTED_ON_DARK}`}>a tiempo</span>
                   </motion.div>
                 </div>
-                <div className="flex justify-center pb-2.5 pt-1">
+                <div className="flex justify-center pb-2.5 pt-1 mt-auto min-h-[38px] items-center">
                   <span className="inline-flex items-center gap-2 rounded-full bg-white/10 px-3 py-1.5 text-[11px] text-[#c9a97e]">
                     <span className="size-1.5 rounded-full bg-[#e8b23d] animate-pulse" />
                     2 rutas activas ahora
