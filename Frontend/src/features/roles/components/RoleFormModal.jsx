@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { X } from 'lucide-react';
 import { mockPermisos, usePermissions } from '../../../shared/contexts/PermissionContext';
+import { Combobox } from '../../../shared/ui/Combobox';
 
 export function RoleFormModal({ open, onClose, role = null, onSave, isLoading = false }) {
   const { updateRolePermissions } = usePermissions();
@@ -96,16 +97,16 @@ export function RoleFormModal({ open, onClose, role = null, onSave, isLoading = 
           </div>
           <div className="modal-field modal-field-wide">
             <label htmlFor="rol_estado" className="block mb-2 text-sm font-medium">Estado</label>
-            <select
+            <Combobox
               id="rol_estado"
               name="estado"
               value={estado}
               onChange={(e) => setEstado(e.target.value)}
-              className="w-full px-4 py-2 border border-input bg-input-background rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-ring"
-            >
-              <option value="activo">Activo</option>
-              <option value="inactivo">Inactivo</option>
-            </select>
+              options={[
+                { value: 'activo', label: 'Activo' },
+                { value: 'inactivo', label: 'Inactivo' },
+              ]}
+            />
           </div>
           <div className="modal-field role-description-field">
             <label htmlFor="rol_descripcion" className="block mb-2 text-sm font-medium">Descripción</label>

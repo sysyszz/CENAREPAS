@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { X } from 'lucide-react';
 import { mockProveedores, getProveedores } from '../../proveedores/services/proveedoresService';
+import { Combobox } from '../../../shared/ui/Combobox';
 
 export function InsumoFormModal({ open, onClose, insumo = null, onSave, isLoading = false }) {
   const [nombre, setNombre] = useState('');
@@ -125,19 +126,19 @@ export function InsumoFormModal({ open, onClose, insumo = null, onSave, isLoadin
             </div>
             <div>
               <label htmlFor="insumo_unidad_medida" className="block mb-1.5 text-sm font-medium">Unidad de Medida *</label>
-              <select
+              <Combobox
                 id="insumo_unidad_medida"
                 name="unidad_medida"
                 value={unidadMedida}
                 onChange={(e) => setUnidadMedida(e.target.value)}
-                className="w-full px-4 py-2 border border-input bg-input-background rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-ring"
-              >
-                <option value="kg">kg (Kilogramos)</option>
-                <option value="g">g (Gramos)</option>
-                <option value="l">l (Litros)</option>
-                <option value="ml">ml (Mililitros)</option>
-                <option value="unidad">unidad (Unidades)</option>
-              </select>
+                options={[
+                  { value: 'kg', label: 'kg (Kilogramos)' },
+                  { value: 'g', label: 'g (Gramos)' },
+                  { value: 'l', label: 'l (Litros)' },
+                  { value: 'ml', label: 'ml (Mililitros)' },
+                  { value: 'unidad', label: 'unidad (Unidades)' },
+                ]}
+              />
             </div>
           </div>
 
@@ -171,33 +172,30 @@ export function InsumoFormModal({ open, onClose, insumo = null, onSave, isLoadin
 
           <div className="modal-field-wide">
             <label htmlFor="insumo_id_proveedor" className="block mb-1.5 text-sm font-medium">Proveedor *</label>
-            <select
+            <Combobox
               id="insumo_id_proveedor"
               name="id_proveedor"
               value={idProveedor}
               onChange={(e) => setIdProveedor(e.target.value)}
-              className="w-full px-4 py-2 border border-input bg-input-background rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-ring"
-            >
-              {proveedores.map((p) => (
-                <option key={p.id_proveedor} value={String(p.id_proveedor)}>
-                  {p.nombre}
-                </option>
-              ))}
-            </select>
+              options={proveedores.map((p) => ({
+                value: String(p.id_proveedor),
+                label: p.nombre,
+              }))}
+            />
           </div>
 
           <div className="modal-field-wide">
             <label htmlFor="insumo_estado" className="block mb-1.5 text-sm font-medium">Estado</label>
-            <select
+            <Combobox
               id="insumo_estado"
               name="estado"
               value={estado}
               onChange={(e) => setEstado(e.target.value)}
-              className="w-full px-4 py-2 border border-input bg-input-background rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-ring"
-            >
-              <option value="activo">Activo / Disponible</option>
-              <option value="inactivo">Inactivo / Agotado</option>
-            </select>
+              options={[
+                { value: 'activo', label: 'Activo / Disponible' },
+                { value: 'inactivo', label: 'Inactivo / Agotado' },
+              ]}
+            />
           </div>
 
           <div className="flex gap-2 pt-4 border-t border-border">

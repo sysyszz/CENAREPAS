@@ -3,13 +3,7 @@ import { X, Package, Plus, Trash2 } from 'lucide-react';
 import { mockFichasTecnicas, mockFichaTecnicaInsumos, getFichasTecnicas } from '../../fichas-tecnicas/services/fichasTecnicasService';
 import { mockInsumos, getInsumos } from '../../insumos/services/insumosService';
 import { mockUsuarios } from '../../usuarios/services/usuariosService';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '../../../shared/ui/select';
+import { Combobox } from '../../../shared/ui/Combobox';
 
 export function ProduccionFormModal({ open, onClose, lote = null, onSave, isLoading = false }) {
   const [idFicha, setIdFicha] = useState('1');
@@ -157,18 +151,18 @@ export function ProduccionFormModal({ open, onClose, lote = null, onSave, isLoad
         <form onSubmit={handleSubmit} className="modal-form-grid space-y-4">
           <div className="modal-field-wide">
             <label htmlFor="lote_id_ficha" className="block mb-1.5 text-sm font-medium">Ficha Técnica (Receta) *</label>
-            <Select value={idFicha} onValueChange={setIdFicha}>
-              <SelectTrigger id="lote_id_ficha" className="w-full bg-input-background">
-                <SelectValue placeholder="Seleccionar receta..." />
-              </SelectTrigger>
-              <SelectContent className="z-[100] max-h-56">
-                {fichas.map((f) => (
-                  <SelectItem key={f.id_ficha} value={String(f.id_ficha)}>
-                    {f.nombre}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <Combobox
+              id="lote_id_ficha"
+              name="id_ficha"
+              placeholder="Seleccionar receta..."
+              value={idFicha}
+              onValueChange={setIdFicha}
+              onChange={(e) => setIdFicha(e.target.value)}
+              options={fichas.map((f) => ({
+                value: String(f.id_ficha),
+                label: f.nombre,
+              }))}
+            />
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -204,32 +198,33 @@ export function ProduccionFormModal({ open, onClose, lote = null, onSave, isLoad
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <label htmlFor="lote_id_usuario_responsable" className="block mb-1.5 text-sm font-medium">Usuario Responsable *</label>
-              <Select value={idUsuarioResponsable} onValueChange={setIdUsuarioResponsable}>
-                <SelectTrigger id="lote_id_usuario_responsable" className="w-full bg-input-background">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent className="z-[100] max-h-56">
-                  {mockUsuarios.map((u) => (
-                    <SelectItem key={u.id_usuario} value={String(u.id_usuario)}>
-                      {u.nombre}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <Combobox
+                id="lote_id_usuario_responsable"
+                name="id_usuario_responsable"
+                value={idUsuarioResponsable}
+                onValueChange={setIdUsuarioResponsable}
+                onChange={(e) => setIdUsuarioResponsable(e.target.value)}
+                options={mockUsuarios.map((u) => ({
+                  value: String(u.id_usuario),
+                  label: u.nombre,
+                }))}
+              />
             </div>
             <div>
               <label htmlFor="lote_estado" className="block mb-1.5 text-sm font-medium">Estado *</label>
-              <Select value={estado} onValueChange={setEstado}>
-                <SelectTrigger id="lote_estado" className="w-full bg-input-background">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent className="z-[100]">
-                  <SelectItem value="en_proceso">En proceso</SelectItem>
-                  <SelectItem value="finalizado">Finalizado</SelectItem>
-                  <SelectItem value="programado">Programado</SelectItem>
-                  <SelectItem value="anulado">Anulado</SelectItem>
-                </SelectContent>
-              </Select>
+              <Combobox
+                id="lote_estado"
+                name="estado"
+                value={estado}
+                onValueChange={setEstado}
+                onChange={(e) => setEstado(e.target.value)}
+                options={[
+                  { value: 'en_proceso', label: 'En proceso' },
+                  { value: 'finalizado', label: 'Finalizado' },
+                  { value: 'programado', label: 'Programado' },
+                  { value: 'anulado', label: 'Anulado' },
+                ]}
+              />
             </div>
           </div>
 
@@ -247,18 +242,17 @@ export function ProduccionFormModal({ open, onClose, lote = null, onSave, isLoad
 
             <div className="flex flex-col sm:flex-row gap-2">
               <div className="flex-1">
-                <Select value={selectedInsumoId} onValueChange={setSelectedInsumoId}>
-                  <SelectTrigger id="lote_insumo_id_insumo" className="w-full bg-input-background">
-                    <SelectValue placeholder="Seleccionar insumo..." />
-                  </SelectTrigger>
-                  <SelectContent className="z-[100] max-h-56">
-                    {availableInsumos.map((ins) => (
-                      <SelectItem key={ins.id_insumo} value={String(ins.id_insumo)}>
-                        {ins.nombre} ({ins.unidad_medida})
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                <Combobox
+                  id="lote_insumo_id_insumo"
+                  placeholder="Seleccionar insumo..."
+                  value={selectedInsumoId}
+                  onValueChange={setSelectedInsumoId}
+                  onChange={(e) => setSelectedInsumoId(e.target.value)}
+                  options={availableInsumos.map((ins) => ({
+                    value: String(ins.id_insumo),
+                    label: `${ins.nombre} (${ins.unidad_medida})`,
+                  }))}
+                />
               </div>
 
               <div className="flex gap-2 sm:w-56">

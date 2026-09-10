@@ -3,6 +3,7 @@ import { X, Upload, Trash2, Image as ImageIcon } from 'lucide-react';
 import { mockCategorias, getCategorias } from '../../categorias/services/categoriasService';
 import { mockFichasTecnicas, getFichasTecnicas } from '../../fichas-tecnicas/services/fichasTecnicasService';
 import { mockProveedores, getProveedores } from '../../proveedores/services/proveedoresService';
+import { Combobox } from '../../../shared/ui/Combobox';
 
 export function ProductoFormModal({ open, onClose, producto = null, onSave, isLoading = false }) {
   const [nombre, setNombre] = useState('');
@@ -160,19 +161,16 @@ export function ProductoFormModal({ open, onClose, producto = null, onSave, isLo
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <label htmlFor="producto_id_categoria" className="block mb-1.5 text-sm font-medium">Categoría *</label>
-              <select
+              <Combobox
                 id="producto_id_categoria"
                 name="id_categoria"
                 value={idCategoria}
                 onChange={(e) => setIdCategoria(e.target.value)}
-                className="w-full px-4 py-2 border border-input bg-input-background rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-ring"
-              >
-                {categorias.map((cat) => (
-                  <option key={cat.id_categoria} value={String(cat.id_categoria)}>
-                    {cat.nombre}
-                  </option>
-                ))}
-              </select>
+                options={categorias.map((cat) => ({
+                  value: String(cat.id_categoria),
+                  label: cat.nombre,
+                }))}
+              />
             </div>
             <div>
               <label htmlFor="producto_precio_venta" className="block mb-1.5 text-sm font-medium">Precio de Venta ($) *</label>
@@ -342,53 +340,53 @@ export function ProductoFormModal({ open, onClose, producto = null, onSave, isLo
             </div>
             <div>
               <label htmlFor="producto_estado" className="block mb-1.5 text-sm font-medium">Estado</label>
-              <select
+              <Combobox
                 id="producto_estado"
                 name="estado"
                 value={estado}
                 onChange={(e) => setEstado(e.target.value)}
-                className="w-full px-4 py-2 border border-input bg-input-background rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-ring"
-              >
-                <option value="activo">Activo</option>
-                <option value="inactivo">Inactivo</option>
-              </select>
+                options={[
+                  { value: 'activo', label: 'Activo' },
+                  { value: 'inactivo', label: 'Inactivo' },
+                ]}
+              />
             </div>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <label htmlFor="producto_id_ficha" className="block mb-1.5 text-sm font-medium">Ficha Técnica (Receta)</label>
-              <select
+              <Combobox
                 id="producto_id_ficha"
                 name="id_ficha"
                 value={idFicha}
+                placeholder="Sin ficha técnica"
                 onChange={(e) => setIdFicha(e.target.value)}
-                className="w-full px-4 py-2 border border-input bg-input-background rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-ring"
-              >
-                <option value="">Sin ficha técnica</option>
-                {fichas.map((f) => (
-                  <option key={f.id_ficha} value={String(f.id_ficha)}>
-                    {f.nombre}
-                  </option>
-                ))}
-              </select>
+                options={[
+                  { value: '', label: 'Sin ficha técnica' },
+                  ...fichas.map((f) => ({
+                    value: String(f.id_ficha),
+                    label: f.nombre,
+                  })),
+                ]}
+              />
             </div>
             <div>
               <label htmlFor="producto_id_proveedor" className="block mb-1.5 text-sm font-medium">Proveedor (Opcional)</label>
-              <select
+              <Combobox
                 id="producto_id_proveedor"
                 name="id_proveedor"
                 value={idProveedor}
+                placeholder="Sin proveedor"
                 onChange={(e) => setIdProveedor(e.target.value)}
-                className="w-full px-4 py-2 border border-input bg-input-background rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-ring"
-              >
-                <option value="">Sin proveedor</option>
-                {proveedores.map((p) => (
-                  <option key={p.id_proveedor} value={String(p.id_proveedor)}>
-                    {p.nombre}
-                  </option>
-                ))}
-              </select>
+                options={[
+                  { value: '', label: 'Sin proveedor' },
+                  ...proveedores.map((p) => ({
+                    value: String(p.id_proveedor),
+                    label: p.nombre,
+                  })),
+                ]}
+              />
             </div>
           </div>
 

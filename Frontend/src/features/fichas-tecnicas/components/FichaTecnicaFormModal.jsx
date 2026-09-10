@@ -2,13 +2,7 @@ import { useState, useEffect } from 'react';
 import { Plus, Trash2, X, Package } from 'lucide-react';
 import { mockInsumos, getInsumos } from '../../insumos/services/insumosService';
 import { mockFichaTecnicaInsumos } from '../services/fichasTecnicasService';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '../../../shared/ui/select';
+import { Combobox } from '../../../shared/ui/Combobox';
 
 export function FichaTecnicaFormModal({ open, onClose, ficha = null, onSave, isLoading = false }) {
   const [nombre, setNombre] = useState('');
@@ -231,18 +225,17 @@ export function FichaTecnicaFormModal({ open, onClose, ficha = null, onSave, isL
 
             <div className="flex flex-col sm:flex-row gap-2">
               <div className="flex-1">
-                <Select value={selectedInsumoId} onValueChange={setSelectedInsumoId}>
-                  <SelectTrigger id="ficha_insumo_id_insumo" className="w-full bg-input-background">
-                    <SelectValue placeholder="Seleccionar insumo..." />
-                  </SelectTrigger>
-                  <SelectContent className="z-[100] max-h-56">
-                    {availableInsumos.map((ins) => (
-                      <SelectItem key={ins.id_insumo} value={String(ins.id_insumo)}>
-                        {ins.nombre} ({ins.unidad_medida})
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                <Combobox
+                  id="ficha_insumo_id_insumo"
+                  placeholder="Seleccionar insumo..."
+                  value={selectedInsumoId}
+                  onValueChange={setSelectedInsumoId}
+                  onChange={(e) => setSelectedInsumoId(e.target.value)}
+                  options={availableInsumos.map((ins) => ({
+                    value: String(ins.id_insumo),
+                    label: `${ins.nombre} (${ins.unidad_medida})`,
+                  }))}
+                />
               </div>
 
               <div className="flex gap-2 sm:w-56">
@@ -315,16 +308,18 @@ export function FichaTecnicaFormModal({ open, onClose, ficha = null, onSave, isL
           </div>
 
           <div className="modal-field-wide">
-            <label className="block mb-1.5 text-sm font-medium">Estado</label>
-            <Select value={estado} onValueChange={setEstado}>
-              <SelectTrigger className="w-full bg-input-background">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent className="z-[100]">
-                <SelectItem value="Activo">Activo / Vigente</SelectItem>
-                <SelectItem value="Inactivo">Inactivo / En Revisión</SelectItem>
-              </SelectContent>
-            </Select>
+            <label htmlFor="ficha_estado" className="block mb-1.5 text-sm font-medium">Estado</label>
+            <Combobox
+              id="ficha_estado"
+              name="estado"
+              value={estado}
+              onValueChange={setEstado}
+              onChange={(e) => setEstado(e.target.value)}
+              options={[
+                { value: 'Activo', label: 'Activo / Vigente' },
+                { value: 'Inactivo', label: 'Inactivo / En Revisión' },
+              ]}
+            />
           </div>
 
           <div className="flex gap-2 pt-4 border-t border-border">

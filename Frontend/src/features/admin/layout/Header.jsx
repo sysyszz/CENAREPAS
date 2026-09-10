@@ -1,30 +1,72 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { Search, Sun, Moon, User, Settings, LogOut, Menu } from 'lucide-react';
+import { useNavigate, useLocation, Link } from 'react-router-dom';
+import { Search, Sun, Moon, User, Settings, LogOut, Menu, ChevronRight, Home } from 'lucide-react';
 import { useTheme } from '../../../shared/contexts/ThemeContext';
 import { NotificationCenter } from '../components/NotificationCenter';
 
+const ROUTE_LABELS = {
+  '/admin': 'Dashboard',
+  '/admin/usuarios': 'Usuarios',
+  '/admin/roles': 'Roles y Permisos',
+  '/admin/proveedores': 'Proveedores',
+  '/admin/clientes': 'Clientes',
+  '/admin/categorias': 'Categorías',
+  '/admin/productos': 'Productos',
+  '/admin/insumos': 'Insumos',
+  '/admin/fichas-tecnicas': 'Fichas Técnicas',
+  '/admin/produccion': 'Control de Producción',
+  '/admin/compras': 'Gestión de Compras',
+  '/admin/pedidos': 'Gestión de Pedidos',
+  '/admin/ventas': 'Gestión de Ventas',
+  '/admin/configuracion': 'Configuración del Sistema',
+  '/admin/profile': 'Mi Perfil',
+};
+
 export default function Header({ onLogout, onMenuClick }) {
   const navigate = useNavigate();
+  const location = useLocation();
   const { theme, toggleTheme } = useTheme();
   const [showUserMenu, setShowUserMenu] = useState(false);
 
+  const currentLabel = ROUTE_LABELS[location.pathname] || 'Panel';
+
   return (
-    <header className="bg-card border-b border-border px-3.5 py-2.5 sm:px-6 sm:py-3.5 flex items-center justify-between gap-2 sm:gap-4">
-      <button
-        onClick={onMenuClick}
-        className="p-1.5 sm:p-2 -ml-1 sm:-ml-2 hover:bg-muted rounded-lg transition-colors lg:hidden shrink-0 cursor-pointer text-foreground"
-        aria-label="Abrir menú"
-      >
-        <Menu className="w-5 h-5" />
-      </button>
-      <div className="flex items-center gap-2 sm:gap-4 flex-1 min-w-0 sm:max-w-2xl">
-        <Search className="w-4 sm:w-5 h-4 sm:h-5 text-muted-foreground shrink-0 hidden sm:block" />
-        <input
-          type="search"
-          placeholder="Buscar..."
-          className="w-full min-w-0 px-3 py-1.5 sm:px-4 sm:py-2 border border-input bg-input-background rounded-lg focus:outline-none focus:ring-2 focus:ring-ring text-xs sm:text-sm"
-        />
+    <header className="bg-card border-b border-border px-3.5 py-2.5 sm:px-6 sm:py-3.5 flex items-center justify-between gap-2 sm:gap-4 sticky top-0 z-20 backdrop-blur-md bg-card/95">
+      <div className="flex items-center gap-2 sm:gap-4">
+        <button
+          onClick={onMenuClick}
+          className="p-1.5 sm:p-2 -ml-1 sm:-ml-2 hover:bg-muted rounded-lg transition-colors lg:hidden shrink-0 cursor-pointer text-foreground"
+          aria-label="Abrir menú"
+        >
+          <Menu className="w-5 h-5" />
+        </button>
+        
+        {/* Breadcrumb Navigation */}
+        <nav aria-label="Breadcrumb" className="hidden sm:flex items-center gap-1.5 text-xs text-muted-foreground font-medium">
+          <Link to="/admin" className="flex items-center gap-1 hover:text-primary transition-colors">
+            <Home className="w-3.5 h-3.5 text-primary" />
+            <span>Inicio</span>
+          </Link>
+          {location.pathname !== '/admin' && (
+            <>
+              <ChevronRight className="w-3 h-3 text-muted-foreground/60" />
+              <span className="text-foreground font-semibold px-2 py-0.5 rounded-md bg-primary/10 text-primary">
+                {currentLabel}
+              </span>
+            </>
+          )}
+        </nav>
+      </div>
+
+      <div className="flex items-center gap-2 sm:gap-4 flex-1 min-w-0 max-w-xs sm:max-w-md ml-auto">
+        <div className="relative w-full">
+          <Search className="w-4 h-4 text-muted-foreground absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+          <input
+            type="search"
+            placeholder="Buscar arepas, insumos, clientes..."
+            className="w-full min-w-0 pl-9 pr-3 py-1.5 sm:py-2 border border-input bg-input-background rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/40 text-xs sm:text-sm transition-all shadow-xs placeholder:text-muted-foreground/60"
+          />
+        </div>
       </div>
       <div className="flex items-center gap-1.5 sm:gap-3 shrink-0">
         <button

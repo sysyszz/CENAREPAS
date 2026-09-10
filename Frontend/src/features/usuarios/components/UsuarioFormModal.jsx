@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { X } from 'lucide-react';
 import { mockRoles, getRoles } from '../../roles/services/rolesService';
+import { Combobox } from '../../../shared/ui/Combobox';
 
 export function UsuarioFormModal({ open, onClose, usuario = null, onSave, isLoading = false }) {
   const [nombre, setNombre] = useState('');
@@ -105,19 +106,16 @@ export function UsuarioFormModal({ open, onClose, usuario = null, onSave, isLoad
           </div>
           <div>
             <label htmlFor="usuario_id_rol" className="block mb-2 text-sm font-medium">Rol</label>
-            <select
+            <Combobox
               id="usuario_id_rol"
               name="id_rol"
               value={idRol}
               onChange={(e) => setIdRol(e.target.value)}
-              className="w-full px-4 py-2 border border-input bg-input-background rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-ring"
-            >
-              {roles.map((r) => (
-                <option key={r.id_rol} value={String(r.id_rol)}>
-                  {r.nombre}
-                </option>
-              ))}
-            </select>
+              options={roles.map((r) => ({
+                value: String(r.id_rol),
+                label: r.nombre,
+              }))}
+            />
           </div>
           <div>
             <label htmlFor="usuario_contrasena" className="block mb-2 text-sm font-medium">
@@ -136,16 +134,16 @@ export function UsuarioFormModal({ open, onClose, usuario = null, onSave, isLoad
           </div>
           <div className="modal-field-wide">
             <label htmlFor="usuario_estado" className="block mb-2 text-sm font-medium">Estado</label>
-            <select
+            <Combobox
               id="usuario_estado"
               name="estado"
               value={estado}
               onChange={(e) => setEstado(e.target.value)}
-              className="w-full px-4 py-2 border border-input bg-input-background rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-ring"
-            >
-              <option value="activo">Activo</option>
-              <option value="inactivo">Inactivo</option>
-            </select>
+              options={[
+                { value: 'activo', label: 'Activo' },
+                { value: 'inactivo', label: 'Inactivo' },
+              ]}
+            />
           </div>
           <div className="modal-field-wide flex gap-3 pt-6 border-t border-border/50">
             <button

@@ -1,6 +1,7 @@
 import { Routes, Route, Navigate } from 'react-router-dom';
 import LandingPage from './features/landing/pages/LandingPage';
 import Login from './features/auth/pages/Login';
+import Register from './features/auth/pages/Register';
 import ForgotPassword from './features/auth/pages/ForgotPassword';
 import AdminLayout from './features/admin/layout/AdminLayout';
 
@@ -35,6 +36,8 @@ export function AppRoutes({ isAuthenticated, setIsAuthenticated }) {
         path="/admin/login"
         element={<Login onLogin={() => setIsAuthenticated(true)} />}
       />
+      <Route path="/admin/register" element={<Register />} />
+      <Route path="/register" element={<Register />} />
       <Route path="/admin/forgot-password" element={<ForgotPassword />} />
       <Route
         path="/admin"

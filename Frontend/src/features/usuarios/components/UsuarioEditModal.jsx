@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { X, Save } from 'lucide-react';
 import { mockRoles, getRoles } from '../../roles/services/rolesService';
+import { Combobox } from '../../../shared/ui/Combobox';
 
 export function UsuarioEditModal({ open, editData, setEditData, onClose, onSave, isSaving }) {
   const [roles, setRoles] = useState(mockRoles);
@@ -49,32 +50,29 @@ export function UsuarioEditModal({ open, editData, setEditData, onClose, onSave,
           </div>
           <div>
             <label htmlFor="edit_usuario_id_rol" className="block mb-2 text-sm font-medium">Rol</label>
-            <select
+            <Combobox
               id="edit_usuario_id_rol"
               name="id_rol"
               value={editData.id_rol}
               onChange={(e) => setEditData({ ...editData, id_rol: Number(e.target.value) })}
-              className="w-full px-4 py-2 border border-input bg-input-background rounded-lg focus:outline-none focus:ring-2 focus:ring-ring"
-            >
-              {roles.map((r) => (
-                <option key={r.id_rol} value={r.id_rol}>
-                  {r.nombre}
-                </option>
-              ))}
-            </select>
+              options={roles.map((r) => ({
+                value: r.id_rol,
+                label: r.nombre,
+              }))}
+            />
           </div>
           <div className="modal-field-wide">
             <label htmlFor="edit_usuario_estado" className="block mb-2 text-sm font-medium">Estado</label>
-            <select
+            <Combobox
               id="edit_usuario_estado"
               name="estado"
               value={editData.estado}
               onChange={(e) => setEditData({ ...editData, estado: e.target.value })}
-              className="w-full px-4 py-2 border border-input bg-input-background rounded-lg focus:outline-none focus:ring-2 focus:ring-ring"
-            >
-              <option value="activo">Activo</option>
-              <option value="inactivo">Inactivo</option>
-            </select>
+              options={[
+                { value: 'activo', label: 'Activo' },
+                { value: 'inactivo', label: 'Inactivo' },
+              ]}
+            />
           </div>
           <div className="flex gap-2 pt-4">
             <button

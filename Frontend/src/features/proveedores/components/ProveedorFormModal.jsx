@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { X } from 'lucide-react';
+import { Combobox } from '../../../shared/ui/Combobox';
 
 export function ProveedorFormModal({ open, onClose, proveedor = null, onSave, isLoading = false }) {
   const [nombre, setNombre] = useState('');
@@ -140,16 +141,16 @@ export function ProveedorFormModal({ open, onClose, proveedor = null, onSave, is
           </div>
           <div className="modal-field-wide">
             <label htmlFor="proveedor_estado" className="block mb-2 text-sm font-medium">Estado</label>
-            <select
+            <Combobox
               id="proveedor_estado"
               name="estado"
               value={estado}
               onChange={(e) => setEstado(e.target.value)}
-              className="w-full px-4 py-2 border border-input bg-input-background rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-ring"
-            >
-              <option value="activo">Activo</option>
-              <option value="inactivo">Inactivo</option>
-            </select>
+              options={[
+                { value: 'activo', label: 'Activo' },
+                { value: 'inactivo', label: 'Inactivo' },
+              ]}
+            />
           </div>
           <div className="flex gap-2 pt-4">
             <button

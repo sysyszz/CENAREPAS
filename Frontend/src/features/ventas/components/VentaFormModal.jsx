@@ -4,6 +4,7 @@ import { mockClientes, getClientes } from '../../clientes/services/clientesServi
 import { mockPedidos, getPedidos } from '../../pedidos/services/pedidosService';
 import { mockProductos, getProductos } from '../../productos/services/productosService';
 import { mockDetallesVenta } from '../services/ventasService';
+import { Combobox } from '../../../shared/ui/Combobox';
 
 const SEDES_DEFAULT = [
   { id_sede: 1, nombre: 'Sede Principal (Ibagué)' },
@@ -182,54 +183,48 @@ export function VentaFormModal({ open, onClose, venta = null, onSave, isLoading 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <label htmlFor="venta_id_cliente" className="block mb-1.5 text-sm font-medium">Cliente *</label>
-              <select
+              <Combobox
                 id="venta_id_cliente"
                 name="id_cliente"
                 value={idCliente}
                 onChange={(e) => setIdCliente(e.target.value)}
-                className="w-full px-4 py-2 border border-input bg-input-background rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-ring"
-              >
-                {clientes.map((c) => (
-                  <option key={c.id_cliente} value={String(c.id_cliente)}>
-                    {c.nombre}
-                  </option>
-                ))}
-              </select>
+                options={clientes.map((c) => ({
+                  value: String(c.id_cliente),
+                  label: c.nombre,
+                }))}
+              />
             </div>
             <div>
               <label htmlFor="venta_id_sede" className="block mb-1.5 text-sm font-medium">Sede / Punto de Venta *</label>
-              <select
+              <Combobox
                 id="venta_id_sede"
                 name="id_sede"
                 value={idSede}
                 onChange={(e) => setIdSede(e.target.value)}
-                className="w-full px-4 py-2 border border-input bg-input-background rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-ring"
-              >
-                {SEDES_DEFAULT.map((s) => (
-                  <option key={s.id_sede} value={String(s.id_sede)}>
-                    {s.nombre}
-                  </option>
-                ))}
-              </select>
+                options={SEDES_DEFAULT.map((s) => ({
+                  value: String(s.id_sede),
+                  label: s.nombre,
+                }))}
+              />
             </div>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <label htmlFor="venta_id_pedido" className="block mb-1.5 text-sm font-medium">Pedido Asociado (Opcional)</label>
-              <select
+              <Combobox
                 id="venta_id_pedido"
                 name="id_pedido"
+                placeholder="Venta directa en mostrador (Sin pedido)"
                 value={idPedido}
                 onChange={(e) => setIdPedido(e.target.value)}
-                className="w-full px-4 py-2 border border-input bg-input-background rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-ring"
-              >
-                <option value="">Venta directa en mostrador (Sin pedido)</option>
-                {pedidos.map((p) => (
-                  <option key={p.id_pedido} value={String(p.id_pedido)}>
-                    Pedido #{p.id_pedido} - ${Number(p.valor_total).toLocaleString('es-CO')}
-                  </option>
-                ))}
-              </select>
+                options={[
+                  { value: '', label: 'Venta directa en mostrador (Sin pedido)' },
+                  ...pedidos.map((p) => ({
+                    value: String(p.id_pedido),
+                    label: `Pedido #${p.id_pedido} - $${Number(p.valor_total).toLocaleString('es-CO')}`,
+                  })),
+                ]}
+              />
             </div>
             <div>
               <label htmlFor="venta_fecha_venta" className="block mb-1.5 text-sm font-medium">Fecha y Hora</label>
@@ -246,30 +241,30 @@ export function VentaFormModal({ open, onClose, venta = null, onSave, isLoading 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <label htmlFor="venta_medio_pago" className="block mb-1.5 text-sm font-medium">Medio de Pago</label>
-              <select
+              <Combobox
                 id="venta_medio_pago"
                 name="medio_pago"
                 value={medioPago}
                 onChange={(e) => setMedioPago(e.target.value)}
-                className="w-full px-4 py-2 border border-input bg-input-background rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-ring"
-              >
-                <option value="transferencia">Transferencia Bancaria</option>
-                <option value="efectivo">Efectivo</option>
-                <option value="tarjeta">Tarjeta Débito/Crédito</option>
-              </select>
+                options={[
+                  { value: 'transferencia', label: 'Transferencia Bancaria' },
+                  { value: 'efectivo', label: 'Efectivo' },
+                  { value: 'tarjeta', label: 'Tarjeta Débito/Crédito' },
+                ]}
+              />
             </div>
             <div>
               <label htmlFor="venta_estado" className="block mb-1.5 text-sm font-medium">Estado</label>
-              <select
+              <Combobox
                 id="venta_estado"
                 name="estado"
                 value={estado}
                 onChange={(e) => setEstado(e.target.value)}
-                className="w-full px-4 py-2 border border-input bg-input-background rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-ring"
-              >
-                <option value="completada">Completada</option>
-                <option value="anulada">Anulada</option>
-              </select>
+                options={[
+                  { value: 'completada', label: 'Completada' },
+                  { value: 'anulada', label: 'Anulada' },
+                ]}
+              />
             </div>
           </div>
           <div className="modal-field-wide">
@@ -297,20 +292,20 @@ export function VentaFormModal({ open, onClose, venta = null, onSave, isLoading 
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-12 gap-2">
               <div className="sm:col-span-5">
-                <select
+                <Combobox
                   id="detalle_venta_id_producto"
                   aria-label="Seleccionar producto para venta"
+                  placeholder="Seleccionar producto..."
                   value={selectedProductoId}
                   onChange={(e) => setSelectedProductoId(e.target.value)}
-                  className="w-full px-3 py-2 border border-input bg-input-background rounded-lg text-xs focus:outline-none focus:ring-2 focus:ring-ring"
-                >
-                  <option value="">Seleccionar producto...</option>
-                  {availableProductos.map((prod) => (
-                    <option key={prod.id_producto} value={String(prod.id_producto)}>
-                      {prod.nombre} (${Number(prod.precio_venta).toLocaleString('es-CO')})
-                    </option>
-                  ))}
-                </select>
+                  options={[
+                    { value: '', label: 'Seleccionar producto...' },
+                    ...availableProductos.map((prod) => ({
+                      value: String(prod.id_producto),
+                      label: `${prod.nombre} ($${Number(prod.precio_venta).toLocaleString('es-CO')})`,
+                    })),
+                  ]}
+                />
               </div>
               <div className="sm:col-span-3">
                 <input

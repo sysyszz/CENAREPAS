@@ -3,6 +3,7 @@ import { X, Plus, Trash2, Package } from 'lucide-react';
 import { mockProveedores, getProveedores } from '../../proveedores/services/proveedoresService';
 import { mockInsumos, getInsumos } from '../../insumos/services/insumosService';
 import { mockDetallesCompra } from '../services/comprasService';
+import { Combobox } from '../../../shared/ui/Combobox';
 
 export function CompraFormModal({ open, onClose, compra = null, onSave, isLoading = false }) {
   const [fechaCompra, setFechaCompra] = useState('');
@@ -195,51 +196,48 @@ export function CompraFormModal({ open, onClose, compra = null, onSave, isLoadin
             </div>
             <div>
               <label htmlFor="compra_id_proveedor" className="block mb-1.5 text-sm font-medium">Proveedor *</label>
-              <select
+              <Combobox
                 id="compra_id_proveedor"
                 name="id_proveedor"
                 value={idProveedor}
                 onChange={(e) => setIdProveedor(e.target.value)}
-                className="w-full px-4 py-2 border border-input bg-input-background rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-ring"
-              >
-                {proveedores.map((p) => (
-                  <option key={p.id_proveedor} value={String(p.id_proveedor)}>
-                    {p.nombre}
-                  </option>
-                ))}
-              </select>
+                options={proveedores.map((p) => ({
+                  value: String(p.id_proveedor),
+                  label: p.nombre,
+                }))}
+              />
             </div>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <label htmlFor="compra_medio_pago" className="block mb-1.5 text-sm font-medium">Medio de Pago</label>
-              <select
+              <Combobox
                 id="compra_medio_pago"
                 name="medio_pago"
                 value={medioPago}
                 onChange={(e) => setMedioPago(e.target.value)}
-                className="w-full px-4 py-2 border border-input bg-input-background rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-ring"
-              >
-                <option value="transferencia">Transferencia Bancaria</option>
-                <option value="efectivo">Efectivo</option>
-                <option value="credito">Crédito Proveedor</option>
-              </select>
+                options={[
+                  { value: 'transferencia', label: 'Transferencia Bancaria' },
+                  { value: 'efectivo', label: 'Efectivo' },
+                  { value: 'credito', label: 'Crédito Proveedor' },
+                ]}
+              />
             </div>
             <div>
               <label htmlFor="compra_estado" className="block mb-1.5 text-sm font-medium">Estado</label>
-              <select
+              <Combobox
                 id="compra_estado"
                 name="estado"
                 value={estado}
                 onChange={(e) => setEstado(e.target.value)}
-                className="w-full px-4 py-2 border border-input bg-input-background rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-ring"
-              >
-                <option value="activo">Activo</option>
-                <option value="recibida">Recibida</option>
-                <option value="pendiente">Pendiente</option>
-                <option value="anulado">Anulada</option>
-              </select>
+                options={[
+                  { value: 'activo', label: 'Activo' },
+                  { value: 'recibida', label: 'Recibida' },
+                  { value: 'pendiente', label: 'Pendiente' },
+                  { value: 'anulado', label: 'Anulada' },
+                ]}
+              />
             </div>
           </div>
 
@@ -271,20 +269,20 @@ export function CompraFormModal({ open, onClose, compra = null, onSave, isLoadin
 
             <div className="grid grid-cols-1 sm:grid-cols-12 gap-2">
               <div className="sm:col-span-5">
-                <select
+                <Combobox
                   id="detalle_compra_id_insumo"
                   aria-label="Seleccionar insumo para compra"
+                  placeholder="Seleccionar insumo..."
                   value={selectedInsumoId}
                   onChange={(e) => setSelectedInsumoId(e.target.value)}
-                  className="w-full px-3 py-2 border border-input bg-input-background rounded-lg text-xs focus:outline-none focus:ring-2 focus:ring-ring"
-                >
-                  <option value="">Seleccionar insumo...</option>
-                  {availableInsumos.map((ins) => (
-                    <option key={ins.id_insumo} value={String(ins.id_insumo)}>
-                      {ins.nombre} ({ins.unidad_medida})
-                    </option>
-                  ))}
-                </select>
+                  options={[
+                    { value: '', label: 'Seleccionar insumo...' },
+                    ...availableInsumos.map((ins) => ({
+                      value: String(ins.id_insumo),
+                      label: `${ins.nombre} (${ins.unidad_medida})`,
+                    })),
+                  ]}
+                />
               </div>
 
               <div className="sm:col-span-3">

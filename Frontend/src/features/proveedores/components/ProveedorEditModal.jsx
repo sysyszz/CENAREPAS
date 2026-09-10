@@ -1,4 +1,5 @@
 import { Save, X } from 'lucide-react';
+import { Combobox } from '../../../shared/ui/Combobox';
 
 export function ProveedorEditModal({ open, editData, setEditData, onClose, onSave, isSaving }) {
   if (!open || !editData) return null;
@@ -77,16 +78,16 @@ export function ProveedorEditModal({ open, editData, setEditData, onClose, onSav
           </div>
           <div className="modal-field-wide">
             <label htmlFor="edit_proveedor_estado" className="block mb-2 text-sm font-medium">Estado</label>
-            <select
+            <Combobox
               id="edit_proveedor_estado"
               name="estado"
               value={editData.estado || 'activo'}
               onChange={(e) => setEditData({ ...editData, estado: e.target.value })}
-              className="w-full px-4 py-2 border border-input bg-input-background rounded-lg focus:outline-none focus:ring-2 focus:ring-ring"
-            >
-              <option value="activo">Activo</option>
-              <option value="inactivo">Inactivo</option>
-            </select>
+              options={[
+                { value: 'activo', label: 'Activo' },
+                { value: 'inactivo', label: 'Inactivo' },
+              ]}
+            />
           </div>
           <div className="flex gap-2 pt-4">
             <button
