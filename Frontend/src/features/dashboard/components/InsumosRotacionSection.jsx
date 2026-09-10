@@ -48,7 +48,7 @@ export function InsumosRotacionSection({ insumosData, onOpenAsistente }) {
   const list = insumosData || defaultInsumos;
 
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5 sm:gap-4.5 mb-7">
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5 sm:gap-4.5 mb-7 items-stretch">
       {/* 3 Insumos Cards */}
       {list.map((ins, idx) => {
         const isPositive = ins.deltaPct >= 0;
@@ -63,14 +63,14 @@ export function InsumosRotacionSection({ insumosData, onOpenAsistente }) {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5, delay: idx * 0.08 + 0.1, ease: [0.22, 1, 0.36, 1] }}
             whileHover={{ y: -4, transition: { duration: 0.2 } }}
-            className="bg-card dark:bg-[#111820] rounded-3xl p-4.5 sm:p-5.5 shadow-[0_2px_10px_rgba(46,43,37,0.06)] dark:shadow-none border border-border dark:border-[rgba(148,163,184,0.14)] hover:shadow-md transition-shadow duration-300 flex flex-col justify-between"
+            className="bg-card dark:bg-[#111820] rounded-3xl p-4.5 sm:p-5.5 shadow-[0_2px_10px_rgba(46,43,37,0.06)] dark:shadow-none border border-border dark:border-[rgba(148,163,184,0.14)] hover:shadow-md transition-shadow duration-300 flex flex-col justify-between h-full"
           >
             {/* Header del Insumo */}
             <div className="flex items-center gap-2.5 mb-3.5">
-              <div className="size-8.5 rounded-full flex items-center justify-center bg-[#FFE1D0] dark:bg-[#C1502D]/20 text-[#8C491A] dark:text-[#E2895F]">
+              <div className="size-8.5 rounded-full flex items-center justify-center bg-[#FFE1D0] dark:bg-[#C1502D]/20 text-[#8C491A] dark:text-[#E2895F] shrink-0">
                 <IconComp className="size-4" />
               </div>
-              <span className="text-[13.5px] font-bold text-slate-800 dark:text-foreground truncate">{ins.nombre}</span>
+              <span className="text-[13.5px] font-bold text-slate-800 dark:text-foreground truncate min-h-[24px] flex items-center">{ins.nombre}</span>
             </div>
 
             {/* Rotación en Días & Delta Tag */}
@@ -92,7 +92,7 @@ export function InsumosRotacionSection({ insumosData, onOpenAsistente }) {
             </div>
 
             {/* Sparkline con Badge Flotante de Delta Absoluto */}
-            <div className="relative h-11 pt-1">
+            <div className="relative h-11 pt-1 mt-auto">
               <span 
                 className="absolute -top-1.5 right-0 font-mono text-[10.5px] font-bold px-2 py-0.5 rounded-md border border-border dark:border-[rgba(148,163,184,0.2)] bg-[#FFFBF0] dark:bg-[#0B0F14]"
                 style={{ color: lineColor }}
@@ -113,7 +113,7 @@ export function InsumosRotacionSection({ insumosData, onOpenAsistente }) {
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5, delay: 0.35, ease: [0.22, 1, 0.36, 1] }}
         whileHover={{ y: -4, transition: { duration: 0.2 } }}
-        className="relative overflow-hidden rounded-3xl p-4.5 sm:p-5.5 flex flex-col justify-between shadow-md bg-gradient-to-br from-[#D67F48] via-[#C1502D] to-[#8C491A] text-white"
+        className="relative overflow-hidden rounded-3xl p-4.5 sm:p-5.5 flex flex-col justify-between shadow-md bg-gradient-to-br from-[#D67F48] via-[#C1502D] to-[#8C491A] text-white h-full"
       >
         {/* Anillos ambientales decorativos */}
         <svg className="absolute -top-7 -right-7 size-36 opacity-20 pointer-events-none" viewBox="0 0 100 100">

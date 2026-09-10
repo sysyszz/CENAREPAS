@@ -157,9 +157,9 @@ function KpiCard({ icon: Icon, value, title, description, tone }) {
       variants={railItem}
       whileHover={{ y: -4, scale: 1.015 }}
       transition={{ type: 'spring', stiffness: 350, damping: 22 }}
-      className="group relative flex flex-col justify-between rounded-2xl border border-[#2a1408]/15 bg-gradient-to-b from-[#1c0d06] to-[#120703] p-5 shadow-[0_12px_24px_-8px_rgba(28,11,3,0.2)] transition-all duration-300 hover:border-[#c1502d]/45 hover:shadow-[0_20px_35px_-8px_rgba(28,11,3,0.35)]"
+      className="group relative flex flex-col justify-between rounded-2xl border border-[#2a1408]/15 bg-gradient-to-b from-[#1c0d06] to-[#120703] p-5 shadow-[0_12px_24px_-8px_rgba(28,11,3,0.2)] transition-all duration-300 hover:border-[#c1502d]/45 hover:shadow-[0_20px_35px_-8px_rgba(28,11,3,0.35)] h-full"
     >
-      <div>
+      <div className="flex-1 flex flex-col">
         <div className="flex items-center justify-between gap-3">
           <span className={`flex size-9 shrink-0 items-center justify-center rounded-xl ${t.chip}`}>
             <Icon className="size-4.5" aria-hidden />
@@ -168,10 +168,10 @@ function KpiCard({ icon: Icon, value, title, description, tone }) {
             {value}
           </span>
         </div>
-        <h3 className="mt-3.5 text-sm font-bold leading-snug text-[#fffbf0]">{title}</h3>
-        <p className="mt-1.5 text-xs leading-relaxed text-[#fffbf0]/65">{description}</p>
+        <h3 className="mt-3.5 text-sm font-bold leading-snug text-[#fffbf0] min-h-[40px] flex items-center">{title}</h3>
+        <p className="mt-1.5 text-xs leading-relaxed text-[#fffbf0]/65 line-clamp-3">{description}</p>
       </div>
-      <div className="mt-3 flex items-center gap-1 text-[10.5px] font-semibold text-[#fbd28a]/70 group-hover:text-[#fbd28a] transition-colors">
+      <div className="mt-4 flex items-center gap-1 text-[10.5px] font-semibold text-[#fbd28a]/70 group-hover:text-[#fbd28a] transition-colors pt-2 border-t border-white/5">
         <span>Trazado en sistema</span>
         <ChevronRight className="size-3 transition-transform group-hover:translate-x-0.5" />
       </div>
@@ -533,7 +533,7 @@ export function Ventajas() {
           initial="hidden"
           whileInView="visible"
           viewport={{ once: true, amount: 0.15 }}
-          className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-5 mb-14 sm:mb-18"
+          className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-5 mb-14 sm:mb-18 items-stretch"
         >
           {KPIS.map((kpi) => (
             <KpiCard key={kpi.id} {...kpi} />

@@ -137,7 +137,7 @@ export function ProductsSection() {
           initial="hidden"
           whileInView="visible"
           viewport={{ once: true, amount: 0.15 }}
-          className="grid grid-cols-1 gap-x-8 gap-y-14 sm:grid-cols-2 lg:grid-cols-4"
+          className="grid grid-cols-1 gap-x-8 gap-y-14 sm:grid-cols-2 lg:grid-cols-4 items-stretch"
         >
           {PRODUCTOS.map((product) => {
             const TagIcon = product.tag.icon;
@@ -155,7 +155,7 @@ export function ProductsSection() {
                     : { rotate: 0, y: restLift - 8, scale: 1.03 }
                 }
                 transition={{ type: 'spring', stiffness: 280, damping: 22 }}
-                className="group relative flex flex-col rounded-2xl bg-white border border-[#e8dcc0] p-3 pb-5 shadow-[0_10px_25px_-8px_rgba(45,20,10,0.08)] hover:shadow-xl hover:border-brand/30 transition-all duration-300"
+                className="group relative flex flex-col rounded-2xl bg-white border border-[#e8dcc0] p-3 pb-5 shadow-[0_10px_25px_-8px_rgba(45,20,10,0.08)] hover:shadow-xl hover:border-brand/30 transition-all duration-300 h-full"
               >
                 {/* Cinta de washi tape cálida */}
                 <span
@@ -163,7 +163,7 @@ export function ProductsSection() {
                   className="absolute -top-2.5 left-1/2 h-5 w-14 -translate-x-1/2 -rotate-2 rounded-[2px] bg-accent-gold/40 border border-accent-gold/60 shadow-xs"
                 />
 
-                <div className="relative aspect-[4/5] w-full overflow-hidden rounded-xl bg-[#f5ecd8]">
+                <div className="relative aspect-[4/5] w-full overflow-hidden rounded-xl bg-[#f5ecd8] shrink-0">
                   <img
                     src={product.image}
                     alt={product.alt}
@@ -179,11 +179,13 @@ export function ProductsSection() {
                   </span>
                 </div>
 
-                <div className="px-1.5 pt-3.5 text-center">
-                  <h3 className="text-lg font-bold text-slate-900">{product.name}</h3>
-                  <p className="mt-2 text-xs leading-relaxed text-slate-600">{product.description}</p>
+                <div className="px-1.5 pt-3.5 text-center flex-1 flex flex-col justify-between">
+                  <div>
+                    <h3 className="text-lg font-bold text-slate-900 min-h-[56px] flex items-center justify-center leading-snug">{product.name}</h3>
+                    <p className="mt-2 text-xs leading-relaxed text-slate-600 line-clamp-3 min-h-[48px]">{product.description}</p>
+                  </div>
 
-                  <div className="mt-3.5 inline-flex flex-wrap items-center justify-center gap-x-1.5 gap-y-1 rounded-full border border-[#e8dcc0] bg-[#fffbf0] px-3 py-1.5 text-[11px] font-semibold text-slate-800">
+                  <div className="mt-4 inline-flex flex-wrap items-center justify-center gap-x-1.5 gap-y-1 rounded-full border border-[#e8dcc0] bg-[#fffbf0] px-3 py-1.5 text-[11px] font-semibold text-slate-800 self-center">
                     <TagIcon className="size-3.5 shrink-0 text-brand" aria-hidden />
                     <span className="text-slate-500 font-medium">{product.tag.label}:</span>
                     <span>{product.tag.value}</span>

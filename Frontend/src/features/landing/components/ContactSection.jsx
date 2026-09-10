@@ -191,7 +191,7 @@ export function ContactSection() {
             </motion.div>
 
             {/* 2. Tarjetas Rápidas de Teléfono y Correo con Botón de Copiado */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 items-stretch">
               
               {/* Teléfono */}
               <motion.div
@@ -199,31 +199,33 @@ export function ContactSection() {
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
                 transition={{ duration: 0.5, delay: 0.08 }}
-                className="rounded-2xl border border-[#e8dcc0] bg-white/90 p-4.5 shadow-xs transition-all hover:border-brand/40 hover:shadow-md"
+                className="rounded-2xl border border-[#e8dcc0] bg-white/90 p-4.5 shadow-xs transition-all hover:border-brand/40 hover:shadow-md flex flex-col justify-between h-full"
               >
-                <div className="flex items-center justify-between gap-2 mb-2">
-                  <div className="flex size-8 items-center justify-center rounded-xl bg-brand/10 text-brand">
-                    <Phone className="size-4" />
+                <div>
+                  <div className="flex items-center justify-between gap-2 mb-2">
+                    <div className="flex size-8 items-center justify-center rounded-xl bg-brand/10 text-brand">
+                      <Phone className="size-4" />
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => handleCopy('+57 311 348 2845', 'phone')}
+                      className="flex items-center gap-1 text-[11px] font-semibold text-slate-500 hover:text-brand transition-colors cursor-pointer"
+                      title="Copiar teléfono"
+                    >
+                      {copiedField === 'phone' ? (
+                        <span className="flex items-center gap-1 text-accent-green font-bold">
+                          <CheckCheck className="size-3" /> Copiado
+                        </span>
+                      ) : (
+                        <span className="flex items-center gap-1">
+                          <Copy className="size-3" /> Copiar
+                        </span>
+                      )}
+                    </button>
                   </div>
-                  <button
-                    type="button"
-                    onClick={() => handleCopy('+57 311 348 2845', 'phone')}
-                    className="flex items-center gap-1 text-[11px] font-semibold text-slate-500 hover:text-brand transition-colors cursor-pointer"
-                    title="Copiar teléfono"
-                  >
-                    {copiedField === 'phone' ? (
-                      <span className="flex items-center gap-1 text-accent-green font-bold">
-                        <CheckCheck className="size-3" /> Copiado
-                      </span>
-                    ) : (
-                      <span className="flex items-center gap-1">
-                        <Copy className="size-3" /> Copiar
-                      </span>
-                    )}
-                  </button>
+                  <p className="text-[11px] font-medium text-slate-500 min-h-[32px] flex items-center">Línea de Atención (María Quintero)</p>
                 </div>
-                <p className="text-[11px] font-medium text-slate-500">Línea de Atención (María Quintero)</p>
-                <a href="tel:+573113482845" className="text-sm font-bold text-slate-900 hover:text-brand transition-colors block mt-0.5">
+                <a href="tel:+573113482845" className="text-sm font-bold text-slate-900 hover:text-brand transition-colors block mt-2">
                   +57 311 348 2845
                 </a>
               </motion.div>
@@ -234,31 +236,33 @@ export function ContactSection() {
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
                 transition={{ duration: 0.5, delay: 0.12 }}
-                className="rounded-2xl border border-[#e8dcc0] bg-white/90 p-4.5 shadow-xs transition-all hover:border-brand/40 hover:shadow-md"
+                className="rounded-2xl border border-[#e8dcc0] bg-white/90 p-4.5 shadow-xs transition-all hover:border-brand/40 hover:shadow-md flex flex-col justify-between h-full"
               >
-                <div className="flex items-center justify-between gap-2 mb-2">
-                  <div className="flex size-8 items-center justify-center rounded-xl bg-accent-gold/15 text-[#8a5a14]">
-                    <Mail className="size-4" />
+                <div>
+                  <div className="flex items-center justify-between gap-2 mb-2">
+                    <div className="flex size-8 items-center justify-center rounded-xl bg-accent-gold/15 text-[#8a5a14]">
+                      <Mail className="size-4" />
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => handleCopy('estebanpqw1011@gmail.com', 'email')}
+                      className="flex items-center gap-1 text-[11px] font-semibold text-slate-500 hover:text-brand transition-colors cursor-pointer"
+                      title="Copiar correo"
+                    >
+                      {copiedField === 'email' ? (
+                        <span className="flex items-center gap-1 text-accent-green font-bold">
+                          <CheckCheck className="size-3" /> Copiado
+                        </span>
+                      ) : (
+                        <span className="flex items-center gap-1">
+                          <Copy className="size-3" /> Copiar
+                        </span>
+                      )}
+                    </button>
                   </div>
-                  <button
-                    type="button"
-                    onClick={() => handleCopy('estebanpqw1011@gmail.com', 'email')}
-                    className="flex items-center gap-1 text-[11px] font-semibold text-slate-500 hover:text-brand transition-colors cursor-pointer"
-                    title="Copiar correo"
-                  >
-                    {copiedField === 'email' ? (
-                      <span className="flex items-center gap-1 text-accent-green font-bold">
-                        <CheckCheck className="size-3" /> Copiado
-                      </span>
-                    ) : (
-                      <span className="flex items-center gap-1">
-                        <Copy className="size-3" /> Copiar
-                      </span>
-                    )}
-                  </button>
+                  <p className="text-[11px] font-medium text-slate-500 min-h-[32px] flex items-center">Correo Electrónico</p>
                 </div>
-                <p className="text-[11px] font-medium text-slate-500">Correo Electrónico</p>
-                <a href="mailto:estebanpqw1011@gmail.com" className="text-xs font-bold text-slate-900 hover:text-brand transition-colors block mt-1 truncate">
+                <a href="mailto:estebanpqw1011@gmail.com" className="text-xs font-bold text-slate-900 hover:text-brand transition-colors block mt-2 truncate">
                   estebanpqw1011@gmail.com
                 </a>
               </motion.div>

@@ -32,21 +32,21 @@ export function StatsSection() {
           initial="hidden"
           whileInView="visible"
           viewport={{ once: true, amount: 0.3 }}
-          className="grid grid-cols-2 gap-8 lg:grid-cols-4 lg:divide-x lg:divide-brand/15"
+          className="grid grid-cols-2 gap-8 lg:grid-cols-4 lg:divide-x lg:divide-brand/15 items-stretch"
         >
           {STATS.map(({ icon: Icon, value, label }) => (
             <motion.div
               key={label}
               variants={itemVariants}
-              className="flex flex-col items-center gap-2.5 text-center lg:px-6"
+              className="flex flex-col items-center gap-2.5 text-center lg:px-6 h-full justify-start"
             >
-              <span className="flex size-11 items-center justify-center rounded-full bg-brand/10 text-brand">
+              <span className="flex size-11 items-center justify-center rounded-full bg-brand/10 text-brand shrink-0">
                 <Icon className="size-5" aria-hidden="true" />
               </span>
-              <span className="text-3xl font-extrabold tracking-tight text-brand-dark sm:text-4xl">
+              <span className="text-3xl font-extrabold tracking-tight text-brand-dark sm:text-4xl min-h-[44px] flex items-center justify-center">
                 {value}
               </span>
-              <span className="max-w-[14rem] text-sm font-medium leading-snug text-slate-600">
+              <span className="max-w-[14rem] text-sm font-medium leading-snug text-slate-600 mt-auto">
                 {label}
               </span>
             </motion.div>

@@ -26,7 +26,7 @@ export function PedidoActivoFunnelSection({ pedidoData }) {
   const maxUnidades = funnelStages[0].unidades;
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-[1.25fr_1fr] gap-4.5 mb-7">
+    <div className="grid grid-cols-1 lg:grid-cols-[1.25fr_1fr] gap-4.5 mb-7 items-stretch">
       
       {/* ─── Card 1: Pedido Activo #4821 ─── */}
       <motion.div
@@ -34,7 +34,7 @@ export function PedidoActivoFunnelSection({ pedidoData }) {
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5, delay: 0.2, ease: [0.22, 1, 0.36, 1] }}
         whileHover={{ y: -3, transition: { duration: 0.2 } }}
-        className="bg-card dark:bg-[#111820] rounded-3xl p-4.5 sm:p-6 shadow-[0_2px_10px_rgba(46,43,37,0.06)] dark:shadow-none border-t-4 border-t-[#C1502D] dark:border-t-[#E8B23D] border-x border-b border-border dark:border-[rgba(148,163,184,0.14)] flex flex-col justify-between"
+        className="bg-card dark:bg-[#111820] rounded-3xl p-4.5 sm:p-6 shadow-[0_2px_10px_rgba(46,43,37,0.06)] dark:shadow-none border-t-4 border-t-[#C1502D] dark:border-t-[#E8B23D] border-x border-b border-border dark:border-[rgba(148,163,184,0.14)] flex flex-col justify-between h-full"
       >
         <div>
           {/* Header */}
@@ -106,7 +106,7 @@ export function PedidoActivoFunnelSection({ pedidoData }) {
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5, delay: 0.28, ease: [0.22, 1, 0.36, 1] }}
         whileHover={{ y: -3, transition: { duration: 0.2 } }}
-        className="bg-card dark:bg-[#111820] rounded-3xl p-4.5 sm:p-6 shadow-[0_2px_10px_rgba(46,43,37,0.06)] dark:shadow-none border border-border dark:border-[rgba(148,163,184,0.14)] flex flex-col justify-between"
+        className="bg-card dark:bg-[#111820] rounded-3xl p-4.5 sm:p-6 shadow-[0_2px_10px_rgba(46,43,37,0.06)] dark:shadow-none border border-border dark:border-[rgba(148,163,184,0.14)] flex flex-col justify-between h-full"
       >
         <div>
           <h4 className="text-[15px] font-bold text-slate-900 dark:text-foreground leading-tight mb-1">

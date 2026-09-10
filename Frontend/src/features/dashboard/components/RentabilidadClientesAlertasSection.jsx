@@ -131,7 +131,7 @@ export function RentabilidadClientesAlertasSection({ topClientesData, alertasDat
     <div className="space-y-7">
       
       {/* ─── Grid 2 Columnas: Rentabilidad & Top Clientes ─── */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4.5">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4.5 items-stretch">
         
         {/* Card 1: Rentabilidad */}
         <motion.div
@@ -139,7 +139,7 @@ export function RentabilidadClientesAlertasSection({ topClientesData, alertasDat
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5, delay: 0.38, ease: [0.22, 1, 0.36, 1] }}
           whileHover={{ y: -3, transition: { duration: 0.2 } }}
-          className="bg-card dark:bg-[#111820] rounded-3xl p-4.5 sm:p-6 shadow-[0_2px_10px_rgba(46,43,37,0.06)] dark:shadow-none border border-border dark:border-[rgba(148,163,184,0.14)] flex flex-col justify-between"
+          className="bg-card dark:bg-[#111820] rounded-3xl p-4.5 sm:p-6 shadow-[0_2px_10px_rgba(46,43,37,0.06)] dark:shadow-none border border-border dark:border-[rgba(148,163,184,0.14)] flex flex-col justify-between h-full"
         >
           <div>
             <div className="flex items-start justify-between mb-1">
@@ -159,7 +159,7 @@ export function RentabilidadClientesAlertasSection({ topClientesData, alertasDat
           </div>
 
           {/* Area Chart SVG con Tooltip Interactivo */}
-          <div className="relative h-24 mt-2">
+          <div className="relative h-24 mt-auto pt-2">
             <svg width="100%" height="96" viewBox="0 0 100 100" preserveAspectRatio="none" className="block overflow-visible">
               <defs>
                 <linearGradient id="rentaGrad" x1="0" y1="0" x2="0" y2="1">
@@ -219,7 +219,7 @@ export function RentabilidadClientesAlertasSection({ topClientesData, alertasDat
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5, delay: 0.42, ease: [0.22, 1, 0.36, 1] }}
           whileHover={{ y: -3, transition: { duration: 0.2 } }}
-          className="bg-card dark:bg-[#111820] rounded-3xl p-4.5 sm:p-6 shadow-[0_2px_10px_rgba(46,43,37,0.06)] dark:shadow-none border border-border dark:border-[rgba(148,163,184,0.14)] flex flex-col justify-between"
+          className="bg-card dark:bg-[#111820] rounded-3xl p-4.5 sm:p-6 shadow-[0_2px_10px_rgba(46,43,37,0.06)] dark:shadow-none border border-border dark:border-[rgba(148,163,184,0.14)] flex flex-col justify-between h-full"
         >
           <div>
             <h4 className="text-[15px] font-bold text-slate-900 dark:text-foreground leading-tight">Top Clientes</h4>

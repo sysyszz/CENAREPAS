@@ -112,7 +112,7 @@ export function DashboardKpis({ kpisData }) {
   ];
 
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5 sm:gap-4.5 mb-7">
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5 sm:gap-4.5 mb-7 items-stretch">
       {cards.map((kpi, idx) => {
         const animatedVal = kpi.target * progress;
         const spark = buildSparkPaths(kpi.sparks);
@@ -126,13 +126,13 @@ export function DashboardKpis({ kpisData }) {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5, delay: idx * 0.08, ease: [0.22, 1, 0.36, 1] }}
             whileHover={{ y: -4, transition: { duration: 0.2 } }}
-            className="bg-card dark:bg-[#111820] rounded-3xl p-4.5 sm:p-5.5 shadow-[0_2px_10px_rgba(46,43,37,0.06)] dark:shadow-none border border-border dark:border-[rgba(148,163,184,0.14)] hover:shadow-md transition-shadow duration-300 flex flex-col justify-between"
+            className="bg-card dark:bg-[#111820] rounded-3xl p-4.5 sm:p-5.5 shadow-[0_2px_10px_rgba(46,43,37,0.06)] dark:shadow-none border border-border dark:border-[rgba(148,163,184,0.14)] hover:shadow-md transition-shadow duration-300 flex flex-col justify-between h-full"
           >
             {/* Header */}
             <div className="flex items-center justify-between mb-3.5">
-              <span className="text-[13px] font-semibold text-slate-700 dark:text-slate-300">{kpi.label}</span>
+              <span className="text-[13px] font-semibold text-slate-700 dark:text-slate-300 min-h-[38px] flex items-center">{kpi.label}</span>
               <div 
-                className="size-9 rounded-full flex items-center justify-center transition-transform hover:scale-110"
+                className="size-9 rounded-full flex items-center justify-center transition-transform hover:scale-110 shrink-0"
                 style={{ backgroundColor: kpi.chipBg }}
               >
                 <IconComponent className="size-4.5" style={{ color: kpi.chipColor }} />

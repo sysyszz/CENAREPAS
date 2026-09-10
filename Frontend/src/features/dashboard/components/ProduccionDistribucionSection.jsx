@@ -51,7 +51,7 @@ export function ProduccionDistribucionSection({ lineasData, pedidosFlow }) {
   const flow = pedidosFlow || { belloOriente: 48, aranjuez: 36 };
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-[1.1fr_1fr] gap-4.5 mb-7">
+    <div className="grid grid-cols-1 lg:grid-cols-[1.1fr_1fr] gap-4.5 mb-7 items-stretch">
       
       {/* ─── Card 1: Producción por Línea ─── */}
       <motion.div
@@ -59,7 +59,7 @@ export function ProduccionDistribucionSection({ lineasData, pedidosFlow }) {
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5, delay: 0.24, ease: [0.22, 1, 0.36, 1] }}
         whileHover={{ y: -3, transition: { duration: 0.2 } }}
-        className="bg-card dark:bg-[#111820] rounded-3xl p-4.5 sm:p-6 shadow-[0_2px_10px_rgba(46,43,37,0.06)] dark:shadow-none border border-border dark:border-[rgba(148,163,184,0.14)] flex flex-col justify-between"
+        className="bg-card dark:bg-[#111820] rounded-3xl p-4.5 sm:p-6 shadow-[0_2px_10px_rgba(46,43,37,0.06)] dark:shadow-none border border-border dark:border-[rgba(148,163,184,0.14)] flex flex-col justify-between h-full"
       >
         <div>
           <h4 className="text-[15px] font-bold text-slate-900 dark:text-foreground leading-tight mb-1">
@@ -71,7 +71,7 @@ export function ProduccionDistribucionSection({ lineasData, pedidosFlow }) {
         </div>
 
         {/* Bar Chart Container */}
-        <div className="flex items-end justify-between gap-4 h-48 px-3">
+        <div className="flex items-end justify-between gap-4 h-48 px-3 mt-auto">
           {lineas.map((l, idx) => {
             const heightPct = Math.round((l.unidades / maxLineUnidades) * 100);
             const isHovered = hoveredBar === idx;
@@ -131,7 +131,7 @@ export function ProduccionDistribucionSection({ lineasData, pedidosFlow }) {
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5, delay: 0.32, ease: [0.22, 1, 0.36, 1] }}
         whileHover={{ y: -3, transition: { duration: 0.2 } }}
-        className="bg-card dark:bg-[#111820] rounded-3xl p-4.5 sm:p-6 shadow-[0_2px_10px_rgba(46,43,37,0.06)] dark:shadow-none border border-border dark:border-[rgba(148,163,184,0.14)] flex flex-col justify-between"
+        className="bg-card dark:bg-[#111820] rounded-3xl p-4.5 sm:p-6 shadow-[0_2px_10px_rgba(46,43,37,0.06)] dark:shadow-none border border-border dark:border-[rgba(148,163,184,0.14)] flex flex-col justify-between h-full"
       >
         <div>
           <h4 className="text-[15px] font-bold text-slate-900 dark:text-foreground leading-tight mb-1">
