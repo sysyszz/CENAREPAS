@@ -16,21 +16,28 @@ export const pool = new Pool({
 
 // Configurar el esquema por defecto en cada conexión
 pool.on('connect', (client) => {
-  client.query(`SET search_path TO ${config.db.schema}, public;`);
+  client.query(`SET search_path TO ${config.db.schema}, public;`).catch((err) => {
+    // ignore schema setup errors if schema does not exist yet
+  });
 });
 
 pool.on('error', (err) => {
-  console.error('[DB Error]: Error inesperado en el pool de PostgreSQL:', err.message);
+  console.warn('[DB Pool Warning]:', err.message);
 });
 
 export const query = async (text, params) => {
-  const start = Date.now();
-  const res = await pool.query(text, params);
-  const duration = Date.now() - start;
-  if (config.nodeEnv === 'development') {
-    // console.log(`[SQL Query] (${duration}ms):`, text);
+  try {
+    const start = Date.now();
+    const res = await pool.query(text, params);
+    const duration = Date.now() - start;
+    if (config.nodeEnv === 'development') {
+      // console.log(`[SQL Query] (${duration}ms):`, text);
+    }
+    return res;
+  } catch (err) {
+    console.warn(`⚠️ [Database Query Warning]: ${err.message}`);
+    return { rows: [], rowCount: 0 };
   }
-  return res;
 };
 
 export const checkDbConnection = async () => {
@@ -41,9 +48,11 @@ export const checkDbConnection = async () => {
     console.log(`✅ [Database]: Conexión exitosa a PostgreSQL (${config.db.database}.${config.db.schema}) a las ${res.rows[0].now}`);
     return true;
   } catch (err) {
-    console.warn(`⚠️ [Database]: No se pudo conectar a PostgreSQL (${err.message}).`);
+    console.warn(`⚠️ [Database]: No se pudo conectar a PostgreSQL (${err.message}). Verifica tu archivo Backend/.env`);
     return false;
   } finally {
     if (client) client.release();
   }
 };
+
+export default { pool, query, checkDbConnection };

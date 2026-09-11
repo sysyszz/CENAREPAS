@@ -4,12 +4,10 @@ import { authenticate } from '../middlewares/auth.middleware.js';
 
 const router = Router();
 
-router.use(authenticate);
-
 router.get('/', SedesController.getAll);
 router.get('/:id', SedesController.getById);
-router.post('/', SedesController.create);
-router.put('/:id', SedesController.update);
-router.delete('/:id', SedesController.delete);
+router.post('/', authenticate, SedesController.create);
+router.put('/:id', authenticate, SedesController.update);
+router.delete('/:id', authenticate, SedesController.delete);
 
 export default router;
