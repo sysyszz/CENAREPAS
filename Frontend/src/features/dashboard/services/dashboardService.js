@@ -1,6 +1,9 @@
+import { api } from '../../../shared/services/api.js';
+
 // dashboardService.js - Servicio de datos para el Panel de Datos de CENAREPAS
 export const getDashboardData = async () => {
-  return {
+  return api.get('/dashboard', () => ({
+
     kpis: {
       ventasHoy: 2450000,
       ventasHoyCambio: 12.5,
@@ -186,5 +189,6 @@ export const getDashboardData = async () => {
         { dia: 'Dom', semanaAnterior: 945, semanaActual: 1280 },
       ],
     },
-  };
+  }));
 };
+

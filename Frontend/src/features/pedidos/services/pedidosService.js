@@ -194,8 +194,10 @@ export let mockPedidos = [
   },
 ];
 
+import { api } from '../../../shared/services/api.js';
+
 export const getPedidos = async () => {
-  return [...mockPedidos];
+  return api.get('/pedidos', () => [...mockPedidos]);
 };
 
 export const mockDetallesPedido = [
@@ -220,22 +222,28 @@ export const mockDetallesPedido = [
 ];
 
 export const createPedido = async (pedido) => {
-  const newObj = {
-    id_pedido: Date.now(),
-    fecha_pedido: new Date().toISOString(),
-    estado: 'pendiente',
-    ...pedido,
-  };
-  mockPedidos = [newObj, ...mockPedidos];
-  return newObj;
+  return api.post('/pedidos', pedido, async () => {
+    const newObj = {
+      id_pedido: Date.now(),
+      fecha_pedido: new Date().toISOString(),
+      estado: 'pendiente',
+      ...pedido,
+    };
+    mockPedidos = [newObj, ...mockPedidos];
+    return newObj;
+  });
 };
 
 export const updatePedido = async (id_pedido, pedido) => {
-  mockPedidos = mockPedidos.map((p) => (p.id_pedido === id_pedido ? { ...p, ...pedido } : p));
-  return { id_pedido, ...pedido };
+  return api.put(`/pedidos/${id_pedido}`, pedido, async () => {
+    mockPedidos = mockPedidos.map((p) => (p.id_pedido === id_pedido ? { ...p, ...pedido } : p));
+    return { id_pedido, ...pedido };
+  });
 };
 
 export const deletePedido = async (id_pedido) => {
-  mockPedidos = mockPedidos.filter((p) => p.id_pedido !== id_pedido);
-  return true;
+  return api.delete(`/pedidos/${id_pedido}`, async () => {
+    mockPedidos = mockPedidos.filter((p) => p.id_pedido !== id_pedido);
+    return true;
+  });
 };

@@ -1,5 +1,5 @@
-// clientesService.js - Servicio para la gestión de clientes en Masarepas
-export const mockClientes = [
+export let mockClientes = [
+
   {
     id_cliente: 1,
     nombre: "Supermercados Mercacentro S.A. (Sede Principal)",
@@ -162,10 +162,36 @@ export const mockClientes = [
   },
 ];
 
+import { api } from '../../../shared/services/api.js';
+
 export const getClientes = async () => {
-  return [...mockClientes];
+  return api.get('/clientes', () => [...mockClientes]);
 };
 
-export const createCliente = async (cliente) => ({ id_cliente: Date.now(), ...cliente });
-export const updateCliente = async (id_cliente, cliente) => ({ id_cliente, ...cliente });
-export const deleteCliente = async (id_cliente) => true;
+export const createCliente = async (cliente) => {
+  return api.post('/clientes', cliente, async () => {
+    const newObj = {
+      id_cliente: Date.now(),
+      fecha_creacion: new Date().toISOString(),
+      estado: 'activo',
+      ...cliente,
+    };
+    mockClientes = [newObj, ...mockClientes];
+    return newObj;
+  });
+};
+
+export const updateCliente = async (id_cliente, cliente) => {
+  return api.put(`/clientes/${id_cliente}`, cliente, async () => {
+    mockClientes = mockClientes.map((c) => (c.id_cliente === id_cliente ? { ...c, ...cliente } : c));
+    return { id_cliente, ...cliente };
+  });
+};
+
+export const deleteCliente = async (id_cliente) => {
+  return api.delete(`/clientes/${id_cliente}`, async () => {
+    mockClientes = mockClientes.filter((c) => c.id_cliente !== id_cliente);
+    return true;
+  });
+};
+

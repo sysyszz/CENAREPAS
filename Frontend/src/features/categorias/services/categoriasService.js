@@ -1,5 +1,5 @@
 // categoriasService.js - Servicio para la gestión de categorías en Masarepas
-export const mockCategorias = [
+export let mockCategorias = [
   {
     id_categoria: 1,
     nombre: "Arepas Dulces de Chócolo",
@@ -50,10 +50,31 @@ export const mockCategorias = [
   },
 ];
 
+import { api } from '../../../shared/services/api.js';
+
 export const getCategorias = async () => {
-  return [...mockCategorias];
+  return api.get('/categorias', () => [...mockCategorias]);
 };
 
-export const createCategoria = async (categoria) => ({ id_categoria: Date.now(), ...categoria });
-export const updateCategoria = async (id_categoria, categoria) => ({ id_categoria, ...categoria });
-export const deleteCategoria = async (id_categoria) => true;
+export const createCategoria = async (categoria) => {
+  return api.post('/categorias', categoria, async () => {
+    const newObj = {
+      id_categoria: Date.now(),
+      estado: 'activo',
+      ...categoria,
+    };
+    mockCategorias.push(newObj);
+    return newObj;
+  });
+};
+
+export const updateCategoria = async (id_categoria, categoria) => {
+  return api.put(`/categorias/${id_categoria}`, categoria, async () => {
+    return { id_categoria, ...categoria };
+  });
+};
+
+export const deleteCategoria = async (id_categoria) => {
+  return api.delete(`/categorias/${id_categoria}`, async () => true);
+};
+

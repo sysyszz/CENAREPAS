@@ -58,27 +58,36 @@ export let mockRoles = [
   },
 ];
 
+import { api } from '../../../shared/services/api.js';
+
 export const getRoles = async () => {
-  return [...mockRoles];
+  return api.get('/roles', () => [...mockRoles]);
 };
 
 export const createRol = async (rol) => {
-  const newObj = {
-    id_rol: Date.now(),
-    fecha_creacion: new Date().toISOString(),
-    estado: 'activo',
-    ...rol,
-  };
-  mockRoles = [newObj, ...mockRoles];
-  return newObj;
+  return api.post('/roles', rol, async () => {
+    const newObj = {
+      id_rol: Date.now(),
+      fecha_creacion: new Date().toISOString(),
+      estado: 'activo',
+      ...rol,
+    };
+    mockRoles = [newObj, ...mockRoles];
+    return newObj;
+  });
 };
 
 export const updateRol = async (id_rol, rol) => {
-  mockRoles = mockRoles.map((r) => (r.id_rol === id_rol ? { ...r, ...rol } : r));
-  return { id_rol, ...rol };
+  return api.put(`/roles/${id_rol}`, rol, async () => {
+    mockRoles = mockRoles.map((r) => (r.id_rol === id_rol ? { ...r, ...rol } : r));
+    return { id_rol, ...rol };
+  });
 };
 
 export const deleteRol = async (id) => {
-  mockRoles = mockRoles.filter((r) => r.id_rol !== id);
-  return true;
+  return api.delete(`/roles/${id}`, async () => {
+    mockRoles = mockRoles.filter((r) => r.id_rol !== id);
+    return true;
+  });
 };
+

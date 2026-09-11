@@ -226,26 +226,35 @@ export let mockProductos = [
   },
 ];
 
+import { api } from '../../../shared/services/api.js';
+
 export const getProductos = async () => {
-  return [...mockProductos];
+  return api.get('/productos', () => [...mockProductos]);
 };
 
 export const createProducto = async (producto) => {
-  const newObj = {
-    id_producto: Date.now(),
-    estado: 'activo',
-    ...producto,
-  };
-  mockProductos = [newObj, ...mockProductos];
-  return newObj;
+  return api.post('/productos', producto, async () => {
+    const newObj = {
+      id_producto: Date.now(),
+      estado: 'activo',
+      ...producto,
+    };
+    mockProductos = [newObj, ...mockProductos];
+    return newObj;
+  });
 };
 
 export const updateProducto = async (id_producto, producto) => {
-  mockProductos = mockProductos.map((p) => (p.id_producto === id_producto ? { ...p, ...producto } : p));
-  return { id_producto, ...producto };
+  return api.put(`/productos/${id_producto}`, producto, async () => {
+    mockProductos = mockProductos.map((p) => (p.id_producto === id_producto ? { ...p, ...producto } : p));
+    return { id_producto, ...producto };
+  });
 };
 
 export const deleteProducto = async (id_producto) => {
-  mockProductos = mockProductos.filter((p) => p.id_producto !== id_producto);
-  return true;
+  return api.delete(`/productos/${id_producto}`, async () => {
+    mockProductos = mockProductos.filter((p) => p.id_producto !== id_producto);
+    return true;
+  });
 };
+

@@ -146,8 +146,10 @@ export let mockLotesProduccion = [
   },
 ];
 
+import { api } from '../../../shared/services/api.js';
+
 export const getLotes = async () => {
-  return [...mockLotesProduccion];
+  return api.get('/produccion', () => [...mockLotesProduccion]);
 };
 
 export const mockLotesProduccionInsumos = [
@@ -166,24 +168,30 @@ export const mockLotesProduccionInsumos = [
 ];
 
 export const createLote = async (lote) => {
-  const newObj = {
-    id_lote: Date.now(),
-    fecha_produccion: new Date().toISOString().split('T')[0],
-    estado: 'en_proceso',
-    ...lote,
-  };
-  mockLotesProduccion = [newObj, ...mockLotesProduccion];
-  return newObj;
+  return api.post('/produccion', lote, async () => {
+    const newObj = {
+      id_lote: Date.now(),
+      fecha_produccion: new Date().toISOString().split('T')[0],
+      estado: 'en_proceso',
+      ...lote,
+    };
+    mockLotesProduccion = [newObj, ...mockLotesProduccion];
+    return newObj;
+  });
 };
 
 export const updateLote = async (id_lote, lote) => {
-  mockLotesProduccion = mockLotesProduccion.map((l) => (l.id_lote === id_lote ? { ...l, ...lote } : l));
-  return { id_lote, ...lote };
+  return api.put(`/produccion/${id_lote}`, lote, async () => {
+    mockLotesProduccion = mockLotesProduccion.map((l) => (l.id_lote === id_lote ? { ...l, ...lote } : l));
+    return { id_lote, ...lote };
+  });
 };
 
 export const anularLote = async (id_lote) => {
-  mockLotesProduccion = mockLotesProduccion.map((l) =>
-    l.id_lote === id_lote ? { ...l, estado: 'anulado' } : l
-  );
-  return true;
+  return api.delete(`/produccion/${id_lote}`, async () => {
+    mockLotesProduccion = mockLotesProduccion.map((l) =>
+      l.id_lote === id_lote ? { ...l, estado: 'anulado' } : l
+    );
+    return true;
+  });
 };

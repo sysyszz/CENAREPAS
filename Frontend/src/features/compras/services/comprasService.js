@@ -178,8 +178,10 @@ export let mockCompras = [
   },
 ];
 
+import { api } from '../../../shared/services/api.js';
+
 export const getCompras = async () => {
-  return [...mockCompras];
+  return api.get('/compras', () => [...mockCompras]);
 };
 
 export const mockDetallesCompra = [
@@ -202,17 +204,23 @@ export const mockDetallesCompra = [
 ];
 
 export const createCompra = async (compra) => {
-  const newObj = { id_compra: Date.now(), ...compra };
-  mockCompras = [newObj, ...mockCompras];
-  return newObj;
+  return api.post('/compras', compra, async () => {
+    const newObj = { id_compra: Date.now(), ...compra };
+    mockCompras = [newObj, ...mockCompras];
+    return newObj;
+  });
 };
 
 export const updateCompra = async (id_compra, compra) => {
-  mockCompras = mockCompras.map((c) => (c.id_compra === id_compra ? { ...c, ...compra } : c));
-  return { id_compra, ...compra };
+  return api.put(`/compras/${id_compra}`, compra, async () => {
+    mockCompras = mockCompras.map((c) => (c.id_compra === id_compra ? { ...c, ...compra } : c));
+    return { id_compra, ...compra };
+  });
 };
 
 export const anularCompra = async (id_compra) => {
-  mockCompras = mockCompras.map((c) => (c.id_compra === id_compra ? { ...c, estado: 'anulado' } : c));
-  return true;
+  return api.delete(`/compras/${id_compra}`, async () => {
+    mockCompras = mockCompras.map((c) => (c.id_compra === id_compra ? { ...c, estado: 'anulado' } : c));
+    return true;
+  });
 };

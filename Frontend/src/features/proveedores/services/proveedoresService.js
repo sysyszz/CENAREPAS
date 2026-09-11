@@ -162,27 +162,36 @@ export let mockProveedores = [
   },
 ];
 
+import { api } from '../../../shared/services/api.js';
+
 export const getProveedores = async () => {
-  return [...mockProveedores];
+  return api.get('/proveedores', () => [...mockProveedores]);
 };
 
 export const createProveedor = async (proveedor) => {
-  const newObj = {
-    id_proveedor: Date.now(),
-    fecha_creacion: new Date().toISOString(),
-    estado: 'activo',
-    ...proveedor,
-  };
-  mockProveedores = [newObj, ...mockProveedores];
-  return newObj;
+  return api.post('/proveedores', proveedor, async () => {
+    const newObj = {
+      id_proveedor: Date.now(),
+      fecha_creacion: new Date().toISOString(),
+      estado: 'activo',
+      ...proveedor,
+    };
+    mockProveedores = [newObj, ...mockProveedores];
+    return newObj;
+  });
 };
 
 export const updateProveedor = async (id_proveedor, proveedor) => {
-  mockProveedores = mockProveedores.map((p) => (p.id_proveedor === id_proveedor ? { ...p, ...proveedor } : p));
-  return { id_proveedor, ...proveedor };
+  return api.put(`/proveedores/${id_proveedor}`, proveedor, async () => {
+    mockProveedores = mockProveedores.map((p) => (p.id_proveedor === id_proveedor ? { ...p, ...proveedor } : p));
+    return { id_proveedor, ...proveedor };
+  });
 };
 
 export const deleteProveedor = async (id_proveedor) => {
-  mockProveedores = mockProveedores.filter((p) => p.id_proveedor !== id_proveedor);
-  return true;
+  return api.delete(`/proveedores/${id_proveedor}`, async () => {
+    mockProveedores = mockProveedores.filter((p) => p.id_proveedor !== id_proveedor);
+    return true;
+  });
 };
+

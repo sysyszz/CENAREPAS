@@ -194,8 +194,10 @@ export let mockVentas = [
   },
 ];
 
+import { api } from '../../../shared/services/api.js';
+
 export const getVentas = async () => {
-  return [...mockVentas];
+  return api.get('/ventas', () => [...mockVentas]);
 };
 
 export const mockDetallesVenta = [
@@ -218,22 +220,28 @@ export const mockDetallesVenta = [
 ];
 
 export const createVenta = async (venta) => {
-  const newObj = {
-    id_venta: Date.now(),
-    fecha_venta: new Date().toISOString(),
-    estado: 'completada',
-    ...venta,
-  };
-  mockVentas = [newObj, ...mockVentas];
-  return newObj;
+  return api.post('/ventas', venta, async () => {
+    const newObj = {
+      id_venta: Date.now(),
+      fecha_venta: new Date().toISOString(),
+      estado: 'completada',
+      ...venta,
+    };
+    mockVentas = [newObj, ...mockVentas];
+    return newObj;
+  });
 };
 
 export const updateVenta = async (id_venta, venta) => {
-  mockVentas = mockVentas.map((v) => (v.id_venta === id_venta ? { ...v, ...venta } : v));
-  return { id_venta, ...venta };
+  return api.put(`/ventas/${id_venta}`, venta, async () => {
+    mockVentas = mockVentas.map((v) => (v.id_venta === id_venta ? { ...v, ...venta } : v));
+    return { id_venta, ...venta };
+  });
 };
 
 export const deleteVenta = async (id_venta) => {
-  mockVentas = mockVentas.filter((v) => v.id_venta !== id_venta);
-  return true;
+  return api.delete(`/ventas/${id_venta}`, async () => {
+    mockVentas = mockVentas.filter((v) => v.id_venta !== id_venta);
+    return true;
+  });
 };

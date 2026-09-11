@@ -178,27 +178,36 @@ export let mockUsuarios = [
   },
 ];
 
+import { api } from '../../../shared/services/api.js';
+
 export const getUsuarios = async () => {
-  return [...mockUsuarios];
+  return api.get('/usuarios', () => [...mockUsuarios]);
 };
 
 export const createUsuario = async (usuario) => {
-  const newObj = {
-    id_usuario: Date.now(),
-    fecha_creacion: new Date().toISOString(),
-    estado: 'activo',
-    ...usuario,
-  };
-  mockUsuarios = [newObj, ...mockUsuarios];
-  return newObj;
+  return api.post('/usuarios', usuario, async () => {
+    const newObj = {
+      id_usuario: Date.now(),
+      fecha_creacion: new Date().toISOString(),
+      estado: 'activo',
+      ...usuario,
+    };
+    mockUsuarios = [newObj, ...mockUsuarios];
+    return newObj;
+  });
 };
 
 export const updateUsuario = async (id_usuario, usuario) => {
-  mockUsuarios = mockUsuarios.map((u) => (u.id_usuario === id_usuario ? { ...u, ...usuario } : u));
-  return { id_usuario, ...usuario };
+  return api.put(`/usuarios/${id_usuario}`, usuario, async () => {
+    mockUsuarios = mockUsuarios.map((u) => (u.id_usuario === id_usuario ? { ...u, ...usuario } : u));
+    return { id_usuario, ...usuario };
+  });
 };
 
 export const deleteUsuario = async (id_usuario) => {
-  mockUsuarios = mockUsuarios.filter((u) => u.id_usuario !== id_usuario);
-  return true;
+  return api.delete(`/usuarios/${id_usuario}`, async () => {
+    mockUsuarios = mockUsuarios.filter((u) => u.id_usuario !== id_usuario);
+    return true;
+  });
 };
+

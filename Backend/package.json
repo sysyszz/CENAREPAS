@@ -1,0 +1,33 @@
+{
+  "name": "cenarepas-backend",
+  "version": "1.0.0",
+  "description": "Backend API RESTful para CENAREPAS / Masarepas",
+  "main": "src/server.js",
+  "type": "module",
+  "scripts": {
+    "start": "node src/server.js",
+    "dev": "nodemon src/server.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "cenarepas",
+    "masarepas",
+    "express",
+    "postgresql",
+    "api"
+  ],
+  "author": "CENAREPAS Dev Team",
+  "license": "ISC",
+  "dependencies": {
+    "bcryptjs": "^3.0.3",
+    "cors": "^2.8.5",
+    "dotenv": "^17.3.1",
+    "express": "^4.21.2",
+    "jsonwebtoken": "^9.0.2",
+    "morgan": "^1.10.0",
+    "pg": "^8.13.1"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.9"
+  }
+}

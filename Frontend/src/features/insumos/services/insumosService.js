@@ -162,22 +162,31 @@ export let mockInsumos = [
   },
 ];
 
+import { api } from '../../../shared/services/api.js';
+
 export const getInsumos = async () => {
-  return [...mockInsumos];
+  return api.get('/insumos', () => [...mockInsumos]);
 };
 
 export const createInsumo = async (insumo) => {
-  const newObj = { id_insumo: Date.now(), ...insumo };
-  mockInsumos = [newObj, ...mockInsumos];
-  return newObj;
+  return api.post('/insumos', insumo, async () => {
+    const newObj = { id_insumo: Date.now(), estado: 'activo', ...insumo };
+    mockInsumos = [newObj, ...mockInsumos];
+    return newObj;
+  });
 };
 
 export const updateInsumo = async (id_insumo, insumo) => {
-  mockInsumos = mockInsumos.map((i) => (i.id_insumo === id_insumo ? { ...i, ...insumo } : i));
-  return { id_insumo, ...insumo };
+  return api.put(`/insumos/${id_insumo}`, insumo, async () => {
+    mockInsumos = mockInsumos.map((i) => (i.id_insumo === id_insumo ? { ...i, ...insumo } : i));
+    return { id_insumo, ...insumo };
+  });
 };
 
 export const deleteInsumo = async (id_insumo) => {
-  mockInsumos = mockInsumos.filter((i) => i.id_insumo !== id_insumo);
-  return true;
+  return api.delete(`/insumos/${id_insumo}`, async () => {
+    mockInsumos = mockInsumos.filter((i) => i.id_insumo !== id_insumo);
+    return true;
+  });
 };
+

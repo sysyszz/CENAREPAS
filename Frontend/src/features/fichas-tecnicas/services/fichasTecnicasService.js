@@ -74,9 +74,7 @@ export let mockFichasTecnicas = [
   },
 ];
 
-export const getFichasTecnicas = async () => {
-  return [...mockFichasTecnicas];
-};
+import { api } from '../../../shared/services/api.js';
 
 export const mockFichaTecnicaInsumos = [
   // Ficha 1: Arepa de Chócolo
@@ -106,18 +104,36 @@ export const mockFichaTecnicaInsumos = [
   { id_ficha_insumo: 19, id_ficha: 6, id_insumo: 12, cantidad: 3.0, unidad_medida: 'kg' },
 ];
 
+export const getFichasTecnicas = async () => {
+  return api.get('/fichas-tecnicas', () => [...mockFichasTecnicas]);
+};
+
+
+export const getFichaTecnicaInsumos = async (id_ficha) => {
+  if (id_ficha) {
+    return mockFichaTecnicaInsumos.filter((fi) => fi.id_ficha === Number(id_ficha));
+  }
+  return [...mockFichaTecnicaInsumos];
+};
+
 export const createFichaTecnica = async (ficha) => {
-  const newObj = { id_ficha: Date.now(), ...ficha };
-  mockFichasTecnicas = [newObj, ...mockFichasTecnicas];
-  return newObj;
+  return api.post('/fichas-tecnicas', ficha, async () => {
+    const newObj = { id_ficha: Date.now(), estado: 'activo', ...ficha };
+    mockFichasTecnicas = [newObj, ...mockFichasTecnicas];
+    return newObj;
+  });
 };
 
 export const updateFichaTecnica = async (id_ficha, ficha) => {
-  mockFichasTecnicas = mockFichasTecnicas.map((f) => (f.id_ficha === id_ficha ? { ...f, ...ficha } : f));
-  return { id_ficha, ...ficha };
+  return api.put(`/fichas-tecnicas/${id_ficha}`, ficha, async () => {
+    mockFichasTecnicas = mockFichasTecnicas.map((f) => (f.id_ficha === id_ficha ? { ...f, ...ficha } : f));
+    return { id_ficha, ...ficha };
+  });
 };
 
 export const deleteFichaTecnica = async (id_ficha) => {
-  mockFichasTecnicas = mockFichasTecnicas.filter((f) => f.id_ficha !== id_ficha);
-  return true;
+  return api.delete(`/fichas-tecnicas/${id_ficha}`, async () => {
+    mockFichasTecnicas = mockFichasTecnicas.filter((f) => f.id_ficha !== id_ficha);
+    return true;
+  });
 };
