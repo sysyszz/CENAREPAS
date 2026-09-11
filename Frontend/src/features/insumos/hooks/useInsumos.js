@@ -14,7 +14,9 @@ export function useInsumos() {
   const [isSaving, setIsSaving] = useState(false);
 
   useEffect(() => {
-    getInsumos().then((data) => setInsumos(data));
+    getInsumos()
+      .then((data) => setInsumos(Array.isArray(data) ? data : []))
+      .catch(() => setInsumos([]));
   }, []);
 
   const filteredInsumos = useMemo(() => {

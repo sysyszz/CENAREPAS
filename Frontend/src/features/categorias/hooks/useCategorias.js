@@ -13,7 +13,9 @@ export function useCategorias() {
   const [isSaving, setIsSaving] = useState(false);
 
   useEffect(() => {
-    getCategorias().then((data) => setCategorias(data));
+    getCategorias()
+      .then((data) => setCategorias(Array.isArray(data) ? data : []))
+      .catch(() => setCategorias([]));
   }, []);
 
   const filteredCategorias = categorias.filter((c) => {

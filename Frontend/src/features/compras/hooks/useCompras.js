@@ -13,7 +13,9 @@ export function useCompras() {
   const [isSaving, setIsSaving] = useState(false);
 
   useEffect(() => {
-    getCompras().then((data) => setCompras(data));
+    getCompras()
+      .then((data) => setCompras(Array.isArray(data) ? data : []))
+      .catch(() => setCompras([]));
   }, []);
 
   const filteredCompras = compras.filter((c) => {

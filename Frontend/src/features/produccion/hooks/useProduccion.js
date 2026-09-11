@@ -13,7 +13,9 @@ export function useProduccion() {
   const [isSaving, setIsSaving] = useState(false);
 
   useEffect(() => {
-    getLotes().then((data) => setLotes(data));
+    getLotes()
+      .then((data) => setLotes(Array.isArray(data) ? data : []))
+      .catch(() => setLotes([]));
   }, []);
 
   const filteredLotes = useMemo(() => {

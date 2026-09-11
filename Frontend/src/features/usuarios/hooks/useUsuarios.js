@@ -14,7 +14,9 @@ export function useUsuarios() {
   const [isSaving, setIsSaving] = useState(false);
 
   useEffect(() => {
-    getUsuarios().then((data) => setUsuarios(data));
+    getUsuarios()
+      .then((data) => setUsuarios(Array.isArray(data) ? data : []))
+      .catch(() => setUsuarios([]));
   }, []);
 
   const filteredUsuarios = useMemo(() => {

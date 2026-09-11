@@ -14,7 +14,9 @@ export function useProductos() {
   const [productos, setProductos] = useState([]);
 
   useEffect(() => {
-    getProductos().then((data) => setProductos(data));
+    getProductos()
+      .then((data) => setProductos(Array.isArray(data) ? data : []))
+      .catch(() => setProductos([]));
   }, []);
 
   const filteredProductos = useMemo(() => {

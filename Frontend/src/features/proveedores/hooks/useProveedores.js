@@ -13,7 +13,9 @@ export function useProveedores() {
   const [isSaving, setIsSaving] = useState(false);
 
   useEffect(() => {
-    getProveedores().then((data) => setProveedores(data));
+    getProveedores()
+      .then((data) => setProveedores(Array.isArray(data) ? data : []))
+      .catch(() => setProveedores([]));
   }, []);
 
   const filteredProveedores = useMemo(() => {

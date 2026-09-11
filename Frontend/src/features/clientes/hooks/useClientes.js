@@ -13,7 +13,9 @@ export function useClientes() {
   const [isSaving, setIsSaving] = useState(false);
 
   useEffect(() => {
-    getClientes().then((data) => setClientes(data));
+    getClientes()
+      .then((data) => setClientes(Array.isArray(data) ? data : []))
+      .catch(() => setClientes([]));
   }, []);
 
   const filteredClientes = useMemo(() => {

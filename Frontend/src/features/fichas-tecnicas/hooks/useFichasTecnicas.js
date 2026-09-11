@@ -13,7 +13,9 @@ export function useFichasTecnicas() {
   const [isSaving, setIsSaving] = useState(false);
 
   useEffect(() => {
-    getFichasTecnicas().then((data) => setFichas(data));
+    getFichasTecnicas()
+      .then((data) => setFichas(Array.isArray(data) ? data : []))
+      .catch(() => setFichas([]));
   }, []);
 
   const filteredFichas = useMemo(() => {

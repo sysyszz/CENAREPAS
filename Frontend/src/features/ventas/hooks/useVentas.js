@@ -13,7 +13,9 @@ export function useVentas() {
   const [isSaving, setIsSaving] = useState(false);
 
   useEffect(() => {
-    getVentas().then((data) => setVentas(data));
+    getVentas()
+      .then((data) => setVentas(Array.isArray(data) ? data : []))
+      .catch(() => setVentas([]));
   }, []);
 
   const filteredVentas = useMemo(() => {

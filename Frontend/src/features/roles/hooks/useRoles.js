@@ -14,7 +14,9 @@ export function useRoles() {
   const [isSaving, setIsSaving] = useState(false);
 
   useEffect(() => {
-    getRoles().then((data) => setRoles(data));
+    getRoles()
+      .then((data) => setRoles(Array.isArray(data) ? data : []))
+      .catch(() => setRoles([]));
   }, []);
 
   const filteredRoles = useMemo(() => {

@@ -13,7 +13,9 @@ export function usePedidos() {
   const [isSaving, setIsSaving] = useState(false);
 
   useEffect(() => {
-    getPedidos().then((data) => setPedidos(data));
+    getPedidos()
+      .then((data) => setPedidos(Array.isArray(data) ? data : []))
+      .catch(() => setPedidos([]));
   }, []);
 
   const filteredPedidos = useMemo(() => {
