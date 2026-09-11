@@ -1,8 +1,8 @@
 import { useState, useEffect } from 'react';
 import { X, Package, Plus, Trash2 } from 'lucide-react';
-import { mockFichasTecnicas, mockFichaTecnicaInsumos, getFichasTecnicas } from '../../fichas-tecnicas/services/fichasTecnicasService';
-import { mockInsumos, getInsumos } from '../../insumos/services/insumosService';
-import { mockUsuarios } from '../../usuarios/services/usuariosService';
+import { getFichasTecnicas, getFichaTecnicaInsumos } from '../../fichas-tecnicas/services/fichasTecnicasService';
+import { getInsumos } from '../../insumos/services/insumosService';
+import { getUsuarios } from '../../usuarios/services/usuariosService';
 import { Combobox } from '../../../shared/ui/Combobox';
 
 export function ProduccionFormModal({ open, onClose, lote = null, onSave, isLoading = false }) {
@@ -13,19 +13,23 @@ export function ProduccionFormModal({ open, onClose, lote = null, onSave, isLoad
   const [estado, setEstado] = useState('en_proceso');
   const [observaciones, setObservaciones] = useState('');
 
-  const [fichas, setFichas] = useState(mockFichasTecnicas);
-  const [availableInsumos, setAvailableInsumos] = useState(mockInsumos);
+  const [fichas, setFichas] = useState([]);
+  const [availableInsumos, setAvailableInsumos] = useState([]);
+  const [usuarios, setUsuarios] = useState([]);
   const [insumosList, setInsumosList] = useState([]);
   const [selectedInsumoId, setSelectedInsumoId] = useState('');
   const [cantidadInsumo, setCantidadInsumo] = useState('');
 
   useEffect(() => {
     getFichasTecnicas().then((data) => {
-      if (data && data.length > 0) setFichas(data);
-    });
+      if (Array.isArray(data)) setFichas(data);
+    }).catch(() => {});
     getInsumos().then((data) => {
-      if (data && data.length > 0) setAvailableInsumos(data);
-    });
+      if (Array.isArray(data)) setAvailableInsumos(data);
+    }).catch(() => {});
+    getUsuarios().then((data) => {
+      if (Array.isArray(data)) setUsuarios(data);
+    }).catch(() => {});
   }, []);
 
   useEffect(() => {
@@ -36,36 +40,39 @@ export function ProduccionFormModal({ open, onClose, lote = null, onSave, isLoad
       setFechaProduccion(lote.fecha_produccion || '');
       setEstado(lote.estado || 'en_proceso');
       setObservaciones(lote.observaciones || '');
+      if (Array.isArray(lote.insumos)) {
+        setInsumosList(lote.insumos);
+      }
     } else {
-      setIdFicha('1');
+      setIdFicha(fichas[0]?.id_ficha ? String(fichas[0].id_ficha) : '1');
       setCantidadProducida('');
-      setIdUsuarioResponsable('1');
+      setIdUsuarioResponsable(usuarios[0]?.id_usuario ? String(usuarios[0].id_usuario) : '1');
       setFechaProduccion(new Date().toISOString().split('T')[0]);
       setEstado('en_proceso');
       setObservaciones('');
     }
-  }, [lote, open]);
+  }, [lote, open, fichas, usuarios]);
 
   // Actualizar insumos requeridos cuando cambia la ficha seleccionada
   useEffect(() => {
-    if (!idFicha) return;
-    const recipeInsumos = mockFichaTecnicaInsumos.filter((fi) => String(fi.id_ficha) === String(idFicha));
-    if (recipeInsumos.length > 0) {
-      setInsumosList(
-        recipeInsumos.map((item) => {
-          const ins = availableInsumos.find((i) => i.id_insumo === item.id_insumo);
-          return {
-            id_insumo: item.id_insumo,
-            nombre: ins?.nombre || `Insumo #${item.id_insumo}`,
-            cantidad: item.cantidad,
-            unidad_medida: item.unidad_medida || ins?.unidad_medida || 'kg',
-          };
-        })
-      );
-    } else {
-      setInsumosList([]);
-    }
-  }, [idFicha, availableInsumos]);
+    if (!idFicha || lote) return;
+    getFichaTecnicaInsumos(idFicha).then((recipeInsumos) => {
+      if (Array.isArray(recipeInsumos) && recipeInsumos.length > 0) {
+        setInsumosList(
+          recipeInsumos.map((item) => {
+            const ins = availableInsumos.find((i) => i.id_insumo === item.id_insumo);
+            return {
+              id_insumo: item.id_insumo,
+              nombre: ins?.nombre || item.insumo_nombre || `Insumo #${item.id_insumo}`,
+              cantidad: item.cantidad,
+              unidad_medida: item.unidad_medida || ins?.unidad_medida || 'kg',
+            };
+          })
+        );
+      }
+    }).catch(() => {});
+  }, [idFicha, availableInsumos, lote]);
+
 
   if (!open) return null;
 

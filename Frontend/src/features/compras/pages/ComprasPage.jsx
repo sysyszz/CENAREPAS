@@ -1,12 +1,11 @@
 import { useState, useMemo, useEffect } from 'react';
 import { ShoppingCart, CheckCircle, Clock, DollarSign } from 'lucide-react';
 import { useCompras } from '../hooks/useCompras';
-import { mockProveedores, getProveedores } from '../../proveedores/services/proveedoresService';
-import { mockUsuarios } from '../../usuarios/services/usuariosService';
+import { getProveedores } from '../../proveedores/services/proveedoresService';
+import { getUsuarios } from '../../usuarios/services/usuariosService';
 import { DataTable } from '../../../shared/components/DataTable';
 import { RowActions } from '../../../shared/components/RowActions';
 import { CompraFormModal } from '../components/CompraFormModal';
-import { mockDetallesCompra } from '../services/comprasService';
 import ConfirmDialog from '../../../shared/components/ConfirmDialog';
 import DetailModal from '../../../shared/components/DetailModal';
 import PageHeader from '../../../shared/components/PageHeader';
@@ -36,12 +35,16 @@ export default function ComprasPage() {
   } = useCompras();
 
   const [selectedCompra, setSelectedCompra] = useState(null);
-  const [proveedores, setProveedores] = useState(mockProveedores);
+  const [proveedores, setProveedores] = useState([]);
+  const [usuarios, setUsuarios] = useState([]);
 
   useEffect(() => {
     getProveedores().then((data) => {
-      if (data && data.length > 0) setProveedores(data);
-    });
+      if (Array.isArray(data)) setProveedores(data);
+    }).catch(() => {});
+    getUsuarios().then((data) => {
+      if (Array.isArray(data)) setUsuarios(data);
+    }).catch(() => {});
   }, []);
 
   const proveedoresNames = useMemo(
@@ -50,9 +53,10 @@ export default function ComprasPage() {
   );
 
   const usuariosNames = useMemo(
-    () => Object.fromEntries(mockUsuarios.map((u) => [u.id_usuario, u.nombre])),
-    []
+    () => Object.fromEntries(usuarios.map((u) => [u.id_usuario, u.nombre])),
+    [usuarios]
   );
+
 
   const totalCompras = rawCompras.length;
   const recibidas = rawCompras.filter(
@@ -232,7 +236,7 @@ export default function ComprasPage() {
             label: 'Insumos Comprados',
             value: (
               <div className="space-y-1 mt-1 text-left w-full">
-                {(detailModal.data.detalles || mockDetallesCompra.filter((d) => d.id_compra === detailModal.data.id_compra)).map((item, idx) => (
+                {(detailModal.data.detalles || []).map((item, idx) => (
                   <div key={idx} className="flex items-center justify-between text-xs py-1 border-b border-border/40 last:border-0">
                     <span className="font-medium text-foreground">{item.nombre_insumo || `Insumo #${item.id_insumo}`}</span>
                     <span className="text-muted-foreground">{item.cantidad} {item.unidad_medida || 'kg'} x ${Number(item.valor_unitario).toLocaleString('es-CO')} = <strong className="text-primary">${Number(item.subtotal).toLocaleString('es-CO')}</strong></span>

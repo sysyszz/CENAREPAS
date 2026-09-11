@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { X } from 'lucide-react';
-import { mockRoles, getRoles } from '../../roles/services/rolesService';
+import { getRoles } from '../../roles/services/rolesService';
 import { Combobox } from '../../../shared/ui/Combobox';
 
 export function UsuarioFormModal({ open, onClose, usuario = null, onSave, isLoading = false }) {
@@ -9,13 +9,14 @@ export function UsuarioFormModal({ open, onClose, usuario = null, onSave, isLoad
   const [idRol, setIdRol] = useState('1');
   const [contrasena, setContrasena] = useState('');
   const [estado, setEstado] = useState('activo');
-  const [roles, setRoles] = useState(mockRoles);
+  const [roles, setRoles] = useState([]);
 
   useEffect(() => {
     getRoles().then((data) => {
-      if (data && data.length > 0) setRoles(data);
-    });
+      if (Array.isArray(data)) setRoles(data);
+    }).catch(() => {});
   }, []);
+
 
   useEffect(() => {
     if (usuario) {

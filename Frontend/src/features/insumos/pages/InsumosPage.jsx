@@ -1,7 +1,7 @@
 import { useState, useMemo, useEffect } from 'react';
 import { Package, AlertTriangle, CheckCircle, Truck } from 'lucide-react';
 import { useInsumos } from '../hooks/useInsumos';
-import { mockProveedores, getProveedores } from '../../proveedores/services/proveedoresService';
+import { getProveedores } from '../../proveedores/services/proveedoresService';
 import { DataTable } from '../../../shared/components/DataTable';
 import { RowActions } from '../../../shared/components/RowActions';
 import { InsumoFormModal } from '../components/InsumoFormModal';
@@ -36,13 +36,14 @@ export default function InsumosPage() {
   } = useInsumos();
 
   const [selectedInsumo, setSelectedInsumo] = useState(null);
-  const [proveedores, setProveedores] = useState(mockProveedores);
+  const [proveedores, setProveedores] = useState([]);
 
   useEffect(() => {
     getProveedores().then((data) => {
-      if (data && data.length > 0) setProveedores(data);
-    });
+      if (Array.isArray(data)) setProveedores(data);
+    }).catch(() => {});
   }, []);
+
 
   const proveedorNames = useMemo(
     () => Object.fromEntries(proveedores.map((p) => [p.id_proveedor, p.nombre])),

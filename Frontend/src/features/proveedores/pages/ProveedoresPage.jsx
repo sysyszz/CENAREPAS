@@ -1,7 +1,7 @@
 import { useState, useMemo, useEffect } from 'react';
 import { Truck, CheckCircle, Clock, Package } from 'lucide-react';
 import { useProveedores } from '../hooks/useProveedores';
-import { mockInsumos, getInsumos } from '../../insumos/services/insumosService';
+import { getInsumos } from '../../insumos/services/insumosService';
 import { DataTable } from '../../../shared/components/DataTable';
 import { RowActions } from '../../../shared/components/RowActions';
 import { MetricCard } from '../../../shared/components/MetricCard';
@@ -35,13 +35,14 @@ export default function ProveedoresPage() {
   } = useProveedores();
 
   const [selectedProveedor, setSelectedProveedor] = useState(null);
-  const [insumosCount, setInsumosCount] = useState(mockInsumos.length);
+  const [insumosCount, setInsumosCount] = useState(0);
 
   useEffect(() => {
     getInsumos().then((data) => {
-      if (data && data.length > 0) setInsumosCount(data.length);
-    });
+      if (Array.isArray(data)) setInsumosCount(data.length);
+    }).catch(() => {});
   }, []);
+
 
   const totalProveedores = rawProveedores.length;
   const activos = rawProveedores.filter((p) => String(p.estado).toLowerCase() === 'activo').length;

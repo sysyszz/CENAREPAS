@@ -1,16 +1,17 @@
 import { useState, useEffect } from 'react';
 import { X, Save } from 'lucide-react';
-import { mockRoles, getRoles } from '../../roles/services/rolesService';
+import { getRoles } from '../../roles/services/rolesService';
 import { Combobox } from '../../../shared/ui/Combobox';
 
 export function UsuarioEditModal({ open, editData, setEditData, onClose, onSave, isSaving }) {
-  const [roles, setRoles] = useState(mockRoles);
+  const [roles, setRoles] = useState([]);
 
   useEffect(() => {
     getRoles().then((data) => {
-      if (data && data.length > 0) setRoles(data);
-    });
+      if (Array.isArray(data)) setRoles(data);
+    }).catch(() => {});
   }, []);
+
 
   if (!open || !editData) return null;
 

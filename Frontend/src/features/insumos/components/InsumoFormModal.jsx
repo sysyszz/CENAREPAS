@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { X } from 'lucide-react';
-import { mockProveedores, getProveedores } from '../../proveedores/services/proveedoresService';
+import { getProveedores } from '../../proveedores/services/proveedoresService';
 import { Combobox } from '../../../shared/ui/Combobox';
 
 export function InsumoFormModal({ open, onClose, insumo = null, onSave, isLoading = false }) {
@@ -11,13 +11,14 @@ export function InsumoFormModal({ open, onClose, insumo = null, onSave, isLoadin
   const [stockMinimo, setStockMinimo] = useState('');
   const [idProveedor, setIdProveedor] = useState('1');
   const [estado, setEstado] = useState('Activo');
-  const [proveedores, setProveedores] = useState(mockProveedores);
+  const [proveedores, setProveedores] = useState([]);
 
   useEffect(() => {
     getProveedores().then((data) => {
-      if (data && data.length > 0) setProveedores(data);
-    });
+      if (Array.isArray(data)) setProveedores(data);
+    }).catch(() => {});
   }, []);
+
 
   useEffect(() => {
     if (insumo) {

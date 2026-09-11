@@ -1,9 +1,8 @@
 import { useState, useEffect, useMemo } from 'react';
 import { X, Plus, Trash2, ShoppingCart } from 'lucide-react';
-import { mockClientes, getClientes } from '../../clientes/services/clientesService';
-import { mockPedidos, getPedidos } from '../../pedidos/services/pedidosService';
-import { mockProductos, getProductos } from '../../productos/services/productosService';
-import { mockDetallesVenta } from '../services/ventasService';
+import { getClientes } from '../../clientes/services/clientesService';
+import { getPedidos } from '../../pedidos/services/pedidosService';
+import { getProductos } from '../../productos/services/productosService';
 import { Combobox } from '../../../shared/ui/Combobox';
 
 const SEDES_DEFAULT = [
@@ -21,9 +20,9 @@ export function VentaFormModal({ open, onClose, venta = null, onSave, isLoading 
   const [comprobanteUrl, setComprobanteUrl] = useState('');
   const [estado, setEstado] = useState('completada');
 
-  const [clientes, setClientes] = useState(mockClientes);
-  const [pedidos, setPedidos] = useState(mockPedidos);
-  const [availableProductos, setAvailableProductos] = useState(mockProductos);
+  const [clientes, setClientes] = useState([]);
+  const [pedidos, setPedidos] = useState([]);
+  const [availableProductos, setAvailableProductos] = useState([]);
 
   const [detalles, setDetalles] = useState([]);
   const [selectedProductoId, setSelectedProductoId] = useState('');
@@ -31,9 +30,9 @@ export function VentaFormModal({ open, onClose, venta = null, onSave, isLoading 
   const [precioUnitario, setPrecioUnitario] = useState('');
 
   useEffect(() => {
-    getClientes().then((data) => { if (data?.length) setClientes(data); });
-    getPedidos().then((data) => { if (data?.length) setPedidos(data); });
-    getProductos().then((data) => { if (data?.length) setAvailableProductos(data); });
+    getClientes().then((data) => { if (Array.isArray(data)) setClientes(data); }).catch(() => {});
+    getPedidos().then((data) => { if (Array.isArray(data)) setPedidos(data); }).catch(() => {});
+    getProductos().then((data) => { if (Array.isArray(data)) setAvailableProductos(data); }).catch(() => {});
   }, []);
 
   useEffect(() => {
@@ -55,14 +54,13 @@ export function VentaFormModal({ open, onClose, venta = null, onSave, isLoading 
       setComprobanteUrl(venta.comprobante_url || '');
       setEstado(venta.estado || 'completada');
       
-      const existingDetalles = mockDetallesVenta.filter((d) => d.id_venta === venta.id_venta);
-      if (existingDetalles.length > 0) {
+      if (Array.isArray(venta.detalles) && venta.detalles.length > 0) {
         setDetalles(
-          existingDetalles.map((d) => {
+          venta.detalles.map((d) => {
             const prod = availableProductos.find((p) => p.id_producto === d.id_producto);
             return {
               id_producto: d.id_producto,
-              nombre_producto: prod?.nombre || `Producto #${d.id_producto}`,
+              nombre_producto: prod?.nombre || d.nombre_producto || `Producto #${d.id_producto}`,
               cantidad: Number(d.cantidad) || 0,
               precio_unitario: Number(d.precio_unitario) || 0,
               subtotal: Number(d.subtotal) || Number(d.cantidad) * Number(d.precio_unitario),
@@ -76,9 +74,7 @@ export function VentaFormModal({ open, onClose, venta = null, onSave, isLoading 
       setIdCliente(clientes[0]?.id_cliente ? String(clientes[0].id_cliente) : '1');
       setIdSede('1');
       setIdPedido('');
-      const now = new Date();
-      now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
-      setFechaVenta(now.toISOString().slice(0, 16));
+      setFechaVenta(new Date().toISOString().slice(0, 16));
       setMedioPago('transferencia');
       setComprobanteUrl('');
       setEstado('completada');

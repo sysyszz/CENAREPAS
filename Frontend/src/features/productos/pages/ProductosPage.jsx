@@ -2,9 +2,9 @@ import { useState, useMemo, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Box, CheckCircle, AlertTriangle, DollarSign, Calendar } from 'lucide-react';
 import { useProductos } from '../hooks/useProductos';
-import { mockCategorias, getCategorias } from '../../categorias/services/categoriasService';
-import { mockFichasTecnicas, getFichasTecnicas } from '../../fichas-tecnicas/services/fichasTecnicasService';
-import { mockProveedores, getProveedores } from '../../proveedores/services/proveedoresService';
+import { getCategorias } from '../../categorias/services/categoriasService';
+import { getFichasTecnicas } from '../../fichas-tecnicas/services/fichasTecnicasService';
+import { getProveedores } from '../../proveedores/services/proveedoresService';
 import { ProductosTable } from '../components/ProductosTable';
 import { ProductoFormModal } from '../components/ProductoFormModal';
 import ConfirmDialog from '../../../shared/components/ConfirmDialog';
@@ -38,21 +38,22 @@ export default function ProductosPage() {
   } = useProductos();
 
   const [selectedProducto, setSelectedProducto] = useState(null);
-  const [categorias, setCategorias] = useState(mockCategorias);
-  const [fichas, setFichas] = useState(mockFichasTecnicas);
-  const [proveedores, setProveedores] = useState(mockProveedores);
+  const [categorias, setCategorias] = useState([]);
+  const [fichas, setFichas] = useState([]);
+  const [proveedores, setProveedores] = useState([]);
 
   useEffect(() => {
     getCategorias().then((data) => {
-      if (data && data.length > 0) setCategorias(data);
-    });
+      if (Array.isArray(data)) setCategorias(data);
+    }).catch(() => {});
     getFichasTecnicas().then((data) => {
-      if (data && data.length > 0) setFichas(data);
-    });
+      if (Array.isArray(data)) setFichas(data);
+    }).catch(() => {});
     getProveedores().then((data) => {
-      if (data && data.length > 0) setProveedores(data);
-    });
+      if (Array.isArray(data)) setProveedores(data);
+    }).catch(() => {});
   }, []);
+
 
   const categoryNames = useMemo(
     () => Object.fromEntries(categorias.map((cat) => [cat.id_categoria, cat.nombre])),

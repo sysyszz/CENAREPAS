@@ -1,8 +1,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import { X, Plus, Trash2, Package } from 'lucide-react';
-import { mockProveedores, getProveedores } from '../../proveedores/services/proveedoresService';
-import { mockInsumos, getInsumos } from '../../insumos/services/insumosService';
-import { mockDetallesCompra } from '../services/comprasService';
+import { getProveedores } from '../../proveedores/services/proveedoresService';
+import { getInsumos } from '../../insumos/services/insumosService';
 import { Combobox } from '../../../shared/ui/Combobox';
 
 export function CompraFormModal({ open, onClose, compra = null, onSave, isLoading = false }) {
@@ -13,8 +12,8 @@ export function CompraFormModal({ open, onClose, compra = null, onSave, isLoadin
   const [estado, setEstado] = useState('activo');
 
   // Catálogos
-  const [proveedores, setProveedores] = useState(mockProveedores);
-  const [availableInsumos, setAvailableInsumos] = useState(mockInsumos);
+  const [proveedores, setProveedores] = useState([]);
+  const [availableInsumos, setAvailableInsumos] = useState([]);
 
   // Detalle de Compra (detalle_compra)
   const [detalles, setDetalles] = useState([]);
@@ -24,11 +23,11 @@ export function CompraFormModal({ open, onClose, compra = null, onSave, isLoadin
 
   useEffect(() => {
     getProveedores().then((data) => {
-      if (data && data.length > 0) setProveedores(data);
-    });
+      if (Array.isArray(data)) setProveedores(data);
+    }).catch(() => {});
     getInsumos().then((data) => {
-      if (data && data.length > 0) setAvailableInsumos(data);
-    });
+      if (Array.isArray(data)) setAvailableInsumos(data);
+    }).catch(() => {});
   }, []);
 
   useEffect(() => {
@@ -40,15 +39,14 @@ export function CompraFormModal({ open, onClose, compra = null, onSave, isLoadin
       setEstado(compra.estado || 'activo');
 
       // Cargar detalles existentes
-      const existingDetalles = mockDetallesCompra.filter((d) => d.id_compra === compra.id_compra);
-      if (existingDetalles.length > 0) {
+      if (Array.isArray(compra.detalles) && compra.detalles.length > 0) {
         setDetalles(
-          existingDetalles.map((d) => {
+          compra.detalles.map((d) => {
             const ins = availableInsumos.find((i) => i.id_insumo === d.id_insumo);
             return {
               id_insumo: d.id_insumo,
-              nombre_insumo: ins?.nombre || `Insumo #${d.id_insumo}`,
-              unidad_medida: ins?.unidad_medida || 'kg',
+              nombre_insumo: ins?.nombre || d.nombre_insumo || `Insumo #${d.id_insumo}`,
+              unidad_medida: ins?.unidad_medida || d.unidad_medida || 'kg',
               cantidad: Number(d.cantidad) || 0,
               valor_unitario: Number(d.valor_unitario) || 0,
               subtotal: Number(d.subtotal) || Number(d.cantidad) * Number(d.valor_unitario),
@@ -58,6 +56,7 @@ export function CompraFormModal({ open, onClose, compra = null, onSave, isLoadin
       } else {
         setDetalles([]);
       }
+
     } else {
       setFechaCompra(new Date().toISOString().split('T')[0]);
       setIdProveedor(proveedores[0]?.id_proveedor ? String(proveedores[0].id_proveedor) : '1');

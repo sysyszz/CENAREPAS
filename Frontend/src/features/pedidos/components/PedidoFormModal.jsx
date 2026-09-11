@@ -1,8 +1,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import { X, Plus, Trash2, ShoppingBag } from 'lucide-react';
-import { mockClientes, getClientes } from '../../clientes/services/clientesService';
-import { mockProductos, getProductos } from '../../productos/services/productosService';
-import { mockDetallesPedido } from '../services/pedidosService';
+import { getClientes } from '../../clientes/services/clientesService';
+import { getProductos } from '../../productos/services/productosService';
 import { Combobox } from '../../../shared/ui/Combobox';
 
 const SEDES_DEFAULT = [
@@ -19,8 +18,8 @@ export function PedidoFormModal({ open, onClose, pedido = null, onSave, isLoadin
   const [observaciones, setObservaciones] = useState('');
 
   // Catálogos
-  const [clientes, setClientes] = useState(mockClientes);
-  const [availableProductos, setAvailableProductos] = useState(mockProductos);
+  const [clientes, setClientes] = useState([]);
+  const [availableProductos, setAvailableProductos] = useState([]);
 
   // Detalle de Pedido (detalle_pedido)
   const [detalles, setDetalles] = useState([]);
@@ -30,11 +29,11 @@ export function PedidoFormModal({ open, onClose, pedido = null, onSave, isLoadin
 
   useEffect(() => {
     getClientes().then((data) => {
-      if (data && data.length > 0) setClientes(data);
-    });
+      if (Array.isArray(data)) setClientes(data);
+    }).catch(() => {});
     getProductos().then((data) => {
-      if (data && data.length > 0) setAvailableProductos(data);
-    });
+      if (Array.isArray(data)) setAvailableProductos(data);
+    }).catch(() => {});
   }, []);
 
   // Al cambiar el producto seleccionado, precargar su precio_venta
@@ -58,14 +57,13 @@ export function PedidoFormModal({ open, onClose, pedido = null, onSave, isLoadin
       setObservaciones(pedido.observaciones || '');
 
       // Cargar detalles existentes
-      const existingDetalles = mockDetallesPedido.filter((d) => d.id_pedido === pedido.id_pedido);
-      if (existingDetalles.length > 0) {
+      if (Array.isArray(pedido.detalles) && pedido.detalles.length > 0) {
         setDetalles(
-          existingDetalles.map((d) => {
+          pedido.detalles.map((d) => {
             const prod = availableProductos.find((p) => p.id_producto === d.id_producto);
             return {
               id_producto: d.id_producto,
-              nombre_producto: prod?.nombre || `Producto #${d.id_producto}`,
+              nombre_producto: prod?.nombre || d.nombre_producto || `Producto #${d.id_producto}`,
               cantidad: Number(d.cantidad) || 0,
               precio_unitario: Number(d.precio_unitario) || 0,
               subtotal: Number(d.subtotal) || Number(d.cantidad) * Number(d.precio_unitario),
@@ -87,6 +85,7 @@ export function PedidoFormModal({ open, onClose, pedido = null, onSave, isLoadin
     setCantidadProducto('');
     setPrecioUnitario('');
   }, [pedido, open, clientes, availableProductos]);
+
 
   // Cálculo automático del valor total
   const valorTotalCalculado = useMemo(() => {

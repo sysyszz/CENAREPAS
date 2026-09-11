@@ -1,10 +1,9 @@
 import { useState, useMemo, useEffect } from 'react';
 import { Factory, CheckCircle, Clock, Calendar } from 'lucide-react';
 import { useProduccion } from '../hooks/useProduccion';
-import { mockLotesProduccionInsumos } from '../services/produccionService';
-import { mockInsumos } from '../../insumos/services/insumosService';
-import { mockFichasTecnicas, getFichasTecnicas } from '../../fichas-tecnicas/services/fichasTecnicasService';
-import { mockUsuarios } from '../../usuarios/services/usuariosService';
+import { getInsumos } from '../../insumos/services/insumosService';
+import { getFichasTecnicas } from '../../fichas-tecnicas/services/fichasTecnicasService';
+import { getUsuarios } from '../../usuarios/services/usuariosService';
 import { DataTable } from '../../../shared/components/DataTable';
 import { RowActions } from '../../../shared/components/RowActions';
 import { ProduccionFormModal } from '../components/ProduccionFormModal';
@@ -37,32 +36,28 @@ export default function ProduccionPage() {
   } = useProduccion();
 
   const [selectedLote, setSelectedLote] = useState(null);
-  const [fichas, setFichas] = useState(mockFichasTecnicas);
+  const [fichas, setFichas] = useState([]);
+  const [usuarios, setUsuarios] = useState([]);
+  const [insumosList, setInsumosList] = useState([]);
 
   const getLoteInsumosList = (lote) => {
     if (!lote) return [];
     if (Array.isArray(lote.insumos) && lote.insumos.length > 0) {
       return lote.insumos;
     }
-    const fromMock = mockLotesProduccionInsumos.filter((li) => li.id_lote === lote.id_lote);
-    if (fromMock.length > 0) {
-      return fromMock.map((li) => {
-        const ins = mockInsumos.find((i) => i.id_insumo === li.id_insumo);
-        return {
-          id_insumo: li.id_insumo,
-          nombre: ins?.nombre || `Insumo #${li.id_insumo}`,
-          cantidad: li.cantidad_consumida || li.cantidad,
-          unidad_medida: ins?.unidad_medida || 'kg',
-        };
-      });
-    }
     return [];
   };
 
   useEffect(() => {
     getFichasTecnicas().then((data) => {
-      if (data && data.length > 0) setFichas(data);
-    });
+      if (Array.isArray(data)) setFichas(data);
+    }).catch(() => {});
+    getUsuarios().then((data) => {
+      if (Array.isArray(data)) setUsuarios(data);
+    }).catch(() => {});
+    getInsumos().then((data) => {
+      if (Array.isArray(data)) setInsumosList(data);
+    }).catch(() => {});
   }, []);
 
   const fichasNames = useMemo(
@@ -71,9 +66,10 @@ export default function ProduccionPage() {
   );
 
   const usuariosNames = useMemo(
-    () => Object.fromEntries(mockUsuarios.map((u) => [u.id_usuario, u.nombre])),
-    []
+    () => Object.fromEntries(usuarios.map((u) => [u.id_usuario, u.nombre])),
+    [usuarios]
   );
+
 
   const totalLotes = rawLotes.length;
   const finalizados = rawLotes.filter((l) => String(l.estado).toLowerCase() === 'finalizado').length;

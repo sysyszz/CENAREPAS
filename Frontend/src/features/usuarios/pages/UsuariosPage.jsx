@@ -1,7 +1,7 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { Lock, Users, UserCheck, ShieldCheck, KeyRound } from 'lucide-react';
 import { useUsuarios } from '../hooks/useUsuarios';
-import { mockRoles } from '../../roles/services/rolesService';
+import { getRoles } from '../../roles/services/rolesService';
 import { DataTable } from '../../../shared/components/DataTable';
 import { RowActions } from '../../../shared/components/RowActions';
 import { MetricCard } from '../../../shared/components/MetricCard';
@@ -37,15 +37,21 @@ export default function UsuariosPage() {
   } = useUsuarios();
 
   const [selectedUsuario, setSelectedUsuario] = useState(null);
+  const [rolesList, setRolesList] = useState([]);
+
+  useEffect(() => {
+    getRoles().then((data) => setRolesList(Array.isArray(data) ? data : [])).catch(() => {});
+  }, []);
 
   const totalUsuarios = rawUsuarios.length;
   const usuariosActivos = rawUsuarios.filter((u) => String(u.estado).toLowerCase() === 'activo').length;
   const rolesAsignados = new Set(rawUsuarios.map((usuario) => usuario.id_rol)).size;
   const credencialesConfiguradas = rawUsuarios.filter((usuario) => Boolean(usuario.contrasena_hash)).length;
   const roleNames = useMemo(
-    () => Object.fromEntries(mockRoles.map((role) => [role.id_rol, role.nombre])),
-    []
+    () => Object.fromEntries(rolesList.map((role) => [role.id_rol, role.nombre])),
+    [rolesList]
   );
+
 
   const columns = useMemo(
     () => [

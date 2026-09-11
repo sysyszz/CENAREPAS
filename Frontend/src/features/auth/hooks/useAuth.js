@@ -17,18 +17,7 @@ export const useAuth = () => {
     setError('');
     setIsLoading(true);
     try {
-      const res = await api.post('/auth/login', { correo: email, contrasena: password }, async () => {
-        await simulateApiCall(300);
-        return {
-          token: 'mock-jwt-token-cenarepas-admin',
-          usuario: {
-            id_usuario: 1,
-            nombre: 'Carlos Gómez',
-            correo: email || 'carlos.gomez@masarepas.com',
-            rol: 'Administrador de Planta'
-          }
-        };
-      });
+      const res = await api.post('/auth/login', { correo: email, contrasena: password });
 
       if (res?.token) {
         localStorage.setItem('token', res.token);
@@ -42,6 +31,7 @@ export const useAuth = () => {
       return false;
     }
   };
+
 
 
   const handleForgotPassword = async (email) => {

@@ -1,8 +1,8 @@
 import { useState, useEffect } from 'react';
 import { X, Upload, Trash2, Image as ImageIcon } from 'lucide-react';
-import { mockCategorias, getCategorias } from '../../categorias/services/categoriasService';
-import { mockFichasTecnicas, getFichasTecnicas } from '../../fichas-tecnicas/services/fichasTecnicasService';
-import { mockProveedores, getProveedores } from '../../proveedores/services/proveedoresService';
+import { getCategorias } from '../../categorias/services/categoriasService';
+import { getFichasTecnicas } from '../../fichas-tecnicas/services/fichasTecnicasService';
+import { getProveedores } from '../../proveedores/services/proveedoresService';
 import { Combobox } from '../../../shared/ui/Combobox';
 
 export function ProductoFormModal({ open, onClose, producto = null, onSave, isLoading = false }) {
@@ -19,21 +19,22 @@ export function ProductoFormModal({ open, onClose, producto = null, onSave, isLo
   const [fechaVencimiento, setFechaVencimiento] = useState('');
   const [estado, setEstado] = useState('activo');
 
-  const [categorias, setCategorias] = useState(mockCategorias);
-  const [fichas, setFichas] = useState(mockFichasTecnicas);
-  const [proveedores, setProveedores] = useState(mockProveedores);
+  const [categorias, setCategorias] = useState([]);
+  const [fichas, setFichas] = useState([]);
+  const [proveedores, setProveedores] = useState([]);
 
   useEffect(() => {
     getCategorias().then((data) => {
-      if (data && data.length > 0) setCategorias(data);
-    });
+      if (Array.isArray(data)) setCategorias(data);
+    }).catch(() => {});
     getFichasTecnicas().then((data) => {
-      if (data && data.length > 0) setFichas(data);
-    });
+      if (Array.isArray(data)) setFichas(data);
+    }).catch(() => {});
     getProveedores().then((data) => {
-      if (data && data.length > 0) setProveedores(data);
-    });
+      if (Array.isArray(data)) setProveedores(data);
+    }).catch(() => {});
   }, []);
+
 
   useEffect(() => {
     if (producto) {

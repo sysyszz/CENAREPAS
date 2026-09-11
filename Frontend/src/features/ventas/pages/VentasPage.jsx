@@ -1,12 +1,11 @@
 import { useState, useMemo, useEffect } from 'react';
 import { DollarSign, BarChart3, TrendingUp, ShoppingBag } from 'lucide-react';
 import { useVentas } from '../hooks/useVentas';
-import { mockClientes, getClientes } from '../../clientes/services/clientesService';
-import { mockUsuarios } from '../../usuarios/services/usuariosService';
+import { getClientes } from '../../clientes/services/clientesService';
+import { getUsuarios } from '../../usuarios/services/usuariosService';
 import { DataTable } from '../../../shared/components/DataTable';
 import { RowActions } from '../../../shared/components/RowActions';
 import { VentaFormModal } from '../components/VentaFormModal';
-import { mockDetallesVenta } from '../services/ventasService';
 import ConfirmDialog from '../../../shared/components/ConfirmDialog';
 import DetailModal from '../../../shared/components/DetailModal';
 import PageHeader from '../../../shared/components/PageHeader';
@@ -35,12 +34,16 @@ export default function VentasPage() {
     handleAnular,
   } = useVentas();
   const [selectedVenta, setSelectedVenta] = useState(null);
-  const [clientes, setClientes] = useState(mockClientes);
+  const [clientes, setClientes] = useState([]);
+  const [usuarios, setUsuarios] = useState([]);
 
   useEffect(() => {
     getClientes().then((data) => {
-      if (data && data.length > 0) setClientes(data);
-    });
+      if (Array.isArray(data)) setClientes(data);
+    }).catch(() => {});
+    getUsuarios().then((data) => {
+      if (Array.isArray(data)) setUsuarios(data);
+    }).catch(() => {});
   }, []);
 
   const clientesNames = useMemo(
@@ -48,9 +51,10 @@ export default function VentasPage() {
     [clientes]
   );
   const usuariosNames = useMemo(
-    () => Object.fromEntries(mockUsuarios.map((u) => [u.id_usuario, u.nombre])),
-    []
+    () => Object.fromEntries(usuarios.map((u) => [u.id_usuario, u.nombre])),
+    [usuarios]
   );
+
 
   const totalVentas = rawVentas.length;
   const ventasHoy = useMemo(
@@ -218,7 +222,7 @@ export default function VentasPage() {
             label: 'Productos Vendidos',
             value: (
               <div className="space-y-1 mt-1 text-left w-full">
-                {(detailModal.data.detalles || mockDetallesVenta.filter((d) => d.id_venta === detailModal.data.id_venta)).map((item, idx) => (
+                {(detailModal.data.detalles || []).map((item, idx) => (
                   <div key={idx} className="flex items-center justify-between text-xs py-1 border-b border-border/40 last:border-0">
                     <span className="font-medium text-foreground">{item.nombre_producto || `Producto #${item.id_producto}`}</span>
                     <span className="text-muted-foreground">{item.cantidad} und x ${Number(item.precio_unitario).toLocaleString('es-CO')} = <strong className="text-primary">${Number(item.subtotal).toLocaleString('es-CO')}</strong></span>
