@@ -20,6 +20,13 @@ export const mockPermisos = [
   ),
 ];
 
+const defaultRolePermissions = {
+  1: mockPermisos.map((p) => p.id_permiso), // Admin: total
+  2: mockPermisos.filter((p) => ['dashboard', 'compras', 'pedidos', 'ventas', 'insumos', 'productos', 'produccion', 'categorias', 'proveedores', 'clientes', 'fichas-tecnicas'].includes(p.modulo)).map((p) => p.id_permiso), // Secretaria
+  3: mockPermisos.filter((p) => ['dashboard', 'pedidos', 'ventas', 'clientes', 'productos'].includes(p.modulo)).map((p) => p.id_permiso), // Vendedor
+  4: mockPermisos.filter((p) => ['dashboard', 'pedidos'].includes(p.modulo)).map((p) => p.id_permiso), // Domiciliario
+};
+
 export const mockRolPermisos = [
   ...mockPermisos.map((permission) => ({ id_rol: 1, id_permiso: permission.id_permiso })),
 ];
@@ -27,28 +34,64 @@ export const mockRolPermisos = [
 const PermissionContext = createContext(null);
 
 export function PermissionProvider({ children }) {
-  const [roleId, setRoleId] = useState(() => Number(localStorage.getItem('cenarepas_role_id') || 1));
+  const getInitialRoleId = () => {
+    try {
+      const stored = localStorage.getItem('cenarepas_role_id');
+      if (stored) return Number(stored);
+      const user = JSON.parse(localStorage.getItem('user') || '{}');
+      if (user && user.id_rol) return Number(user.id_rol);
+    } catch {
+      // ignore
+    }
+    return 1;
+  };
+
+  const [roleId, setRoleId] = useState(getInitialRoleId);
   const [rolePermissions, setRolePermissions] = useState(() => {
-    try { return JSON.parse(localStorage.getItem('cenarepas_role_permissions')) || { 1: mockPermisos.map((permission) => permission.id_permiso) }; } catch { return { 1: mockPermisos.map((permission) => permission.id_permiso) }; }
+    try {
+      const stored = localStorage.getItem('cenarepas_role_permissions');
+      return stored ? JSON.parse(stored) : defaultRolePermissions;
+    } catch {
+      return defaultRolePermissions;
+    }
   });
 
   const permissions = useMemo(() => {
-    const allowedIds = rolePermissions[roleId] || [];
+    if (roleId === 1) return mockPermisos;
+    const allowedIds = rolePermissions[roleId] || defaultRolePermissions[roleId] || [];
     return mockPermisos.filter((permission) => allowedIds.includes(permission.id_permiso));
   }, [roleId, rolePermissions]);
 
-  const can = (modulo, accion = 'ver') => permissions.some((permission) => permission.modulo === modulo && permission.accion === accion && permission.estado === 'activo');
+  const can = (modulo, accion = 'ver') => {
+    // Si es Administrador (Rol 1), conceder acceso a todos los módulos y acciones
+    if (roleId === 1) return true;
+
+    return permissions.some(
+      (permission) =>
+        permission.modulo === modulo &&
+        permission.accion === accion &&
+        String(permission.estado).toLowerCase() === 'activo'
+    );
+  };
+
   const setActiveRole = (nextRoleId) => {
     localStorage.setItem('cenarepas_role_id', String(nextRoleId));
     setRoleId(Number(nextRoleId));
   };
+
   const updateRolePermissions = (nextRoleId, permissionIds) => {
     const next = { ...rolePermissions, [nextRoleId]: permissionIds };
     localStorage.setItem('cenarepas_role_permissions', JSON.stringify(next));
     setRolePermissions(next);
   };
 
-  return <PermissionContext.Provider value={{ roleId, setActiveRole, permissions, can, updateRolePermissions, rolePermissions }}>{children}</PermissionContext.Provider>;
+  return (
+    <PermissionContext.Provider
+      value={{ roleId, setActiveRole, permissions, can, updateRolePermissions, rolePermissions }}
+    >
+      {children}
+    </PermissionContext.Provider>
+  );
 }
 
 export function usePermissions() {

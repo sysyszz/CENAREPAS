@@ -22,6 +22,9 @@ export const useAuth = () => {
       if (res?.token) {
         localStorage.setItem('token', res.token);
         localStorage.setItem('user', JSON.stringify(res.usuario || { correo: email }));
+        if (res.usuario?.id_rol) {
+          localStorage.setItem('cenarepas_role_id', String(res.usuario.id_rol));
+        }
       }
       setIsLoading(false);
       return true;
