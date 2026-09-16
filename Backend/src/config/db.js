@@ -12,6 +12,9 @@ export const pool = new Pool({
   max: 20,
   idleTimeoutMillis: 30000,
   connectionTimeoutMillis: 4000,
+  ssl: config.nodeEnv === 'production'
+    ? { rejectUnauthorized: false }
+    : false,
 });
 
 // Configurar el esquema por defecto en cada conexión
