@@ -1,9 +1,11 @@
 import { useState, useEffect } from 'react';
-import { X, Upload, Trash2, Image as ImageIcon } from 'lucide-react';
+import { X, Upload, Trash2, Image as ImageIcon, Loader2 } from 'lucide-react';
 import { getCategorias } from '../../categorias/services/categoriasService';
 import { getFichasTecnicas } from '../../fichas-tecnicas/services/fichasTecnicasService';
 import { getProveedores } from '../../proveedores/services/proveedoresService';
 import { Combobox } from '../../../shared/ui/Combobox';
+import { uploadImage } from '../../../shared/services/uploadService';
+import { getImageUrl } from '../../../shared/services/api';
 
 export function ProductoFormModal({ open, onClose, producto = null, onSave, isLoading = false }) {
   const [nombre, setNombre] = useState('');
@@ -14,10 +16,13 @@ export function ProductoFormModal({ open, onClose, producto = null, onSave, isLo
   const [idFicha, setIdFicha] = useState('');
   const [idProveedor, setIdProveedor] = useState('');
   const [imagenUrl, setImagenUrl] = useState('');
+  const [selectedFile, setSelectedFile] = useState(null);
+  const [previewUrl, setPreviewUrl] = useState('');
+  const [isUploading, setIsUploading] = useState(false);
   const [urlInput, setUrlInput] = useState('');
   const [stockMinimo, setStockMinimo] = useState('');
   const [fechaVencimiento, setFechaVencimiento] = useState('');
-  const [estado, setEstado] = useState('activo');
+  const [estado, setEstado] = useState('Activo');
 
   const [categorias, setCategorias] = useState([]);
   const [fichas, setFichas] = useState([]);
@@ -35,8 +40,11 @@ export function ProductoFormModal({ open, onClose, producto = null, onSave, isLo
     }).catch(() => {});
   }, []);
 
-
   useEffect(() => {
+    setSelectedFile(null);
+    setPreviewUrl('');
+    setIsUploading(false);
+
     if (producto) {
       setNombre(producto.nombre || '');
       setIdCategoria(producto.id_categoria ? String(producto.id_categoria) : (categorias[0]?.id_categoria ? String(categorias[0].id_categoria) : '1'));
@@ -49,7 +57,7 @@ export function ProductoFormModal({ open, onClose, producto = null, onSave, isLo
       setUrlInput('');
       setStockMinimo(producto.stock_minimo != null ? String(producto.stock_minimo) : '0');
       setFechaVencimiento(producto.fecha_vencimiento || '');
-      setEstado(producto.estado || 'activo');
+      setEstado(producto.estado || 'Activo');
     } else {
       setNombre('');
       setIdCategoria(categorias[0]?.id_categoria ? String(categorias[0].id_categoria) : '1');
@@ -62,7 +70,7 @@ export function ProductoFormModal({ open, onClose, producto = null, onSave, isLo
       setUrlInput('');
       setStockMinimo('0');
       setFechaVencimiento('');
-      setEstado('activo');
+      setEstado('Activo');
     }
   }, [producto, open, categorias]);
 
@@ -75,17 +83,30 @@ export function ProductoFormModal({ open, onClose, producto = null, onSave, isLo
         alert('La imagen no debe superar los 5MB');
         return;
       }
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setImagenUrl(reader.result);
-      };
-      reader.readAsDataURL(file);
+      setSelectedFile(file);
+      setPreviewUrl(URL.createObjectURL(file));
     }
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     if (!nombre.trim()) return;
+
+    let finalImageUrl = (imagenUrl || urlInput).trim() || null;
+
+    if (selectedFile) {
+      try {
+        setIsUploading(true);
+        const uploadRes = await uploadImage(selectedFile);
+        finalImageUrl = uploadRes?.url || uploadRes?.data?.url || finalImageUrl;
+      } catch (uploadErr) {
+        alert(`Error al subir la imagen: ${uploadErr.message || 'Error desconocido'}`);
+        setIsUploading(false);
+        return;
+      } finally {
+        setIsUploading(false);
+      }
+    }
 
     const payload = producto
       ? {
@@ -97,7 +118,7 @@ export function ProductoFormModal({ open, onClose, producto = null, onSave, isLo
           descripcion: descripcion.trim() || null,
           id_ficha: idFicha ? Number(idFicha) : null,
           id_proveedor: idProveedor ? Number(idProveedor) : null,
-          imagen_url: (imagenUrl || urlInput).trim() || null,
+          imagen_url: finalImageUrl,
           stock_minimo: Number(stockMinimo) || 0,
           fecha_vencimiento: fechaVencimiento || null,
           estado,
@@ -110,10 +131,10 @@ export function ProductoFormModal({ open, onClose, producto = null, onSave, isLo
           descripcion: descripcion.trim() || null,
           id_ficha: idFicha ? Number(idFicha) : null,
           id_proveedor: idProveedor ? Number(idProveedor) : null,
-          imagen_url: (imagenUrl || urlInput).trim() || null,
+          imagen_url: finalImageUrl,
           stock_minimo: Number(stockMinimo) || 0,
           fecha_vencimiento: fechaVencimiento || null,
-          estado: estado || 'activo',
+          estado: estado || 'Activo',
         };
 
     if (onSave) {
@@ -240,14 +261,16 @@ export function ProductoFormModal({ open, onClose, producto = null, onSave, isLo
                 <ImageIcon className="w-4 h-4 text-primary" />
                 Imagen del Producto
               </label>
-              {imagenUrl && (
+              {(previewUrl || imagenUrl) && (
                 <button
                   type="button"
                   onClick={() => {
                     setImagenUrl('');
+                    setSelectedFile(null);
+                    setPreviewUrl('');
                     setUrlInput('');
                   }}
-                  className="text-xs text-destructive hover:underline flex items-center gap-1"
+                  className="text-xs text-destructive hover:underline flex items-center gap-1 cursor-pointer"
                 >
                   <Trash2 className="w-3 h-3" />
                   Eliminar imagen
@@ -255,10 +278,10 @@ export function ProductoFormModal({ open, onClose, producto = null, onSave, isLo
               )}
             </div>
 
-            {imagenUrl ? (
+            {(previewUrl || imagenUrl) ? (
               <div className="relative w-full h-44 rounded-lg border border-border bg-card overflow-hidden group">
                 <img
-                  src={imagenUrl}
+                  src={previewUrl || getImageUrl(imagenUrl)}
                   alt="Vista previa del producto"
                   className="w-full h-full object-cover"
                 />
@@ -315,9 +338,11 @@ export function ProductoFormModal({ open, onClose, producto = null, onSave, isLo
                       onClick={() => {
                         if (urlInput.trim()) {
                           setImagenUrl(urlInput.trim());
+                          setSelectedFile(null);
+                          setPreviewUrl('');
                         }
                       }}
-                      className="px-3 py-1.5 bg-secondary text-secondary-foreground hover:bg-secondary/80 rounded-lg text-xs font-medium transition-colors"
+                      className="px-3 py-1.5 bg-secondary text-secondary-foreground hover:bg-secondary/80 rounded-lg text-xs font-medium transition-colors cursor-pointer"
                     >
                       Cargar
                     </button>
@@ -347,8 +372,8 @@ export function ProductoFormModal({ open, onClose, producto = null, onSave, isLo
                 value={estado}
                 onChange={(e) => setEstado(e.target.value)}
                 options={[
-                  { value: 'activo', label: 'Activo' },
-                  { value: 'inactivo', label: 'Inactivo' },
+                  { value: 'Activo', label: 'Activo' },
+                  { value: 'Inactivo', label: 'Inactivo' },
                 ]}
               />
             </div>
@@ -395,17 +420,28 @@ export function ProductoFormModal({ open, onClose, producto = null, onSave, isLo
             <button
               type="button"
               onClick={onClose}
-              disabled={isLoading}
+              disabled={isLoading || isUploading}
               className="flex-1 px-4 py-2 border border-border rounded-lg hover:bg-muted text-sm font-medium transition-colors cursor-pointer"
             >
               Cancelar
             </button>
             <button
               type="submit"
-              disabled={isLoading}
-              className="flex-1 px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:opacity-90 disabled:opacity-50 text-sm font-medium transition-colors shadow-xs cursor-pointer"
+              disabled={isLoading || isUploading}
+              className="flex-1 px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:opacity-90 disabled:opacity-50 text-sm font-medium transition-colors shadow-xs cursor-pointer flex items-center justify-center gap-2"
             >
-              {isLoading ? 'Guardando...' : producto ? 'Guardar Cambios' : 'Guardar Producto'}
+              {isUploading ? (
+                <>
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                  <span>Subiendo imagen...</span>
+                </>
+              ) : isLoading ? (
+                'Guardando...'
+              ) : producto ? (
+                'Guardar Cambios'
+              ) : (
+                'Guardar Producto'
+              )}
             </button>
           </div>
         </form>

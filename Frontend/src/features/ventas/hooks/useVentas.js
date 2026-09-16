@@ -11,11 +11,23 @@ export function useVentas() {
   const [deleteDialog, setDeleteDialog] = useState({ isOpen: false, id: null, nombre: '' });
   const [isDeleting, setIsDeleting] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+  const [loadError, setLoadError] = useState(null);
+
+  const fetchVentas = () => {
+    setIsLoading(true);
+    setLoadError(null);
+    return getVentas()
+      .then((data) => setVentas(Array.isArray(data) ? data : []))
+      .catch((error) => {
+        setVentas([]);
+        setLoadError(error?.message || 'No se pudieron cargar las ventas');
+      })
+      .finally(() => setIsLoading(false));
+  };
 
   useEffect(() => {
-    getVentas()
-      .then((data) => setVentas(Array.isArray(data) ? data : []))
-      .catch(() => setVentas([]));
+    fetchVentas();
   }, []);
 
   const filteredVentas = useMemo(() => {
@@ -87,6 +99,9 @@ export function useVentas() {
     setDeleteDialog,
     isDeleting,
     isSaving,
+    isLoading,
+    loadError,
+    refetch: fetchVentas,
     handleSave,
     handleAnular,
   };

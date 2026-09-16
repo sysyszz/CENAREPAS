@@ -9,10 +9,13 @@ import { ProductosTable } from '../components/ProductosTable';
 import { ProductoFormModal } from '../components/ProductoFormModal';
 import ConfirmDialog from '../../../shared/components/ConfirmDialog';
 import DetailModal from '../../../shared/components/DetailModal';
+import MetricCard from '../../../shared/components/MetricCard';
 import PageHeader from '../../../shared/components/PageHeader';
 import { usePermissions } from '../../../shared/contexts/PermissionContext';
 import StatusSwitch from '../../../shared/components/StatusSwitch';
 import { CustomSelect } from '../../../shared/components/CustomSelect';
+import ErrorBanner from '../../../shared/components/ErrorBanner';
+import { getImageUrl } from '../../../shared/services/api';
 
 export default function ProductosPage() {
   const { can } = usePermissions();
@@ -31,6 +34,9 @@ export default function ProductosPage() {
     setDeleteDialog,
     isDeleting,
     isSaving,
+    isLoading,
+    loadError,
+    refetch,
     productos,
     filteredProductos,
     handleSave,
@@ -156,7 +162,7 @@ export default function ProductosPage() {
           <div className="w-12 h-12 rounded-lg bg-muted/60 border border-border overflow-hidden flex items-center justify-center shrink-0 shadow-2xs">
             {value ? (
               <img
-                src={value}
+                src={getImageUrl(value)}
                 alt={prod.nombre}
                 className="w-full h-full object-cover"
                 onError={(e) => {
@@ -236,23 +242,11 @@ export default function ProductosPage() {
       {
         key: 'estado',
         label: 'Estado',
-        render: (value) => <StatusSwitch value={value} />,
+        render: (value) => <StatusSwitch value={value} disabled={!can('productos', 'editar')} />,
       },
     ],
     [categoryNames]
   );
-
-  const kpiCards = [
-    { title: 'Total Productos', value: totalProductos, icon: Box, iconStyle: 'bg-primary/10 text-primary' },
-    { title: 'Disponibles', value: disponibles, icon: CheckCircle, iconStyle: 'bg-success/10 text-success' },
-    { title: 'Bajo Stock', value: bajoStock, icon: AlertTriangle, iconStyle: 'bg-warning/10 text-warning' },
-    {
-      title: 'Valor Inventario',
-      value: `$${valorInventario.toLocaleString('es-CO')}`,
-      icon: DollarSign,
-      iconStyle: 'bg-accent/10 text-primary',
-    },
-  ];
 
   return (
     <div className="space-y-6">
@@ -267,34 +261,21 @@ export default function ProductosPage() {
         }}
       />
 
-      {/* Tarjetas de Consolidado con animación en cascada, sombra sutil y elevación al hover */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
-        {kpiCards.map((card, idx) => {
-          const Icon = card.icon;
-          return (
-            <motion.div
-              key={card.title}
-              initial={{ opacity: 0, y: 14 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.35, delay: idx * 0.08, ease: 'easeOut' }}
-              className="bg-card p-4 rounded-xl border border-border flex items-center gap-3 shadow-xs hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 cursor-default"
-            >
-              <div className={`p-3 rounded-lg ${card.iconStyle} shrink-0 transition-transform duration-200`}>
-                <Icon className="w-5 h-5" />
-              </div>
-              <div>
-                <p className="text-sm text-muted-foreground">{card.title}</p>
-                <h3 className="text-xl font-bold text-foreground">{card.value}</h3>
-              </div>
-            </motion.div>
-          );
-        })}
+      {/* Tarjetas de Consolidado */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 items-stretch">
+        <MetricCard index={0} title="Total Productos" value={totalProductos} icon={Box} variant="primary" />
+        <MetricCard index={1} title="Disponibles" value={disponibles} icon={CheckCircle} variant="success" />
+        <MetricCard index={2} title="Bajo Stock" value={bajoStock} icon={AlertTriangle} variant="warning" />
+        <MetricCard index={3} title="Valor Inventario" value={`$${valorInventario.toLocaleString('es-CO')}`} icon={DollarSign} variant="accent" />
       </div>
+
+      <ErrorBanner message={loadError} onRetry={refetch} />
 
       {/* Tabla exclusiva de Productos con animaciones escalonadas y botones de acción circulares */}
       <ProductosTable
         columns={columns}
         data={filteredProductos}
+        isLoading={isLoading}
         emptyIcon={Box}
         entityName="productos"
         onAdd={() => {
@@ -362,7 +343,7 @@ export default function ProductosPage() {
                         value: (
                           <div className="w-24 h-24 rounded-lg overflow-hidden border border-border bg-muted/30 ml-auto">
                             <img
-                              src={detailModal.data.imagen_url}
+                              src={getImageUrl(detailModal.data.imagen_url)}
                               alt={detailModal.data.nombre}
                               className="w-full h-full object-cover"
                             />

@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Plus, Trash2, X, Package } from 'lucide-react';
-import { mockInsumos, getInsumos } from '../../insumos/services/insumosService';
-import { mockFichaTecnicaInsumos } from '../services/fichasTecnicasService';
+import { getInsumos } from '../../insumos/services/insumosService';
 import { Combobox } from '../../../shared/ui/Combobox';
 
 export function FichaTecnicaFormModal({ open, onClose, ficha = null, onSave, isLoading = false }) {
@@ -13,15 +12,15 @@ export function FichaTecnicaFormModal({ open, onClose, ficha = null, onSave, isL
   const [estado, setEstado] = useState('Activo');
 
   // Insumos disponibles y requeridos para la receta
-  const [availableInsumos, setAvailableInsumos] = useState(mockInsumos);
+  const [availableInsumos, setAvailableInsumos] = useState([]);
   const [insumosRequeridos, setInsumosRequeridos] = useState([]);
   const [selectedInsumoId, setSelectedInsumoId] = useState('');
   const [cantidadInsumo, setCantidadInsumo] = useState('');
 
   useEffect(() => {
     getInsumos().then((data) => {
-      if (data && data.length > 0) setAvailableInsumos(data);
-    });
+      if (Array.isArray(data) && data.length > 0) setAvailableInsumos(data);
+    }).catch(() => {});
   }, []);
 
   useEffect(() => {
@@ -34,16 +33,15 @@ export function FichaTecnicaFormModal({ open, onClose, ficha = null, onSave, isL
       const isInactive = String(ficha.estado ?? '').toLowerCase() === 'inactivo';
       setEstado(isInactive ? 'Inactivo' : 'Activo');
 
-      // Cargar insumos asociados a esta ficha
-      const existingInsumos = mockFichaTecnicaInsumos.filter((fi) => fi.id_ficha === ficha.id_ficha);
-      if (existingInsumos.length > 0) {
+      // Cargar insumos asociados a esta ficha desde el payload real del backend (ficha.insumos)
+      if (Array.isArray(ficha.insumos) && ficha.insumos.length > 0) {
         setInsumosRequeridos(
-          existingInsumos.map((item) => {
+          ficha.insumos.map((item) => {
             const insumoData = availableInsumos.find((i) => i.id_insumo === item.id_insumo);
             return {
               id_insumo: item.id_insumo,
-              nombre: insumoData?.nombre || `Insumo #${item.id_insumo}`,
-              cantidad: item.cantidad,
+              nombre: item.insumo_nombre || insumoData?.nombre || `Insumo #${item.id_insumo}`,
+              cantidad: Number(item.cantidad) || 0,
               unidad_medida: item.unidad_medida || insumoData?.unidad_medida || 'kg',
             };
           })

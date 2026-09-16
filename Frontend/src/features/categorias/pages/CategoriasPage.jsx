@@ -11,6 +11,7 @@ import { MetricCard } from '../../../shared/components/MetricCard';
 import { usePermissions } from '../../../shared/contexts/PermissionContext';
 import StatusSwitch from '../../../shared/components/StatusSwitch';
 import { CustomSelect } from '../../../shared/components/CustomSelect';
+import ErrorBanner from '../../../shared/components/ErrorBanner';
 
 export default function CategoriasPage() {
   const { can } = usePermissions();
@@ -28,6 +29,9 @@ export default function CategoriasPage() {
     setDeleteDialog,
     isDeleting,
     isSaving,
+    isLoading,
+    loadError,
+    refetch,
     handleSave,
     handleDelete,
   } = useCategorias();
@@ -74,7 +78,7 @@ export default function CategoriasPage() {
       {
         key: 'estado',
         label: 'Estado',
-        render: (value) => <StatusSwitch value={value} />,
+        render: (value) => <StatusSwitch value={value} disabled={!can('categorias', 'editar')} />,
       },
       {
         key: 'acciones',
@@ -116,17 +120,20 @@ export default function CategoriasPage() {
       />
 
       {/* Tarjetas de Consolidado */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 items-stretch">
         <MetricCard index={0} title="Total Categorías" value={totalCategorias} icon={FolderTree} variant="primary" />
         <MetricCard index={1} title="Categorías Activas" value={activas} icon={CheckCircle} variant="success" />
         <MetricCard index={2} title="Prod. Clasificados" value={totalProductosAsignados} icon={Package} variant="accent" />
         <MetricCard index={3} title="Promedio Prod/Cat" value={promedioProductos} icon={Layers} variant="warning" />
       </div>
 
+      <ErrorBanner message={loadError} onRetry={refetch} />
+
       {/* Tabla con DataTable y RowActions */}
       <DataTable
         columns={columns}
         data={filteredData}
+        isLoading={isLoading}
         emptyIcon={FolderTree}
         entityName="categorías"
         onAdd={() => {

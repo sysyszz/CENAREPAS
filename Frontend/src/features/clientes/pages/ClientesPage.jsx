@@ -11,6 +11,7 @@ import { MetricCard } from '../../../shared/components/MetricCard';
 import { usePermissions } from '../../../shared/contexts/PermissionContext';
 import StatusSwitch from '../../../shared/components/StatusSwitch';
 import { CustomSelect } from '../../../shared/components/CustomSelect';
+import ErrorBanner from '../../../shared/components/ErrorBanner';
 
 export default function ClientesPage() {
   const { can } = usePermissions();
@@ -26,10 +27,18 @@ export default function ClientesPage() {
     setDetailModal,
     deleteDialog,
     setDeleteDialog,
+    statusDialog,
+    setStatusDialog,
     isDeleting,
     isSaving,
+    isUpdatingStatus,
+    isLoading,
+    loadError,
+    refetch,
     handleSave,
     handleDelete,
+    handleRequestStatusChange,
+    handleConfirmStatusChange,
   } = useClientes();
   const [selectedCliente, setSelectedCliente] = useState(null);
 
@@ -92,7 +101,13 @@ export default function ClientesPage() {
       {
         key: 'estado',
         label: 'Estado',
-        render: (value) => <StatusSwitch value={value} />,
+        render: (value, cliente) => (
+          <StatusSwitch
+            value={value}
+            disabled={!can('clientes', 'cambiar_estado')}
+            onToggle={() => handleRequestStatusChange(cliente)}
+          />
+        ),
       },
       {
         key: 'acciones',
@@ -111,7 +126,7 @@ export default function ClientesPage() {
         ),
       },
     ],
-    [can, setDetailModal, setShowModal, setDeleteDialog]
+    [can, setDetailModal, setShowModal, setDeleteDialog, handleRequestStatusChange]
   );
 
   return (
@@ -128,17 +143,20 @@ export default function ClientesPage() {
       />
 
       {/* Tarjetas de Consolidado */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 items-stretch">
         <MetricCard index={0} title="Total Clientes" value={totalClientes} icon={UserCircle} variant="primary" />
         <MetricCard index={1} title="Clientes Activos" value={activos} icon={CheckCircle} variant="success" />
         <MetricCard index={2} title="Pedidos Históricos" value={totalPedidosHistorico} icon={ShoppingBag} variant="accent" />
         <MetricCard index={3} title="Facturación Total" value={`$${totalFacturadoHistorico.toLocaleString('es-CO')}`} icon={DollarSign} variant="warning" />
       </div>
 
+      <ErrorBanner message={loadError} onRetry={refetch} />
+
       {/* Tabla con DataTable (usa SearchFilterBar y PaginationControls internamente) */}
       <DataTable
         columns={columns}
         data={filteredData}
+        isLoading={isLoading}
         emptyIcon={UserCircle}
         entityName="clientes"
         onAdd={() => {
@@ -199,6 +217,21 @@ export default function ClientesPage() {
         onConfirm={handleDelete}
         onCancel={() => setDeleteDialog({ isOpen: false, id: null, nombre: '' })}
         isLoading={isDeleting}
+      />
+
+      {/* Modal de confirmación para Cambio de Estado */}
+      <ConfirmDialog
+        isOpen={statusDialog.isOpen}
+        title={`Cambiar Estado a ${statusDialog.nextEstado}`}
+        message={`¿Estás seguro de que deseas cambiar el estado del cliente "${statusDialog.cliente?.nombre}"${
+          statusDialog.cliente?.direccion ? ` (${statusDialog.cliente.direccion})` : ''
+        } de ${statusDialog.cliente?.estado || 'Activo'} a ${statusDialog.nextEstado}?`}
+        confirmText={`Cambiar a ${statusDialog.nextEstado}`}
+        confirmVariant={statusDialog.nextEstado === 'Activo' ? 'success' : 'warning'}
+        onConfirm={handleConfirmStatusChange}
+        onCancel={() => setStatusDialog({ isOpen: false, cliente: null, nextEstado: 'Activo' })}
+        isLoading={isUpdatingStatus}
+        loadingText="Cambiando estado…"
       />
     </div>
   );

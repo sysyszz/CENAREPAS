@@ -12,6 +12,7 @@ import PageHeader from '../../../shared/components/PageHeader';
 import { usePermissions } from '../../../shared/contexts/PermissionContext';
 import StatusSwitch from '../../../shared/components/StatusSwitch';
 import { CustomSelect } from '../../../shared/components/CustomSelect';
+import ErrorBanner from '../../../shared/components/ErrorBanner';
 
 export default function ProveedoresPage() {
   const { can } = usePermissions();
@@ -30,6 +31,9 @@ export default function ProveedoresPage() {
     setDeleteDialog,
     isDeleting,
     isSaving,
+    isLoading,
+    loadError,
+    refetch,
     handleSave,
     handleDelete,
   } = useProveedores();
@@ -83,7 +87,7 @@ export default function ProveedoresPage() {
       {
         key: 'estado',
         label: 'Estado',
-        render: (value) => <StatusSwitch value={value} />,
+        render: (value) => <StatusSwitch value={value} disabled={!can('proveedores', 'cambiar_estado')} />,
       },
       {
         key: 'fecha_creacion',
@@ -130,17 +134,20 @@ export default function ProveedoresPage() {
       />
 
       {/* Tarjetas de Consolidado */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 items-stretch">
         <MetricCard index={0} title="Total Proveedores" value={totalProveedores} icon={Truck} variant="primary" />
         <MetricCard index={1} title="Proveedores Activos" value={activos} icon={CheckCircle} variant="success" />
         <MetricCard index={2} title="Inactivos" value={inactivos} icon={Clock} variant="warning" />
         <MetricCard index={3} title="Insumos Suministrados" value={insumosCount} icon={Package} variant="accent" />
       </div>
 
+      <ErrorBanner message={loadError} onRetry={refetch} />
+
       {/* Tabla con DataTable */}
       <DataTable
         columns={columns}
         data={proveedores}
+        isLoading={isLoading}
         emptyIcon={Truck}
         entityName="proveedores"
         onAdd={() => {

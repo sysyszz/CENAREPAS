@@ -17,7 +17,7 @@ export class CategoriasService {
   }
 
   static async create(data) {
-    const { nombre, descripcion, estado = 'activo' } = data;
+    const { nombre, descripcion, estado = 'Activo' } = data;
     const res = await query(
       `INSERT INTO categoria_producto (nombre, descripcion, estado)
        VALUES ($1, $2, $3)

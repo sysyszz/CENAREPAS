@@ -10,7 +10,7 @@ export function ProduccionFormModal({ open, onClose, lote = null, onSave, isLoad
   const [cantidadProducida, setCantidadProducida] = useState('');
   const [idUsuarioResponsable, setIdUsuarioResponsable] = useState('1');
   const [fechaProduccion, setFechaProduccion] = useState('');
-  const [estado, setEstado] = useState('en_proceso');
+  const [estado, setEstado] = useState('En proceso');
   const [observaciones, setObservaciones] = useState('');
 
   const [fichas, setFichas] = useState([]);
@@ -38,17 +38,27 @@ export function ProduccionFormModal({ open, onClose, lote = null, onSave, isLoad
       setCantidadProducida(lote.cantidad_producida != null ? String(lote.cantidad_producida) : '');
       setIdUsuarioResponsable(lote.id_usuario_responsable ? String(lote.id_usuario_responsable) : '1');
       setFechaProduccion(lote.fecha_produccion || '');
-      setEstado(lote.estado || 'en_proceso');
+      setEstado(lote.estado || 'En proceso');
       setObservaciones(lote.observaciones || '');
-      if (Array.isArray(lote.insumos)) {
-        setInsumosList(lote.insumos);
+      if (Array.isArray(lote.insumos_consumidos)) {
+        setInsumosList(
+          lote.insumos_consumidos.map((item) => {
+            const ins = availableInsumos.find((i) => i.id_insumo === item.id_insumo);
+            return {
+              id_insumo: item.id_insumo,
+              nombre: item.insumo_nombre || ins?.nombre || `Insumo #${item.id_insumo}`,
+              cantidad: item.cantidad_consumida,
+              unidad_medida: ins?.unidad_medida || 'kg',
+            };
+          })
+        );
       }
     } else {
       setIdFicha(fichas[0]?.id_ficha ? String(fichas[0].id_ficha) : '1');
       setCantidadProducida('');
       setIdUsuarioResponsable(usuarios[0]?.id_usuario ? String(usuarios[0].id_usuario) : '1');
       setFechaProduccion(new Date().toISOString().split('T')[0]);
-      setEstado('en_proceso');
+      setEstado('En proceso');
       setObservaciones('');
     }
   }, [lote, open, fichas, usuarios]);
@@ -124,7 +134,7 @@ export function ProduccionFormModal({ open, onClose, lote = null, onSave, isLoad
           id_usuario_responsable: Number(idUsuarioResponsable) || 1,
           fecha_produccion: fechaProduccion || new Date().toISOString().split('T')[0],
           insumos: insumosList,
-          estado: estado || 'en_proceso',
+          estado: estado || 'En proceso',
           observaciones: observaciones.trim() || null,
         };
 
@@ -211,7 +221,7 @@ export function ProduccionFormModal({ open, onClose, lote = null, onSave, isLoad
                 value={idUsuarioResponsable}
                 onValueChange={setIdUsuarioResponsable}
                 onChange={(e) => setIdUsuarioResponsable(e.target.value)}
-                options={mockUsuarios.map((u) => ({
+                options={usuarios.map((u) => ({
                   value: String(u.id_usuario),
                   label: u.nombre,
                 }))}
@@ -226,10 +236,9 @@ export function ProduccionFormModal({ open, onClose, lote = null, onSave, isLoad
                 onValueChange={setEstado}
                 onChange={(e) => setEstado(e.target.value)}
                 options={[
-                  { value: 'en_proceso', label: 'En proceso' },
-                  { value: 'finalizado', label: 'Finalizado' },
-                  { value: 'programado', label: 'Programado' },
-                  { value: 'anulado', label: 'Anulado' },
+                  { value: 'En proceso', label: 'En proceso' },
+                  { value: 'Terminado', label: 'Terminado' },
+                  { value: 'Anulado', label: 'Anulado' },
                 ]}
               />
             </div>

@@ -27,7 +27,7 @@ export class ProductosService {
     const {
       nombre, descripcion, id_categoria, id_ficha, id_proveedor,
       precio_venta, imagen_url, stock_actual = 0, stock_minimo = 0,
-      fecha_vencimiento, estado = 'activo'
+      fecha_vencimiento, estado = 'Activo'
     } = data;
 
     const res = await query(

@@ -11,11 +11,23 @@ export function usePedidos() {
   const [deleteDialog, setDeleteDialog] = useState({ isOpen: false, id: null, nombre: '' });
   const [isDeleting, setIsDeleting] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+  const [loadError, setLoadError] = useState(null);
+
+  const fetchPedidos = () => {
+    setIsLoading(true);
+    setLoadError(null);
+    return getPedidos()
+      .then((data) => setPedidos(Array.isArray(data) ? data : []))
+      .catch((error) => {
+        setPedidos([]);
+        setLoadError(error?.message || 'No se pudieron cargar los pedidos');
+      })
+      .finally(() => setIsLoading(false));
+  };
 
   useEffect(() => {
-    getPedidos()
-      .then((data) => setPedidos(Array.isArray(data) ? data : []))
-      .catch(() => setPedidos([]));
+    fetchPedidos();
   }, []);
 
   const filteredPedidos = useMemo(() => {
@@ -84,6 +96,9 @@ export function usePedidos() {
     setDeleteDialog,
     isDeleting,
     isSaving,
+    isLoading,
+    loadError,
+    refetch: fetchPedidos,
     handleSave,
     handleDelete,
   };

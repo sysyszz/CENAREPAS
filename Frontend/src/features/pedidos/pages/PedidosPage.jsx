@@ -13,6 +13,7 @@ import { MetricCard } from '../../../shared/components/MetricCard';
 import { usePermissions } from '../../../shared/contexts/PermissionContext';
 import StatusSwitch from '../../../shared/components/StatusSwitch';
 import { CustomSelect } from '../../../shared/components/CustomSelect';
+import ErrorBanner from '../../../shared/components/ErrorBanner';
 
 export default function PedidosPage() {
   const { can } = usePermissions();
@@ -30,6 +31,9 @@ export default function PedidosPage() {
     setDeleteDialog,
     isDeleting,
     isSaving,
+    isLoading,
+    loadError,
+    refetch,
     handleSave,
     handleDelete,
   } = usePedidos();
@@ -60,7 +64,9 @@ export default function PedidosPage() {
 
   const totalPedidos = rawPedidos.length;
   const entregados = rawPedidos.filter((p) => String(p.estado).toLowerCase() === 'entregado').length;
-  const enCamino = rawPedidos.filter((p) => String(p.estado).toLowerCase() === 'en camino' || String(p.estado).toLowerCase() === 'pendiente').length;
+  const enCamino = rawPedidos.filter((p) =>
+    ['pendiente', 'en preparacion', 'listo para entregar'].includes(String(p.estado).toLowerCase())
+  ).length;
   const totalFacturado = rawPedidos.reduce((acc, p) => acc + (p.totalNum || p.valor_total || 0), 0);
 
   const filteredData = useMemo(() => {
@@ -132,7 +138,7 @@ export default function PedidosPage() {
       {
         key: 'estado',
         label: 'Estado',
-        render: (value) => <StatusSwitch value={value} />,
+        render: (value) => <StatusSwitch value={value} disabled={!can('pedidos', 'cambiar_estado')} />,
       },
       {
         key: 'acciones',
@@ -174,17 +180,20 @@ export default function PedidosPage() {
       />
 
       {/* Tarjetas de Consolidado */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 items-stretch">
         <MetricCard index={0} title="Total Pedidos" value={totalPedidos} icon={ClipboardList} variant="primary" />
         <MetricCard index={1} title="Entregados" value={entregados} icon={CheckCircle} variant="success" />
         <MetricCard index={2} title="En Camino" value={enCamino} icon={Truck} variant="warning" />
         <MetricCard index={3} title="Valor Facturado" value={`$${totalFacturado.toLocaleString('es-CO')}`} icon={DollarSign} variant="accent" />
       </div>
 
+      <ErrorBanner message={loadError} onRetry={refetch} />
+
       {/* Tabla con DataTable */}
       <DataTable
         columns={columns}
         data={filteredData}
+        isLoading={isLoading}
         emptyIcon={ClipboardList}
         entityName="pedidos"
         onAdd={() => {
@@ -204,10 +213,11 @@ export default function PedidosPage() {
             className="w-full sm:w-52"
           >
             <option value="Todos">Todos los estados</option>
-            <option value="Entregado">Entregado</option>
-            <option value="En Camino">En Camino</option>
             <option value="Pendiente">Pendiente</option>
-            <option value="Cancelado">Cancelado</option>
+            <option value="En preparacion">En Preparación</option>
+            <option value="Listo para entregar">Listo para Entregar</option>
+            <option value="Entregado">Entregado</option>
+            <option value="Anulado">Anulado</option>
           </CustomSelect>
         }
       />
@@ -230,7 +240,7 @@ export default function PedidosPage() {
               <div className="space-y-1 mt-1 text-left w-full">
                 {(detailModal.data.detalles || []).map((item, idx) => (
                   <div key={idx} className="flex items-center justify-between text-xs py-1 border-b border-border/40 last:border-0">
-                    <span className="font-medium text-foreground">{item.nombre_producto || `Producto #${item.id_producto}`}</span>
+                    <span className="font-medium text-foreground">{item.producto_nombre || `Producto #${item.id_producto}`}</span>
                     <span className="text-muted-foreground">{item.cantidad} und x ${Number(item.precio_unitario).toLocaleString('es-CO')} = <strong className="text-primary">${Number(item.subtotal).toLocaleString('es-CO')}</strong></span>
                   </div>
                 ))}

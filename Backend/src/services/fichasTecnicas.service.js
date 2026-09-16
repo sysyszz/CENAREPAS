@@ -36,7 +36,7 @@ export class FichasTecnicasService {
   }
 
   static async create(data) {
-    const { nombre, descripcion, instrucciones_preparacion, tiempo_estimado_minutos, rendimiento_lote, estado = 'activo', insumos = [] } = data;
+    const { nombre, descripcion, instrucciones_preparacion, tiempo_estimado_minutos, rendimiento_lote, estado = 'Activo', insumos = [] } = data;
     const res = await query(
       `INSERT INTO ficha_tecnica (nombre, descripcion, instrucciones_preparacion, tiempo_estimado_minutos, rendimiento_lote, estado)
        VALUES ($1, $2, $3, $4, $5, $6)

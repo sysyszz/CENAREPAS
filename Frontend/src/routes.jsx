@@ -24,8 +24,16 @@ import NotFoundPage from './features/error/pages/NotFoundPage';
 import { usePermissions } from './shared/contexts/PermissionContext';
 
 function ProtectedModule({ modulo, children }) {
-  const { can } = usePermissions();
-  return can(modulo, 'ver') ? children : <Navigate to="/admin" replace />;
+  const { can, defaultRoute } = usePermissions();
+  return can(modulo, 'ver') ? children : <Navigate to={defaultRoute} replace />;
+}
+
+function AdminIndexRoute() {
+  const { can, defaultRoute } = usePermissions();
+  if (can('dashboard', 'ver')) {
+    return <DashboardPage />;
+  }
+  return <Navigate to={defaultRoute} replace />;
 }
 
 export function AppRoutes({ isAuthenticated, setIsAuthenticated }) {
@@ -49,7 +57,7 @@ export function AppRoutes({ isAuthenticated, setIsAuthenticated }) {
           )
         }
       >
-        <Route index element={<DashboardPage />} />
+        <Route index element={<AdminIndexRoute />} />
         <Route path="profile" element={<ProfilePage />} />
         <Route path="configuracion" element={<ProtectedModule modulo="configuracion"><ConfiguracionPage /></ProtectedModule>} />
         <Route path="usuarios" element={<ProtectedModule modulo="usuarios"><UsuariosPage /></ProtectedModule>} />

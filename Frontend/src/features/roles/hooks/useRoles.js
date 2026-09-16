@@ -12,11 +12,23 @@ export function useRoles() {
   const [deleteDialog, setDeleteDialog] = useState({ isOpen: false, id: null, nombre: '' });
   const [isDeleting, setIsDeleting] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+  const [loadError, setLoadError] = useState(null);
+
+  const fetchRoles = () => {
+    setIsLoading(true);
+    setLoadError(null);
+    return getRoles()
+      .then((data) => setRoles(Array.isArray(data) ? data : []))
+      .catch((error) => {
+        setRoles([]);
+        setLoadError(error?.message || 'No se pudieron cargar los roles');
+      })
+      .finally(() => setIsLoading(false));
+  };
 
   useEffect(() => {
-    getRoles()
-      .then((data) => setRoles(Array.isArray(data) ? data : []))
-      .catch(() => setRoles([]));
+    fetchRoles();
   }, []);
 
   const filteredRoles = useMemo(() => {
@@ -86,6 +98,9 @@ export function useRoles() {
     setDeleteDialog,
     isDeleting,
     isSaving,
+    isLoading,
+    loadError,
+    refetch: fetchRoles,
     handleSave,
     handleDelete,
   };

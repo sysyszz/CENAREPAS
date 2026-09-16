@@ -11,11 +11,23 @@ export function useCompras() {
   const [deleteDialog, setDeleteDialog] = useState({ isOpen: false, id: null, nombre: '' });
   const [isDeleting, setIsDeleting] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+  const [loadError, setLoadError] = useState(null);
+
+  const fetchCompras = () => {
+    setIsLoading(true);
+    setLoadError(null);
+    return getCompras()
+      .then((data) => setCompras(Array.isArray(data) ? data : []))
+      .catch((error) => {
+        setCompras([]);
+        setLoadError(error?.message || 'No se pudieron cargar las compras');
+      })
+      .finally(() => setIsLoading(false));
+  };
 
   useEffect(() => {
-    getCompras()
-      .then((data) => setCompras(Array.isArray(data) ? data : []))
-      .catch(() => setCompras([]));
+    fetchCompras();
   }, []);
 
   const filteredCompras = compras.filter((c) => {
@@ -81,6 +93,9 @@ export function useCompras() {
     setDeleteDialog,
     isDeleting,
     isSaving,
+    isLoading,
+    loadError,
+    refetch: fetchCompras,
     handleSave,
     handleAnular,
   };

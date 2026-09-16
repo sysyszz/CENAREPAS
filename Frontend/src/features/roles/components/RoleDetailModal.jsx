@@ -128,33 +128,33 @@ export default function RoleDetailModal({ isOpen, onClose, role }) {
         {/* Scrollable Content */}
         <div className="overflow-y-auto space-y-5 pr-1 flex-1 custom-scrollbar">
           {/* Metadata Cards */}
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-            <div className="p-3 rounded-lg bg-muted/40 border border-border/60">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 items-stretch">
+            <div className="p-3 rounded-lg bg-muted/40 border border-border/60 flex flex-col justify-between h-full w-full">
               <div className="flex items-center gap-2 text-muted-foreground text-xs font-medium mb-1">
                 <Hash className="w-3.5 h-3.5" />
                 <span>Identificador</span>
               </div>
-              <p className="text-sm font-semibold font-mono text-foreground">
+              <p className="text-sm font-semibold font-mono text-foreground mt-auto">
                 #{role.id_rol}
               </p>
             </div>
 
-            <div className="p-3 rounded-lg bg-muted/40 border border-border/60">
+            <div className="p-3 rounded-lg bg-muted/40 border border-border/60 flex flex-col justify-between h-full w-full">
               <div className="flex items-center gap-2 text-muted-foreground text-xs font-medium mb-1">
                 <Calendar className="w-3.5 h-3.5" />
                 <span>Fecha de Creación</span>
               </div>
-              <p className="text-sm font-semibold text-foreground">
+              <p className="text-sm font-semibold text-foreground mt-auto">
                 {formatDate(role.fecha_creacion)}
               </p>
             </div>
 
-            <div className="p-3 rounded-lg bg-muted/40 border border-border/60">
+            <div className="p-3 rounded-lg bg-muted/40 border border-border/60 flex flex-col justify-between h-full w-full">
               <div className="flex items-center gap-2 text-muted-foreground text-xs font-medium mb-1">
                 <Layers className="w-3.5 h-3.5" />
                 <span>Permisos Asignados</span>
               </div>
-              <p className="text-sm font-semibold text-foreground">
+              <p className="text-sm font-semibold text-foreground mt-auto">
                 <span className="text-primary font-bold">{activeCount}</span>
                 <span className="text-muted-foreground font-normal text-xs"> / {totalSystemPermissions} activos</span>
               </p>

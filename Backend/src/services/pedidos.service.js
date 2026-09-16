@@ -40,7 +40,7 @@ export class PedidosService {
   }
 
   static async create(data) {
-    const { id_cliente, id_sede, id_usuario, fecha_pedido = new Date(), fecha_entrega, valor_total, estado = 'pendiente', observaciones, motivo_anulacion, detalles = [] } = data;
+    const { id_cliente, id_sede, id_usuario, fecha_pedido = new Date(), fecha_entrega, valor_total, estado = 'Pendiente', observaciones, motivo_anulacion, detalles = [] } = data;
     const res = await query(
       `INSERT INTO pedido (id_cliente, id_sede, id_usuario, fecha_pedido, fecha_entrega, valor_total, estado, observaciones, motivo_anulacion)
        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)

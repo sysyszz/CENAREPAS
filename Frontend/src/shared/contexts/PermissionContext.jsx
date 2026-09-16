@@ -1,4 +1,11 @@
 import { createContext, useContext, useMemo, useState } from 'react';
+import {
+  ROLES,
+  ROLE_NAMES,
+  ROLE_DEFAULT_USERS,
+  MATRIZ_PERMISOS,
+  getDefaultRouteForRole,
+} from '../config/permisos';
 
 export const mockPermisos = [
   { id_permiso: 1, modulo: 'dashboard', accion: 'ver', estado: 'activo' },
@@ -20,11 +27,30 @@ export const mockPermisos = [
   ),
 ];
 
-const defaultRolePermissions = {
-  1: mockPermisos.map((p) => p.id_permiso), // Admin: total
-  2: mockPermisos.filter((p) => ['dashboard', 'compras', 'pedidos', 'ventas', 'insumos', 'productos', 'produccion', 'categorias', 'proveedores', 'clientes', 'fichas-tecnicas'].includes(p.modulo)).map((p) => p.id_permiso), // Secretaria
-  3: mockPermisos.filter((p) => ['dashboard', 'pedidos', 'ventas', 'clientes', 'productos'].includes(p.modulo)).map((p) => p.id_permiso), // Vendedor
-  4: mockPermisos.filter((p) => ['dashboard', 'pedidos'].includes(p.modulo)).map((p) => p.id_permiso), // Domiciliario
+export const defaultRolePermissions = {
+  // 1: Administrador (Total)
+  1: mockPermisos.map((p) => p.id_permiso),
+  // 2: Secretaria (Proveedores, Compras, Categorías, Insumos, Producción, Productos, Clientes, Pedidos, Ventas, Dashboard)
+  2: [
+    1, // Dashboard
+    10, 11, 12, 13, // Proveedores
+    14, 15, 16, 17, // Clientes
+    18, 19, 20, 21, // Compras
+    22, 23, 24, 25, // Categorías
+    30, 31, 32, 33, // Insumos
+    34, 35, 36, 37, // Producción
+    38, 39, 40, 41, // Productos
+    42, 43, 44, 45, // Pedidos
+    46, 47, 48, 49, // Ventas
+  ],
+  // 3: Vendedor (Categorías [solo lectura], Productos [solo lectura], Clientes [sin eliminar], Pedidos, Ventas)
+  3: [
+    22, // Categorías ver
+    38, // Productos ver
+    14, 15, 16, // Clientes (ver, crear, editar)
+    42, 43, 44, 45, // Pedidos (ver, crear, editar, anular/eliminar)
+    46, 47, 48, 49, // Ventas (ver, crear, editar, anular/eliminar)
+  ],
 };
 
 export const mockRolPermisos = [
@@ -43,7 +69,7 @@ export function PermissionProvider({ children }) {
     } catch {
       // ignore
     }
-    return 1;
+    return ROLES.ADMINISTRADOR;
   };
 
   const [roleId, setRoleId] = useState(getInitialRoleId);
@@ -63,20 +89,52 @@ export function PermissionProvider({ children }) {
   }, [roleId, rolePermissions]);
 
   const can = (modulo, accion = 'ver') => {
-    // Si es Administrador (Rol 1), conceder acceso a todos los módulos y acciones
-    if (roleId === 1) return true;
+    const mod = String(modulo || '').toLowerCase().trim();
+    const act = String(accion || 'ver').toLowerCase().trim();
 
+    // Administrador (Rol 1) tiene acceso absoluto a todo
+    if (roleId === ROLES.ADMINISTRADOR || roleId === 1) return true;
+
+    // Consultar matriz oficial como fuente de verdad
+    const roleMatrix = MATRIZ_PERMISOS[roleId];
+    if (roleMatrix && roleMatrix[mod]) {
+      const allowedActions = roleMatrix[mod];
+      if (allowedActions.includes(act)) return true;
+      if (act === 'anular' && allowedActions.includes('eliminar')) return true;
+      if (act === 'eliminar' && allowedActions.includes('anular')) return true;
+      if (act === 'cambiar_estado' && allowedActions.includes('editar')) return true;
+      if (act === 'exportar' && allowedActions.includes('ver')) return true;
+      if ((act === 'imagen' || act === 'vencimiento') && allowedActions.includes('crear')) return true;
+    }
+
+    // Fallback a los permisos dinámicos en permissions
     return permissions.some(
       (permission) =>
-        permission.modulo === modulo &&
-        permission.accion === accion &&
+        permission.modulo === mod &&
+        (permission.accion === act || (act === 'anular' && permission.accion === 'eliminar')) &&
         String(permission.estado).toLowerCase() === 'activo'
     );
   };
 
+  const puedeVer = (modulo) => can(modulo, 'ver');
+  const puedeHacer = (modulo, accion) => can(modulo, accion);
+
+  const defaultRoute = useMemo(() => getDefaultRouteForRole(roleId), [roleId]);
+  const roleName = ROLE_NAMES[roleId] || 'Usuario';
+  const currentUserMeta = ROLE_DEFAULT_USERS[roleId] || ROLE_DEFAULT_USERS[1];
+
   const setActiveRole = (nextRoleId) => {
-    localStorage.setItem('cenarepas_role_id', String(nextRoleId));
-    setRoleId(Number(nextRoleId));
+    const numId = Number(nextRoleId);
+    localStorage.setItem('cenarepas_role_id', String(numId));
+    
+    // Actualizar también el usuario por defecto simulado en localStorage si aplica
+    const user = JSON.parse(localStorage.getItem('user') || '{}');
+    const defaultMeta = ROLE_DEFAULT_USERS[numId];
+    if (defaultMeta) {
+      localStorage.setItem('user', JSON.stringify({ ...user, id_rol: numId, nombre: defaultMeta.nombre, correo: defaultMeta.correo }));
+    }
+    
+    setRoleId(numId);
   };
 
   const updateRolePermissions = (nextRoleId, permissionIds) => {
@@ -87,7 +145,19 @@ export function PermissionProvider({ children }) {
 
   return (
     <PermissionContext.Provider
-      value={{ roleId, setActiveRole, permissions, can, updateRolePermissions, rolePermissions }}
+      value={{
+        roleId,
+        roleName,
+        currentUserMeta,
+        defaultRoute,
+        setActiveRole,
+        permissions,
+        can,
+        puedeVer,
+        puedeHacer,
+        updateRolePermissions,
+        rolePermissions,
+      }}
     >
       {children}
     </PermissionContext.Provider>

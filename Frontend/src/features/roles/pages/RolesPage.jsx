@@ -11,6 +11,7 @@ import PageHeader from '../../../shared/components/PageHeader';
 import { usePermissions, mockPermisos } from '../../../shared/contexts/PermissionContext';
 import StatusSwitch from '../../../shared/components/StatusSwitch';
 import { CustomSelect } from '../../../shared/components/CustomSelect';
+import ErrorBanner from '../../../shared/components/ErrorBanner';
 
 export default function RolesPage() {
   const { can } = usePermissions();
@@ -28,6 +29,9 @@ export default function RolesPage() {
     setDeleteDialog,
     isDeleting,
     isSaving,
+    isLoading,
+    loadError,
+    refetch,
     handleSave,
     handleDelete,
   } = useRoles();
@@ -79,7 +83,7 @@ export default function RolesPage() {
       {
         key: 'estado',
         label: 'Estado',
-        render: (value) => <StatusSwitch value={value} />,
+        render: (value) => <StatusSwitch value={value} disabled={!can('roles', 'cambiar_estado')} />,
       },
       {
         key: 'fecha_creacion',
@@ -126,18 +130,20 @@ export default function RolesPage() {
       />
 
       {/* Tarjetas de consolidado / métricas */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 items-stretch">
         <MetricCard index={0} title="Total Roles" value={totalRoles} icon={Shield} variant="primary" />
         <MetricCard index={1} title="Permisos Disponibles" value={permisosDisponibles} icon={KeyRound} variant="accent" />
         <MetricCard index={2} title="Roles Configurados" value={rolesConfigurados} icon={ListChecks} variant="warning" />
         <MetricCard index={3} title="Roles Activos" value={rolesActivos} icon={ShieldCheck} variant="success" />
       </div>
 
+      <ErrorBanner message={loadError} onRetry={refetch} />
 
       {/* Tabla con DataTable */}
       <DataTable
         columns={columns}
         data={filteredData}
+        isLoading={isLoading}
         emptyIcon={Shield}
         entityName="roles"
         onAdd={() => {

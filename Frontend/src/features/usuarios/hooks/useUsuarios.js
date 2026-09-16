@@ -12,11 +12,23 @@ export function useUsuarios() {
   const [deleteDialog, setDeleteDialog] = useState({ isOpen: false, id: null, nombre: '' });
   const [isDeleting, setIsDeleting] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+  const [loadError, setLoadError] = useState(null);
+
+  const fetchUsuarios = () => {
+    setIsLoading(true);
+    setLoadError(null);
+    return getUsuarios()
+      .then((data) => setUsuarios(Array.isArray(data) ? data : []))
+      .catch((error) => {
+        setUsuarios([]);
+        setLoadError(error?.message || 'No se pudieron cargar los usuarios');
+      })
+      .finally(() => setIsLoading(false));
+  };
 
   useEffect(() => {
-    getUsuarios()
-      .then((data) => setUsuarios(Array.isArray(data) ? data : []))
-      .catch(() => setUsuarios([]));
+    fetchUsuarios();
   }, []);
 
   const filteredUsuarios = useMemo(() => {
@@ -88,6 +100,9 @@ export function useUsuarios() {
     setDeleteDialog,
     isDeleting,
     isSaving,
+    isLoading,
+    loadError,
+    refetch: fetchUsuarios,
     handleSave,
     handleDelete,
   };

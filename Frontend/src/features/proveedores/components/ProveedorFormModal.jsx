@@ -8,7 +8,7 @@ export function ProveedorFormModal({ open, onClose, proveedor = null, onSave, is
   const [telefono, setTelefono] = useState('');
   const [correo, setCorreo] = useState('');
   const [direccion, setDireccion] = useState('');
-  const [estado, setEstado] = useState('activo');
+  const [estado, setEstado] = useState('Activo');
 
   useEffect(() => {
     if (proveedor) {
@@ -17,14 +17,14 @@ export function ProveedorFormModal({ open, onClose, proveedor = null, onSave, is
       setTelefono(proveedor.telefono || '');
       setCorreo(proveedor.correo || '');
       setDireccion(proveedor.direccion || '');
-      setEstado(proveedor.estado || 'activo');
+      setEstado(proveedor.estado || 'Activo');
     } else {
       setNombre('');
       setNit('');
       setTelefono('');
       setCorreo('');
       setDireccion('');
-      setEstado('activo');
+      setEstado('Activo');
     }
   }, [proveedor, open]);
 
@@ -50,7 +50,7 @@ export function ProveedorFormModal({ open, onClose, proveedor = null, onSave, is
           telefono: telefono.trim() || null,
           correo: correo.trim() || null,
           direccion: direccion.trim() || null,
-          estado: estado || 'activo',
+          estado: estado || 'Activo',
         };
 
     if (onSave) {
@@ -147,8 +147,8 @@ export function ProveedorFormModal({ open, onClose, proveedor = null, onSave, is
               value={estado}
               onChange={(e) => setEstado(e.target.value)}
               options={[
-                { value: 'activo', label: 'Activo' },
-                { value: 'inactivo', label: 'Inactivo' },
+                { value: 'Activo', label: 'Activo' },
+                { value: 'Inactivo', label: 'Inactivo' },
               ]}
             />
           </div>

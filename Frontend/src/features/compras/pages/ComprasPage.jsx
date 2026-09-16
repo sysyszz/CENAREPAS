@@ -1,5 +1,5 @@
 import { useState, useMemo, useEffect } from 'react';
-import { ShoppingCart, CheckCircle, Clock, DollarSign } from 'lucide-react';
+import { ShoppingCart, CheckCircle, XCircle, DollarSign } from 'lucide-react';
 import { useCompras } from '../hooks/useCompras';
 import { getProveedores } from '../../proveedores/services/proveedoresService';
 import { getUsuarios } from '../../usuarios/services/usuariosService';
@@ -13,6 +13,7 @@ import { MetricCard } from '../../../shared/components/MetricCard';
 import { usePermissions } from '../../../shared/contexts/PermissionContext';
 import StatusSwitch from '../../../shared/components/StatusSwitch';
 import { CustomSelect } from '../../../shared/components/CustomSelect';
+import ErrorBanner from '../../../shared/components/ErrorBanner';
 
 export default function ComprasPage() {
   const { can } = usePermissions();
@@ -30,6 +31,9 @@ export default function ComprasPage() {
     setDeleteDialog,
     isDeleting,
     isSaving,
+    isLoading,
+    loadError,
+    refetch,
     handleSave,
     handleAnular,
   } = useCompras();
@@ -60,10 +64,10 @@ export default function ComprasPage() {
 
   const totalCompras = rawCompras.length;
   const recibidas = rawCompras.filter(
-    (c) => String(c.estado).toLowerCase() === 'recibida' || String(c.estado).toLowerCase() === 'activo'
+    (c) => String(c.estado).toLowerCase() === 'registrada'
   ).length;
-  const pendientes = rawCompras.filter(
-    (c) => String(c.estado).toLowerCase() === 'pendiente'
+  const anuladas = rawCompras.filter(
+    (c) => String(c.estado).toLowerCase() === 'anulada'
   ).length;
   const totalInvertido = rawCompras.reduce(
     (acc, c) => acc + (c.totalNum || c.valor_total || 0),
@@ -132,7 +136,7 @@ export default function ComprasPage() {
       {
         key: 'estado',
         label: 'Estado',
-        render: (value) => <StatusSwitch value={value} />,
+        render: (value) => <StatusSwitch value={value} disabled={!can('compras', 'cambiar_estado')} />,
       },
       {
         key: 'acciones',
@@ -184,17 +188,20 @@ export default function ComprasPage() {
       />
 
       {/* Tarjetas de Consolidado */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 items-stretch">
         <MetricCard index={0} title="Total Compras" value={totalCompras} icon={ShoppingCart} variant="primary" />
-        <MetricCard index={1} title="Recibidas" value={recibidas} icon={CheckCircle} variant="success" />
-        <MetricCard index={2} title="Pendientes" value={pendientes} icon={Clock} variant="warning" />
+        <MetricCard index={1} title="Registradas" value={recibidas} icon={CheckCircle} variant="success" />
+        <MetricCard index={2} title="Anuladas" value={anuladas} icon={XCircle} variant="destructive" />
         <MetricCard index={3} title="Total Invertido" value={`$${totalInvertido.toLocaleString('es-CO')}`} icon={DollarSign} variant="accent" />
       </div>
+
+      <ErrorBanner message={loadError} onRetry={refetch} />
 
       {/* Tabla con DataTable */}
       <DataTable
         columns={columns}
         data={filteredData}
+        isLoading={isLoading}
         emptyIcon={ShoppingCart}
         entityName="compras"
         onAdd={() => {
@@ -214,8 +221,7 @@ export default function ComprasPage() {
             className="w-full sm:w-52"
           >
             <option value="Todos">Todos los estados</option>
-            <option value="Recibida">Recibida</option>
-            <option value="Pendiente">Pendiente</option>
+            <option value="Registrada">Registrada</option>
             <option value="Anulada">Anulada</option>
           </CustomSelect>
         }
@@ -238,7 +244,7 @@ export default function ComprasPage() {
               <div className="space-y-1 mt-1 text-left w-full">
                 {(detailModal.data.detalles || []).map((item, idx) => (
                   <div key={idx} className="flex items-center justify-between text-xs py-1 border-b border-border/40 last:border-0">
-                    <span className="font-medium text-foreground">{item.nombre_insumo || `Insumo #${item.id_insumo}`}</span>
+                    <span className="font-medium text-foreground">{item.insumo_nombre || `Insumo #${item.id_insumo}`}</span>
                     <span className="text-muted-foreground">{item.cantidad} {item.unidad_medida || 'kg'} x ${Number(item.valor_unitario).toLocaleString('es-CO')} = <strong className="text-primary">${Number(item.subtotal).toLocaleString('es-CO')}</strong></span>
                   </div>
                 ))}

@@ -6,19 +6,24 @@ import { Combobox } from '../../../shared/ui/Combobox';
 export function RoleFormModal({ open, onClose, role = null, onSave, isLoading = false }) {
   const { updateRolePermissions } = usePermissions();
   const [nombre, setNombre] = useState('');
-  const [estado, setEstado] = useState('activo');
+  const [estado, setEstado] = useState('Activo');
   const [descripcion, setDescripcion] = useState('');
   const [selectedPermissions, setSelectedPermissions] = useState([]);
 
   useEffect(() => {
     if (role) {
       setNombre(role.nombre || '');
-      setEstado(role.estado || 'activo');
+      setEstado(role.estado || 'Activo');
       setDescripcion(role.descripcion || '');
-      setSelectedPermissions(role.permisos || []);
+      const mapped = Array.isArray(role.permisos)
+        ? role.permisos
+            .map((p) => (typeof p === 'object' && p?.id_permiso != null ? Number(p.id_permiso) : Number(p)))
+            .filter((id) => !isNaN(id) && id > 0)
+        : [];
+      setSelectedPermissions(mapped);
     } else {
       setNombre('');
-      setEstado('activo');
+      setEstado('Activo');
       setDescripcion('');
       setSelectedPermissions([]);
     }
@@ -36,23 +41,25 @@ export function RoleFormModal({ open, onClose, role = null, onSave, isLoading = 
     e.preventDefault();
     if (!nombre.trim()) return;
 
+    const cleanPermissions = selectedPermissions.map(Number).filter((id) => !isNaN(id) && id > 0);
+
     const payload = role
       ? {
           ...role,
           nombre: nombre.trim(),
           estado,
           descripcion: descripcion.trim() || null,
-          permisos: selectedPermissions,
+          permisos: cleanPermissions,
         }
       : {
           nombre: nombre.trim(),
-          estado: estado || 'activo',
+          estado: estado || 'Activo',
           descripcion: descripcion.trim() || null,
-          permisos: selectedPermissions,
+          permisos: cleanPermissions,
         };
 
     if (role?.id_rol) {
-      updateRolePermissions(role.id_rol, selectedPermissions);
+      updateRolePermissions(role.id_rol, cleanPermissions);
     }
 
     if (onSave) {
@@ -103,8 +110,8 @@ export function RoleFormModal({ open, onClose, role = null, onSave, isLoading = 
               value={estado}
               onChange={(e) => setEstado(e.target.value)}
               options={[
-                { value: 'activo', label: 'Activo' },
-                { value: 'inactivo', label: 'Inactivo' },
+                { value: 'Activo', label: 'Activo' },
+                { value: 'Inactivo', label: 'Inactivo' },
               ]}
             />
           </div>
@@ -140,14 +147,15 @@ export function RoleFormModal({ open, onClose, role = null, onSave, isLoading = 
                       <label key={permiso.id_permiso} className="role-action-option flex items-center gap-1.5 text-xs">
                         <input
                           type="checkbox"
-                          checked={selectedPermissions.includes(permiso.id_permiso)}
-                          onChange={(event) =>
+                          checked={selectedPermissions.some((id) => Number(id) === Number(permiso.id_permiso))}
+                          onChange={(event) => {
+                            const permId = Number(permiso.id_permiso);
                             setSelectedPermissions((current) =>
                               event.target.checked
-                                ? [...current, permiso.id_permiso]
-                                : current.filter((id) => id !== permiso.id_permiso)
-                            )
-                          }
+                                ? [...current.filter((id) => Number(id) !== permId), permId]
+                                : current.filter((id) => Number(id) !== permId)
+                            );
+                          }}
                         />
                         <span>{permiso.accion}</span>
                       </label>

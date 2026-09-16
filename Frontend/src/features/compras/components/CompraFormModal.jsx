@@ -7,9 +7,9 @@ import { Combobox } from '../../../shared/ui/Combobox';
 export function CompraFormModal({ open, onClose, compra = null, onSave, isLoading = false }) {
   const [fechaCompra, setFechaCompra] = useState('');
   const [idProveedor, setIdProveedor] = useState('1');
-  const [medioPago, setMedioPago] = useState('transferencia');
+  const [medioPago, setMedioPago] = useState('Transferencia');
   const [comprobanteUrl, setComprobanteUrl] = useState('');
-  const [estado, setEstado] = useState('activo');
+  const [estado, setEstado] = useState('Registrada');
 
   // Catálogos
   const [proveedores, setProveedores] = useState([]);
@@ -34,9 +34,9 @@ export function CompraFormModal({ open, onClose, compra = null, onSave, isLoadin
     if (compra) {
       setFechaCompra(compra.fecha_compra || '');
       setIdProveedor(compra.id_proveedor ? String(compra.id_proveedor) : '1');
-      setMedioPago(compra.medio_pago || 'transferencia');
+      setMedioPago(compra.medio_pago || 'Transferencia');
       setComprobanteUrl(compra.comprobante_url || '');
-      setEstado(compra.estado || 'activo');
+      setEstado(compra.estado || 'Registrada');
 
       // Cargar detalles existentes
       if (Array.isArray(compra.detalles) && compra.detalles.length > 0) {
@@ -60,9 +60,9 @@ export function CompraFormModal({ open, onClose, compra = null, onSave, isLoadin
     } else {
       setFechaCompra(new Date().toISOString().split('T')[0]);
       setIdProveedor(proveedores[0]?.id_proveedor ? String(proveedores[0].id_proveedor) : '1');
-      setMedioPago('transferencia');
+      setMedioPago('Transferencia');
       setComprobanteUrl('');
-      setEstado('activo');
+      setEstado('Registrada');
       setDetalles([]);
     }
     setSelectedInsumoId('');
@@ -148,7 +148,7 @@ export function CompraFormModal({ open, onClose, compra = null, onSave, isLoadin
           valor_total: valorTotalCalculado,
           medio_pago: medioPago,
           comprobante_url: comprobanteUrl.trim() || null,
-          estado: estado || 'activo',
+          estado: estado || 'Registrada',
           detalles,
         };
 
@@ -217,9 +217,9 @@ export function CompraFormModal({ open, onClose, compra = null, onSave, isLoadin
                 value={medioPago}
                 onChange={(e) => setMedioPago(e.target.value)}
                 options={[
-                  { value: 'transferencia', label: 'Transferencia Bancaria' },
-                  { value: 'efectivo', label: 'Efectivo' },
-                  { value: 'credito', label: 'Crédito Proveedor' },
+                  { value: 'Transferencia', label: 'Transferencia Bancaria' },
+                  { value: 'Efectivo', label: 'Efectivo' },
+                  { value: 'Credito', label: 'Crédito Proveedor' },
                 ]}
               />
             </div>
@@ -231,10 +231,8 @@ export function CompraFormModal({ open, onClose, compra = null, onSave, isLoadin
                 value={estado}
                 onChange={(e) => setEstado(e.target.value)}
                 options={[
-                  { value: 'activo', label: 'Activo' },
-                  { value: 'recibida', label: 'Recibida' },
-                  { value: 'pendiente', label: 'Pendiente' },
-                  { value: 'anulado', label: 'Anulada' },
+                  { value: 'Registrada', label: 'Registrada' },
+                  { value: 'Anulada', label: 'Anulada' },
                 ]}
               />
             </div>

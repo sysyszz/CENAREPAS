@@ -34,3 +34,8 @@ Frontend/.impeccable/
 .DS_Store
 Thumbs.db
 *.log
+
+# Uploads
+Backend/uploads/*
+!Backend/uploads/productos/
+!Backend/uploads/productos/.gitkeep

@@ -13,6 +13,7 @@ import { MetricCard } from '../../../shared/components/MetricCard';
 import { usePermissions } from '../../../shared/contexts/PermissionContext';
 import StatusSwitch from '../../../shared/components/StatusSwitch';
 import { CustomSelect } from '../../../shared/components/CustomSelect';
+import ErrorBanner from '../../../shared/components/ErrorBanner';
 
 export default function FichasTecnicasPage() {
   const { can } = usePermissions();
@@ -30,6 +31,9 @@ export default function FichasTecnicasPage() {
     setDeleteDialog,
     isDeleting,
     isSaving,
+    isLoading,
+    loadError,
+    refetch,
     handleSave,
     handleDelete,
   } = useFichasTecnicas();
@@ -106,7 +110,7 @@ export default function FichasTecnicasPage() {
       {
         key: 'estado',
         label: 'Estado',
-        render: (value) => <StatusSwitch value={value} />,
+        render: (value) => <StatusSwitch value={value} disabled={!can('fichas-tecnicas', 'cambiar_estado')} />,
       },
       {
         key: 'acciones',
@@ -148,17 +152,20 @@ export default function FichasTecnicasPage() {
       />
 
       {/* Tarjetas de Consolidado */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 items-stretch">
         <MetricCard index={0} title="Total Recetas" value={totalFichas} icon={BookOpen} variant="primary" />
         <MetricCard index={1} title="Fichas Vigentes" value={vigentes} icon={CheckCircle} variant="success" />
         <MetricCard index={2} title="Versión Actual" value="v3.0 Max" icon={FileText} variant="accent" />
         <MetricCard index={3} title="Última Revisión" value="Hace 15 días" icon={Clock} variant="warning" />
       </div>
 
+      <ErrorBanner message={loadError} onRetry={refetch} />
+
       {/* Tabla con DataTable */}
       <DataTable
         columns={columns}
         data={filteredData}
+        isLoading={isLoading}
         emptyIcon={BookOpen}
         entityName="fichas técnicas"
         onAdd={() => {
@@ -204,7 +211,7 @@ export default function FichasTecnicasPage() {
                 <div className="space-y-1 w-full text-left">
                   {list.map((item, idx) => (
                     <div key={idx} className="flex items-center justify-between gap-3 text-xs bg-card p-1.5 rounded border border-border/50">
-                      <span className="font-medium text-foreground">{item.nombre}</span>
+                      <span className="font-medium text-foreground">{item.insumo_nombre}</span>
                       <span className="font-semibold text-primary px-2 py-0.5 bg-primary/10 rounded">
                         {item.cantidad} {item.unidad_medida}
                       </span>

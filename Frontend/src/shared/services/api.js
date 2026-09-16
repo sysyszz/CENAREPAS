@@ -1,9 +1,20 @@
 // api.js - Centralized HTTP client for CENAREPAS Frontend
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:4000/api/v1';
+const REQUEST_TIMEOUT_MS = 15000;
+
+export const SERVER_BASE_URL = API_BASE_URL.replace(/\/api\/v1\/?$/, '');
+
+export function getImageUrl(path) {
+  if (!path) return '';
+  if (path.startsWith('http://') || path.startsWith('https://') || path.startsWith('blob:') || path.startsWith('data:')) {
+    return path;
+  }
+  return `${SERVER_BASE_URL}${path.startsWith('/') ? '' : '/'}${path}`;
+}
 
 export async function apiRequest(endpoint, options = {}, fallbackFn = null) {
   const url = `${API_BASE_URL}${endpoint.startsWith('/') ? endpoint : `/${endpoint}`}`;
-  
+
   // Retrieve token if present
   let token = null;
   try {
@@ -19,17 +30,27 @@ export async function apiRequest(endpoint, options = {}, fallbackFn = null) {
     // Ignore JSON parse errors
   }
 
+  const isFormData = typeof FormData !== 'undefined' && options.body instanceof FormData;
+
   const headers = {
-    'Content-Type': 'application/json',
+    ...(isFormData ? {} : { 'Content-Type': 'application/json' }),
     ...(token ? { Authorization: `Bearer ${token}` } : {}),
     ...(options.headers || {}),
   };
+
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
 
   try {
     const response = await fetch(url, {
       ...options,
       headers,
-      body: options.body && typeof options.body === 'object' ? JSON.stringify(options.body) : options.body,
+      signal: controller.signal,
+      body: isFormData
+        ? options.body
+        : options.body && typeof options.body === 'object'
+        ? JSON.stringify(options.body)
+        : options.body,
     });
 
     const data = await response.json().catch(() => null);
@@ -44,11 +65,18 @@ export async function apiRequest(endpoint, options = {}, fallbackFn = null) {
 
     return data?.data !== undefined ? data.data : data;
   } catch (err) {
+    const isTimeout = err.name === 'AbortError';
+    const finalErr = isTimeout
+      ? Object.assign(new Error('Tiempo de espera agotado. Verifica tu conexión e inténtalo de nuevo.'), { status: 408 })
+      : err;
+
     if (fallbackFn) {
-      console.warn(`[API Notice] Conexión a Backend ${endpoint} falló (${err.message}). Utilizando datos de respaldo locales.`);
+      console.warn(`[API Notice] Conexión a Backend ${endpoint} falló (${finalErr.message}). Utilizando datos de respaldo locales.`);
       return await fallbackFn();
     }
-    throw err;
+    throw finalErr;
+  } finally {
+    clearTimeout(timeoutId);
   }
 }
 

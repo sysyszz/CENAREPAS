@@ -11,11 +11,23 @@ export function useFichasTecnicas() {
   const [deleteDialog, setDeleteDialog] = useState({ isOpen: false, id: null, nombre: '' });
   const [isDeleting, setIsDeleting] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+  const [loadError, setLoadError] = useState(null);
+
+  const fetchFichasTecnicas = () => {
+    setIsLoading(true);
+    setLoadError(null);
+    return getFichasTecnicas()
+      .then((data) => setFichas(Array.isArray(data) ? data : []))
+      .catch((error) => {
+        setFichas([]);
+        setLoadError(error?.message || 'No se pudieron cargar las fichas técnicas');
+      })
+      .finally(() => setIsLoading(false));
+  };
 
   useEffect(() => {
-    getFichasTecnicas()
-      .then((data) => setFichas(Array.isArray(data) ? data : []))
-      .catch(() => setFichas([]));
+    fetchFichasTecnicas();
   }, []);
 
   const filteredFichas = useMemo(() => {
@@ -83,6 +95,9 @@ export function useFichasTecnicas() {
     setDeleteDialog,
     isDeleting,
     isSaving,
+    isLoading,
+    loadError,
+    refetch: fetchFichasTecnicas,
     handleSave,
     handleDelete,
   };

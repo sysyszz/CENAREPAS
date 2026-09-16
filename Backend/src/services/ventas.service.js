@@ -40,7 +40,7 @@ export class VentasService {
   }
 
   static async create(data) {
-    const { id_sede, id_cliente, id_usuario, id_pedido, fecha_venta = new Date(), valor_total, medio_pago, comprobante_url, estado = 'completada', detalles = [] } = data;
+    const { id_sede, id_cliente, id_usuario, id_pedido, fecha_venta = new Date(), valor_total, medio_pago, comprobante_url, estado = 'Pagada', detalles = [] } = data;
     const res = await query(
       `INSERT INTO venta (id_sede, id_cliente, id_usuario, id_pedido, fecha_venta, valor_total, medio_pago, comprobante_url, estado)
        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)

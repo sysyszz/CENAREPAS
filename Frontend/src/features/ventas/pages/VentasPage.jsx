@@ -11,8 +11,9 @@ import DetailModal from '../../../shared/components/DetailModal';
 import PageHeader from '../../../shared/components/PageHeader';
 import { MetricCard } from '../../../shared/components/MetricCard';
 import { usePermissions } from '../../../shared/contexts/PermissionContext';
-import StatusSwitch from '../../../shared/components/StatusSwitch';
+import EstadoBadge from '../../../shared/ui/EstadoBadge';
 import { CustomSelect } from '../../../shared/components/CustomSelect';
+import ErrorBanner from '../../../shared/components/ErrorBanner';
 
 export default function VentasPage() {
   const { can } = usePermissions();
@@ -30,6 +31,9 @@ export default function VentasPage() {
     setDeleteDialog,
     isDeleting,
     isSaving,
+    isLoading,
+    loadError,
+    refetch,
     handleSave,
     handleAnular,
   } = useVentas();
@@ -130,7 +134,14 @@ export default function VentasPage() {
         key: 'estado',
         label: 'Estado',
         render: (value) => (
-          <StatusSwitch value={value} activeValue="completada" inactiveValue="anulada" />
+          <EstadoBadge
+            value={value}
+            statusMap={{
+              pendiente: { label: 'Pendiente', color: 'warning' },
+              pagada: { label: 'Pagada', color: 'success' },
+              anulada: { label: 'Anulada', color: 'destructive' },
+            }}
+          />
         ),
       },
       {
@@ -172,15 +183,19 @@ export default function VentasPage() {
           setShowModal(true);
         }}
       />
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 items-stretch">
         <MetricCard index={0} title="Ventas Totales ($)" value={`$${ventasHoy.toLocaleString('es-CO')}`} icon={DollarSign} variant="success" />
         <MetricCard index={1} title="Total Registros" value={`${totalVentas} ventas`} icon={BarChart3} variant="primary" />
         <MetricCard index={2} title="Promedio Ticket" value={`$${Math.round(promedioVentas).toLocaleString('es-CO')}`} icon={TrendingUp} variant="accent" />
-        <MetricCard index={3} title="Completadas" value={rawVentas.filter((v) => String(v.estado).toLowerCase() === 'completada').length} icon={ShoppingBag} variant="warning" />
+        <MetricCard index={3} title="Pagadas" value={rawVentas.filter((v) => String(v.estado).toLowerCase() === 'pagada').length} icon={ShoppingBag} variant="warning" />
       </div>
+
+      <ErrorBanner message={loadError} onRetry={refetch} />
+
       <DataTable
         columns={columns}
         data={filteredData}
+        isLoading={isLoading}
         emptyIcon={DollarSign}
         entityName="ventas"
         onAdd={() => {
@@ -200,8 +215,9 @@ export default function VentasPage() {
             className="w-full sm:w-48"
           >
             <option value="Todos">Todos los estados</option>
-            <option value="completada">Completada</option>
-            <option value="anulada">Anulada</option>
+            <option value="Pendiente">Pendiente</option>
+            <option value="Pagada">Pagada</option>
+            <option value="Anulada">Anulada</option>
           </CustomSelect>
         }
       />
@@ -224,7 +240,7 @@ export default function VentasPage() {
               <div className="space-y-1 mt-1 text-left w-full">
                 {(detailModal.data.detalles || []).map((item, idx) => (
                   <div key={idx} className="flex items-center justify-between text-xs py-1 border-b border-border/40 last:border-0">
-                    <span className="font-medium text-foreground">{item.nombre_producto || `Producto #${item.id_producto}`}</span>
+                    <span className="font-medium text-foreground">{item.producto_nombre || `Producto #${item.id_producto}`}</span>
                     <span className="text-muted-foreground">{item.cantidad} und x ${Number(item.precio_unitario).toLocaleString('es-CO')} = <strong className="text-primary">${Number(item.subtotal).toLocaleString('es-CO')}</strong></span>
                   </div>
                 ))}

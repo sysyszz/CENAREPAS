@@ -11,11 +11,23 @@ export function useCategorias() {
   const [deleteDialog, setDeleteDialog] = useState({ isOpen: false, id: null, nombre: '' });
   const [isDeleting, setIsDeleting] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+  const [loadError, setLoadError] = useState(null);
+
+  const fetchCategorias = () => {
+    setIsLoading(true);
+    setLoadError(null);
+    return getCategorias()
+      .then((data) => setCategorias(Array.isArray(data) ? data : []))
+      .catch((error) => {
+        setCategorias([]);
+        setLoadError(error?.message || 'No se pudieron cargar las categorías');
+      })
+      .finally(() => setIsLoading(false));
+  };
 
   useEffect(() => {
-    getCategorias()
-      .then((data) => setCategorias(Array.isArray(data) ? data : []))
-      .catch(() => setCategorias([]));
+    fetchCategorias();
   }, []);
 
   const filteredCategorias = categorias.filter((c) => {
@@ -78,6 +90,9 @@ export function useCategorias() {
     setDeleteDialog,
     isDeleting,
     isSaving,
+    isLoading,
+    loadError,
+    refetch: fetchCategorias,
     handleSave,
     handleDelete,
   };

@@ -2,23 +2,19 @@ import { useState, useEffect, useMemo } from 'react';
 import { X, Plus, Trash2, ShoppingBag } from 'lucide-react';
 import { getClientes } from '../../clientes/services/clientesService';
 import { getProductos } from '../../productos/services/productosService';
+import { getSedes } from '../../sedes/services/sedesService';
 import { Combobox } from '../../../shared/ui/Combobox';
-
-const SEDES_DEFAULT = [
-  { id_sede: 1, nombre: 'Sede Principal (Ibagué)' },
-  { id_sede: 2, nombre: 'Sede Espinal' },
-  { id_sede: 3, nombre: 'Sede Girardot' },
-];
 
 export function PedidoFormModal({ open, onClose, pedido = null, onSave, isLoading = false }) {
   const [idCliente, setIdCliente] = useState('1');
   const [idSede, setIdSede] = useState('1');
   const [fechaEntrega, setFechaEntrega] = useState('');
-  const [estado, setEstado] = useState('pendiente');
+  const [estado, setEstado] = useState('Pendiente');
   const [observaciones, setObservaciones] = useState('');
 
   // Catálogos
   const [clientes, setClientes] = useState([]);
+  const [sedes, setSedes] = useState([]);
   const [availableProductos, setAvailableProductos] = useState([]);
 
   // Detalle de Pedido (detalle_pedido)
@@ -30,6 +26,9 @@ export function PedidoFormModal({ open, onClose, pedido = null, onSave, isLoadin
   useEffect(() => {
     getClientes().then((data) => {
       if (Array.isArray(data)) setClientes(data);
+    }).catch(() => {});
+    getSedes().then((data) => {
+      if (Array.isArray(data)) setSedes(data);
     }).catch(() => {});
     getProductos().then((data) => {
       if (Array.isArray(data)) setAvailableProductos(data);
@@ -50,10 +49,10 @@ export function PedidoFormModal({ open, onClose, pedido = null, onSave, isLoadin
 
   useEffect(() => {
     if (pedido) {
-      setIdCliente(pedido.id_cliente ? String(pedido.id_cliente) : '1');
-      setIdSede(pedido.id_sede ? String(pedido.id_sede) : '1');
+      setIdCliente(pedido.id_cliente ? String(pedido.id_cliente) : (clientes[0]?.id_cliente ? String(clientes[0].id_cliente) : '1'));
+      setIdSede(pedido.id_sede ? String(pedido.id_sede) : (sedes[0]?.id_sede ? String(sedes[0].id_sede) : '1'));
       setFechaEntrega(pedido.fecha_entrega || '');
-      setEstado(pedido.estado || 'pendiente');
+      setEstado(pedido.estado || 'Pendiente');
       setObservaciones(pedido.observaciones || '');
 
       // Cargar detalles existentes
@@ -75,16 +74,16 @@ export function PedidoFormModal({ open, onClose, pedido = null, onSave, isLoadin
       }
     } else {
       setIdCliente(clientes[0]?.id_cliente ? String(clientes[0].id_cliente) : '1');
-      setIdSede('1');
+      setIdSede(sedes[0]?.id_sede ? String(sedes[0].id_sede) : '1');
       setFechaEntrega('');
-      setEstado('pendiente');
+      setEstado('Pendiente');
       setObservaciones('');
       setDetalles([]);
     }
     setSelectedProductoId('');
     setCantidadProducto('');
     setPrecioUnitario('');
-  }, [pedido, open, clientes, availableProductos]);
+  }, [pedido, open, clientes, sedes, availableProductos]);
 
 
   // Cálculo automático del valor total
@@ -164,7 +163,7 @@ export function PedidoFormModal({ open, onClose, pedido = null, onSave, isLoadin
           id_usuario: 1, // Asignado por contexto de sesión activa
           fecha_entrega: fechaEntrega || null,
           valor_total: valorTotalCalculado,
-          estado: estado || 'pendiente',
+          estado: estado || 'Pendiente',
           observaciones: observaciones.trim() || null,
           motivo_anulacion: null,
           detalles,
@@ -219,7 +218,7 @@ export function PedidoFormModal({ open, onClose, pedido = null, onSave, isLoadin
                 name="id_sede"
                 value={idSede}
                 onChange={(e) => setIdSede(e.target.value)}
-                options={SEDES_DEFAULT.map((s) => ({
+                options={sedes.map((s) => ({
                   value: String(s.id_sede),
                   label: s.nombre,
                 }))}
@@ -247,10 +246,11 @@ export function PedidoFormModal({ open, onClose, pedido = null, onSave, isLoadin
                 value={estado}
                 onChange={(e) => setEstado(e.target.value)}
                 options={[
-                  { value: 'pendiente', label: 'Pendiente' },
-                  { value: 'en camino', label: 'En Camino' },
-                  { value: 'entregado', label: 'Entregado' },
-                  { value: 'cancelado', label: 'Cancelado' },
+                  { value: 'Pendiente', label: 'Pendiente' },
+                  { value: 'En preparacion', label: 'En Preparación' },
+                  { value: 'Listo para entregar', label: 'Listo para Entregar' },
+                  { value: 'Entregado', label: 'Entregado' },
+                  { value: 'Anulado', label: 'Anulado' },
                 ]}
               />
             </div>

@@ -193,8 +193,8 @@ export function InsumoFormModal({ open, onClose, insumo = null, onSave, isLoadin
               value={estado}
               onChange={(e) => setEstado(e.target.value)}
               options={[
-                { value: 'activo', label: 'Activo / Disponible' },
-                { value: 'inactivo', label: 'Inactivo / Agotado' },
+                { value: 'Activo', label: 'Activo / Disponible' },
+                { value: 'Inactivo', label: 'Inactivo / Agotado' },
               ]}
             />
           </div>

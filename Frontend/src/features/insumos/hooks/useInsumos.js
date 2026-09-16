@@ -12,11 +12,23 @@ export function useInsumos() {
   const [deleteDialog, setDeleteDialog] = useState({ isOpen: false, id: null, nombre: '' });
   const [isDeleting, setIsDeleting] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+  const [loadError, setLoadError] = useState(null);
+
+  const fetchInsumos = () => {
+    setIsLoading(true);
+    setLoadError(null);
+    return getInsumos()
+      .then((data) => setInsumos(Array.isArray(data) ? data : []))
+      .catch((error) => {
+        setInsumos([]);
+        setLoadError(error?.message || 'No se pudieron cargar los insumos');
+      })
+      .finally(() => setIsLoading(false));
+  };
 
   useEffect(() => {
-    getInsumos()
-      .then((data) => setInsumos(Array.isArray(data) ? data : []))
-      .catch(() => setInsumos([]));
+    fetchInsumos();
   }, []);
 
   const filteredInsumos = useMemo(() => {
@@ -88,6 +100,9 @@ export function useInsumos() {
     setDeleteDialog,
     isDeleting,
     isSaving,
+    isLoading,
+    loadError,
+    refetch: fetchInsumos,
     handleSave,
     handleDelete,
   };

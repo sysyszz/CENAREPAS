@@ -11,11 +11,23 @@ export function useProveedores() {
   const [deleteDialog, setDeleteDialog] = useState({ isOpen: false, id: null, nombre: '' });
   const [isDeleting, setIsDeleting] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+  const [loadError, setLoadError] = useState(null);
+
+  const fetchProveedores = () => {
+    setIsLoading(true);
+    setLoadError(null);
+    return getProveedores()
+      .then((data) => setProveedores(Array.isArray(data) ? data : []))
+      .catch((error) => {
+        setProveedores([]);
+        setLoadError(error?.message || 'No se pudieron cargar los proveedores');
+      })
+      .finally(() => setIsLoading(false));
+  };
 
   useEffect(() => {
-    getProveedores()
-      .then((data) => setProveedores(Array.isArray(data) ? data : []))
-      .catch(() => setProveedores([]));
+    fetchProveedores();
   }, []);
 
   const filteredProveedores = useMemo(() => {
@@ -84,6 +96,9 @@ export function useProveedores() {
     setDeleteDialog,
     isDeleting,
     isSaving,
+    isLoading,
+    loadError,
+    refetch: fetchProveedores,
     handleSave,
     handleDelete,
   };

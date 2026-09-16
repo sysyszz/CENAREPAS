@@ -12,11 +12,23 @@ export function useProductos() {
   const [isDeleting, setIsDeleting] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [productos, setProductos] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [loadError, setLoadError] = useState(null);
+
+  const fetchProductos = () => {
+    setIsLoading(true);
+    setLoadError(null);
+    return getProductos()
+      .then((data) => setProductos(Array.isArray(data) ? data : []))
+      .catch((error) => {
+        setProductos([]);
+        setLoadError(error?.message || 'No se pudieron cargar los productos');
+      })
+      .finally(() => setIsLoading(false));
+  };
 
   useEffect(() => {
-    getProductos()
-      .then((data) => setProductos(Array.isArray(data) ? data : []))
-      .catch(() => setProductos([]));
+    fetchProductos();
   }, []);
 
   const filteredProductos = useMemo(() => {
@@ -91,6 +103,9 @@ export function useProductos() {
     setDeleteDialog,
     isDeleting,
     isSaving,
+    isLoading,
+    loadError,
+    refetch: fetchProductos,
     productos,
     filteredProductos,
     handleSave,

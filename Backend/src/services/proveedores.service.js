@@ -17,7 +17,7 @@ export class ProveedoresService {
   }
 
   static async create(data) {
-    const { nombre, nit, telefono, correo, direccion, estado = 'activo' } = data;
+    const { nombre, nit, telefono, correo, direccion, estado = 'Activo' } = data;
     const res = await query(
       `INSERT INTO proveedor (nombre, nit, telefono, correo, direccion, estado)
        VALUES ($1, $2, $3, $4, $5, $6)

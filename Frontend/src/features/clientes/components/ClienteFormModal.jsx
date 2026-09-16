@@ -8,7 +8,7 @@ export function ClienteFormModal({ open, onClose, cliente = null, onSave, isLoad
   const [telefono, setTelefono] = useState('');
   const [correo, setCorreo] = useState('');
   const [direccion, setDireccion] = useState('');
-  const [estado, setEstado] = useState('activo');
+  const [estado, setEstado] = useState('Activo');
 
   useEffect(() => {
     if (cliente) {
@@ -18,14 +18,14 @@ export function ClienteFormModal({ open, onClose, cliente = null, onSave, isLoad
       setCorreo(cliente.correo || '');
       setDireccion(cliente.direccion || '');
       const isInactive = String(cliente.estado ?? '').toLowerCase() === 'inactivo';
-      setEstado(isInactive ? 'inactivo' : 'activo');
+      setEstado(isInactive ? 'Inactivo' : 'Activo');
     } else {
       setNombre('');
       setDocumento('');
       setTelefono('');
       setCorreo('');
       setDireccion('');
-      setEstado('activo');
+      setEstado('Activo');
     }
   }, [cliente, open]);
 
@@ -145,8 +145,8 @@ export function ClienteFormModal({ open, onClose, cliente = null, onSave, isLoad
               value={estado}
               onChange={(e) => setEstado(e.target.value)}
               options={[
-                { value: 'activo', label: 'Activo' },
-                { value: 'inactivo', label: 'Inactivo' },
+                { value: 'Activo', label: 'Activo' },
+                { value: 'Inactivo', label: 'Inactivo' },
               ]}
             />
           </div>

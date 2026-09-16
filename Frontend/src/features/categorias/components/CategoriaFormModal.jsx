@@ -5,18 +5,18 @@ import { Combobox } from '../../../shared/ui/Combobox';
 export function CategoriaFormModal({ open, onClose, categoria = null, onSave, isLoading = false }) {
   const [nombre, setNombre] = useState('');
   const [descripcion, setDescripcion] = useState('');
-  const [estado, setEstado] = useState('activo');
+  const [estado, setEstado] = useState('Activo');
 
   useEffect(() => {
     if (categoria) {
       setNombre(categoria.nombre || '');
       setDescripcion(categoria.descripcion || '');
       const isInactive = String(categoria.estado ?? '').toLowerCase() === 'inactivo';
-      setEstado(isInactive ? 'inactivo' : 'activo');
+      setEstado(isInactive ? 'Inactivo' : 'Activo');
     } else {
       setNombre('');
       setDescripcion('');
-      setEstado('activo');
+      setEstado('Activo');
     }
   }, [categoria, open]);
 
@@ -86,8 +86,8 @@ export function CategoriaFormModal({ open, onClose, categoria = null, onSave, is
               value={estado}
               onChange={(e) => setEstado(e.target.value)}
               options={[
-                { value: 'activo', label: 'Activo' },
-                { value: 'inactivo', label: 'Inactivo' },
+                { value: 'Activo', label: 'Activo' },
+                { value: 'Inactivo', label: 'Inactivo' },
               ]}
             />
           </div>

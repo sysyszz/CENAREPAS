@@ -22,7 +22,7 @@ export class InsumosService {
   }
 
   static async create(data) {
-    const { nombre, unidad_medida, stock_actual = 0, stock_minimo = 0, fecha_vencimiento, id_proveedor, estado = 'activo' } = data;
+    const { nombre, unidad_medida, stock_actual = 0, stock_minimo = 0, fecha_vencimiento, id_proveedor, estado = 'Activo' } = data;
     const res = await query(
       `INSERT INTO insumo (nombre, unidad_medida, stock_actual, stock_minimo, fecha_vencimiento, id_proveedor, estado)
        VALUES ($1, $2, $3, $4, $5, $6, $7)

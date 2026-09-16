@@ -26,18 +26,13 @@ pool.on('error', (err) => {
 });
 
 export const query = async (text, params) => {
-  try {
-    const start = Date.now();
-    const res = await pool.query(text, params);
-    const duration = Date.now() - start;
-    if (config.nodeEnv === 'development') {
-      // console.log(`[SQL Query] (${duration}ms):`, text);
-    }
-    return res;
-  } catch (err) {
-    console.warn(`⚠️ [Database Query Warning]: ${err.message}`);
-    return { rows: [], rowCount: 0 };
+  const start = Date.now();
+  const res = await pool.query(text, params);
+  const duration = Date.now() - start;
+  if (config.nodeEnv === 'development') {
+    // console.log(`[SQL Query] (${duration}ms):`, text);
   }
+  return res;
 };
 
 export const checkDbConnection = async () => {

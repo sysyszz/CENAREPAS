@@ -199,7 +199,7 @@ export function ContactSection() {
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
                 transition={{ duration: 0.5, delay: 0.08 }}
-                className="rounded-2xl border border-[#e8dcc0] bg-white/90 p-4.5 shadow-xs transition-all hover:border-brand/40 hover:shadow-md flex flex-col justify-between h-full"
+                className="rounded-2xl border border-[#e8dcc0] bg-white/90 p-4.5 shadow-xs transition-all hover:border-brand/40 hover:shadow-md flex flex-col justify-between h-full w-full"
               >
                 <div>
                   <div className="flex items-center justify-between gap-2 mb-2">
@@ -236,7 +236,7 @@ export function ContactSection() {
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
                 transition={{ duration: 0.5, delay: 0.12 }}
-                className="rounded-2xl border border-[#e8dcc0] bg-white/90 p-4.5 shadow-xs transition-all hover:border-brand/40 hover:shadow-md flex flex-col justify-between h-full"
+                className="rounded-2xl border border-[#e8dcc0] bg-white/90 p-4.5 shadow-xs transition-all hover:border-brand/40 hover:shadow-md flex flex-col justify-between h-full w-full"
               >
                 <div>
                   <div className="flex items-center justify-between gap-2 mb-2">

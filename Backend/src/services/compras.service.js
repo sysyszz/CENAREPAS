@@ -39,7 +39,7 @@ export class ComprasService {
   }
 
   static async create(data) {
-    const { id_proveedor, id_usuario, fecha_compra = new Date(), valor_total, medio_pago, comprobante_url, estado = 'activo', detalles = [] } = data;
+    const { id_proveedor, id_usuario, fecha_compra = new Date(), valor_total, medio_pago, comprobante_url, estado = 'Registrada', detalles = [] } = data;
     const res = await query(
       `INSERT INTO compra (id_proveedor, id_usuario, fecha_compra, valor_total, medio_pago, comprobante_url, estado)
        VALUES ($1, $2, $3, $4, $5, $6, $7)

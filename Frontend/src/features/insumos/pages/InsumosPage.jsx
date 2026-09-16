@@ -12,6 +12,7 @@ import { MetricCard } from '../../../shared/components/MetricCard';
 import { usePermissions } from '../../../shared/contexts/PermissionContext';
 import StatusSwitch from '../../../shared/components/StatusSwitch';
 import { CustomSelect } from '../../../shared/components/CustomSelect';
+import ErrorBanner from '../../../shared/components/ErrorBanner';
 
 export default function InsumosPage() {
   const { can } = usePermissions();
@@ -31,6 +32,9 @@ export default function InsumosPage() {
     setDeleteDialog,
     isDeleting,
     isSaving,
+    isLoading,
+    loadError,
+    refetch,
     handleSave,
     handleDelete,
   } = useInsumos();
@@ -129,7 +133,7 @@ export default function InsumosPage() {
       {
         key: 'estado',
         label: 'Estado',
-        render: (value) => <StatusSwitch value={value} />,
+        render: (value) => <StatusSwitch value={value} disabled={!can('insumos', 'cambiar_estado')} />,
       },
       {
         key: 'acciones',
@@ -171,17 +175,20 @@ export default function InsumosPage() {
       />
 
       {/* Tarjetas de Consolidado */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 items-stretch">
         <MetricCard index={0} title="Total Insumos" value={totalInsumos} icon={Package} variant="primary" />
         <MetricCard index={1} title="Disponibles" value={disponibles} icon={CheckCircle} variant="success" />
         <MetricCard index={2} title="Bajo Stock" value={bajoStock} icon={AlertTriangle} variant="warning" />
         <MetricCard index={3} title="Proveedores Activos" value={proveedoresCount} icon={Truck} variant="accent" />
       </div>
 
+      <ErrorBanner message={loadError} onRetry={refetch} />
+
       {/* Tabla con DataTable */}
       <DataTable
         columns={columns}
         data={filteredData}
+        isLoading={isLoading}
         emptyIcon={Package}
         entityName="insumos"
         onAdd={() => {

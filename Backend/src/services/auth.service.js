@@ -13,13 +13,32 @@ export class AuthService {
 
       if (!user) {
         // Fallback si no está en base de datos todavía
-        if (correo === 'admin@sistema.com' || correo === 'carlos.gomez@masarepas.com') {
+        const lowerCorreo = (correo || '').toLowerCase().trim();
+        if (lowerCorreo === 'admin@sistema.com' || lowerCorreo === 'carlos.gomez@masarepas.com') {
           user = {
             id_usuario: 1,
             nombre: 'Carlos Eduardo Gómez (Admin)',
             correo,
             id_rol: 1,
             rol_nombre: 'Administrador',
+            estado: 'Activo',
+          };
+        } else if (lowerCorreo.includes('secretaria') || lowerCorreo === 'secretaria@cenarepas.com') {
+          user = {
+            id_usuario: 2,
+            nombre: 'Laura Gómez (Secretaria)',
+            correo,
+            id_rol: 2,
+            rol_nombre: 'Secretaria',
+            estado: 'Activo',
+          };
+        } else if (lowerCorreo.includes('vendedor') || lowerCorreo === 'vendedor@cenarepas.com') {
+          user = {
+            id_usuario: 3,
+            nombre: 'Carlos Ruiz (Vendedor)',
+            correo,
+            id_rol: 3,
+            rol_nombre: 'Vendedor',
             estado: 'Activo',
           };
         } else {
@@ -46,8 +65,12 @@ export class AuthService {
           isValid = true;
         }
 
-        // Permitir admin123 si es admin@sistema.com
-        if (!isValid && correo === 'admin@sistema.com' && contrasena === 'admin123') {
+        // Permitir claves de demo para pruebas rápidas
+        if (!isValid && (
+          (user.correo.includes('admin') && contrasena === 'admin123') ||
+          (user.correo.includes('secretaria') && (contrasena === 'secretaria123' || contrasena === 'admin123')) ||
+          (user.correo.includes('vendedor') && (contrasena === 'vendedor123' || contrasena === 'admin123'))
+        )) {
           isValid = true;
         }
 
@@ -80,7 +103,7 @@ export class AuthService {
     }
   }
 
-  static async register({ nombre, correo, contrasena, id_rol = 1 }) {
+  static async register({ nombre, correo, contrasena, id_rol = 3 }) {
     try {
       const existing = await query('SELECT id_usuario FROM usuario WHERE LOWER(correo) = LOWER($1)', [correo.trim()]);
       if (existing && existing.rows && existing.rows.length > 0) {
@@ -93,25 +116,42 @@ export class AuthService {
         `INSERT INTO usuario (nombre, correo, contrasena_hash, id_rol, estado)
          VALUES ($1, $2, $3, $4, 'Activo')
          RETURNING id_usuario, nombre, correo, id_rol, estado, fecha_creacion`,
-        [nombre, correo.trim(), hash, id_rol]
+        [nombre.trim(), correo.trim(), hash, id_rol || 3]
       );
 
       const newUser = res.rows[0];
+      const rolRes = await query('SELECT nombre FROM rol WHERE id_rol = $1', [newUser.id_rol]);
+      const rolNombre = rolRes.rows?.[0]?.nombre || 'Vendedor';
+
       const token = generateToken({
         id_usuario: newUser.id_usuario,
         nombre: newUser.nombre,
         correo: newUser.correo,
         id_rol: newUser.id_rol,
+        rol: rolNombre,
       });
 
-      return { token, usuario: newUser };
+      return {
+        token,
+        usuario: {
+          ...newUser,
+          rol_nombre: rolNombre,
+          rol: rolNombre,
+        },
+      };
     } catch (error) {
+      if (error.message.includes('Ya existe un usuario')) {
+        throw error;
+      }
+      console.warn('[AuthService.register] DB Error/Fallback:', error.message);
       // Fallback en memoria si DB aún no migrada
       const fallbackUser = {
         id_usuario: Date.now(),
         nombre,
         correo,
-        id_rol: id_rol || 1,
+        id_rol: id_rol || 3,
+        rol_nombre: 'Vendedor',
+        rol: 'Vendedor',
         estado: 'Activo',
         fecha_creacion: new Date().toISOString(),
       };

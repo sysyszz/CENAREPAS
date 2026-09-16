@@ -3,24 +3,20 @@ import { X, Plus, Trash2, ShoppingCart } from 'lucide-react';
 import { getClientes } from '../../clientes/services/clientesService';
 import { getPedidos } from '../../pedidos/services/pedidosService';
 import { getProductos } from '../../productos/services/productosService';
+import { getSedes } from '../../sedes/services/sedesService';
 import { Combobox } from '../../../shared/ui/Combobox';
-
-const SEDES_DEFAULT = [
-  { id_sede: 1, nombre: 'Sede Principal (Ibagué)' },
-  { id_sede: 2, nombre: 'Sede Espinal' },
-  { id_sede: 3, nombre: 'Sede Girardot' },
-];
 
 export function VentaFormModal({ open, onClose, venta = null, onSave, isLoading = false }) {
   const [idCliente, setIdCliente] = useState('1');
   const [idSede, setIdSede] = useState('1');
   const [idPedido, setIdPedido] = useState('');
   const [fechaVenta, setFechaVenta] = useState('');
-  const [medioPago, setMedioPago] = useState('transferencia');
+  const [medioPago, setMedioPago] = useState('Transferencia');
   const [comprobanteUrl, setComprobanteUrl] = useState('');
-  const [estado, setEstado] = useState('completada');
+  const [estado, setEstado] = useState('Pagada');
 
   const [clientes, setClientes] = useState([]);
+  const [sedes, setSedes] = useState([]);
   const [pedidos, setPedidos] = useState([]);
   const [availableProductos, setAvailableProductos] = useState([]);
 
@@ -31,6 +27,7 @@ export function VentaFormModal({ open, onClose, venta = null, onSave, isLoading 
 
   useEffect(() => {
     getClientes().then((data) => { if (Array.isArray(data)) setClientes(data); }).catch(() => {});
+    getSedes().then((data) => { if (Array.isArray(data)) setSedes(data); }).catch(() => {});
     getPedidos().then((data) => { if (Array.isArray(data)) setPedidos(data); }).catch(() => {});
     getProductos().then((data) => { if (Array.isArray(data)) setAvailableProductos(data); }).catch(() => {});
   }, []);
@@ -46,13 +43,13 @@ export function VentaFormModal({ open, onClose, venta = null, onSave, isLoading 
 
   useEffect(() => {
     if (venta) {
-      setIdCliente(venta.id_cliente ? String(venta.id_cliente) : '1');
-      setIdSede(venta.id_sede ? String(venta.id_sede) : '1');
+      setIdCliente(venta.id_cliente ? String(venta.id_cliente) : (clientes[0]?.id_cliente ? String(clientes[0].id_cliente) : '1'));
+      setIdSede(venta.id_sede ? String(venta.id_sede) : (sedes[0]?.id_sede ? String(sedes[0].id_sede) : '1'));
       setIdPedido(venta.id_pedido ? String(venta.id_pedido) : '');
       setFechaVenta(venta.fecha_venta ? venta.fecha_venta.slice(0, 16) : '');
-      setMedioPago(venta.medio_pago || 'transferencia');
+      setMedioPago(venta.medio_pago || 'Transferencia');
       setComprobanteUrl(venta.comprobante_url || '');
-      setEstado(venta.estado || 'completada');
+      setEstado(venta.estado || 'Pagada');
       
       if (Array.isArray(venta.detalles) && venta.detalles.length > 0) {
         setDetalles(
@@ -72,18 +69,18 @@ export function VentaFormModal({ open, onClose, venta = null, onSave, isLoading 
       }
     } else {
       setIdCliente(clientes[0]?.id_cliente ? String(clientes[0].id_cliente) : '1');
-      setIdSede('1');
+      setIdSede(sedes[0]?.id_sede ? String(sedes[0].id_sede) : '1');
       setIdPedido('');
       setFechaVenta(new Date().toISOString().slice(0, 16));
-      setMedioPago('transferencia');
+      setMedioPago('Transferencia');
       setComprobanteUrl('');
-      setEstado('completada');
+      setEstado('Pagada');
       setDetalles([]);
     }
     setSelectedProductoId('');
     setCantidadProducto('');
     setPrecioUnitario('');
-  }, [venta, open, clientes, availableProductos]);
+  }, [venta, open, clientes, sedes, availableProductos]);
 
   const valorTotalCalculado = useMemo(() => {
     return detalles.reduce((acc, item) => acc + (Number(item.subtotal) || 0), 0);
@@ -149,7 +146,7 @@ export function VentaFormModal({ open, onClose, venta = null, onSave, isLoading 
           medio_pago: medioPago || 'transferencia',
           valor_total: valorTotalCalculado,
           comprobante_url: comprobanteUrl.trim() || null,
-          estado: estado || 'completada',
+          estado: estado || 'Pagada',
           detalles,
         };
     if (onSave) onSave(payload);
@@ -197,7 +194,7 @@ export function VentaFormModal({ open, onClose, venta = null, onSave, isLoading 
                 name="id_sede"
                 value={idSede}
                 onChange={(e) => setIdSede(e.target.value)}
-                options={SEDES_DEFAULT.map((s) => ({
+                options={sedes.map((s) => ({
                   value: String(s.id_sede),
                   label: s.nombre,
                 }))}
@@ -243,9 +240,9 @@ export function VentaFormModal({ open, onClose, venta = null, onSave, isLoading 
                 value={medioPago}
                 onChange={(e) => setMedioPago(e.target.value)}
                 options={[
-                  { value: 'transferencia', label: 'Transferencia Bancaria' },
-                  { value: 'efectivo', label: 'Efectivo' },
-                  { value: 'tarjeta', label: 'Tarjeta Débito/Crédito' },
+                  { value: 'Transferencia', label: 'Transferencia Bancaria' },
+                  { value: 'Efectivo', label: 'Efectivo' },
+                  { value: 'Tarjeta', label: 'Tarjeta Débito/Crédito' },
                 ]}
               />
             </div>
@@ -257,8 +254,9 @@ export function VentaFormModal({ open, onClose, venta = null, onSave, isLoading 
                 value={estado}
                 onChange={(e) => setEstado(e.target.value)}
                 options={[
-                  { value: 'completada', label: 'Completada' },
-                  { value: 'anulada', label: 'Anulada' },
+                  { value: 'Pendiente', label: 'Pendiente' },
+                  { value: 'Pagada', label: 'Pagada' },
+                  { value: 'Anulada', label: 'Anulada' },
                 ]}
               />
             </div>

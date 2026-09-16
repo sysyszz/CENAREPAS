@@ -1,4 +1,11 @@
-import { query } from '../config/db.js';
+import { query, pool } from '../config/db.js';
+
+const sanitizeInsumos = (insumos) => {
+  if (!Array.isArray(insumos)) return [];
+  return insumos.filter(
+    (item) => item && item.id_insumo != null && Number(item.cantidad) > 0
+  );
+};
 
 export class ProduccionService {
   static async getAll() {
@@ -37,31 +44,85 @@ export class ProduccionService {
   }
 
   static async create(data) {
-    const { id_ficha, id_usuario_responsable, fecha_produccion = new Date(), cantidad_producida, estado = 'en_proceso', observaciones } = data;
-    const res = await query(
-      `INSERT INTO lote_produccion (id_ficha, id_usuario_responsable, fecha_produccion, cantidad_producida, estado, observaciones)
-       VALUES ($1, $2, $3, $4, $5, $6)
-       RETURNING *`,
-      [id_ficha, id_usuario_responsable, fecha_produccion, cantidad_producida, estado, observaciones]
-    );
-    return res.rows[0];
+    const { id_ficha, id_usuario_responsable, fecha_produccion = new Date(), cantidad_producida, estado = 'En proceso', observaciones, insumos } = data;
+    const insumosValidos = sanitizeInsumos(insumos);
+
+    const client = await pool.connect();
+    try {
+      await client.query('BEGIN');
+
+      const res = await client.query(
+        `INSERT INTO lote_produccion (id_ficha, id_usuario_responsable, fecha_produccion, cantidad_producida, estado, observaciones)
+         VALUES ($1, $2, $3, $4, $5, $6)
+         RETURNING *`,
+        [id_ficha, id_usuario_responsable, fecha_produccion, cantidad_producida, estado, observaciones]
+      );
+      const newLote = res.rows[0];
+
+      for (const item of insumosValidos) {
+        await client.query(
+          `INSERT INTO lote_produccion_insumo (id_lote, id_insumo, cantidad_consumida)
+           VALUES ($1, $2, $3)`,
+          [newLote.id_lote, item.id_insumo, item.cantidad]
+        );
+      }
+
+      await client.query('COMMIT');
+      return newLote;
+    } catch (error) {
+      await client.query('ROLLBACK');
+      console.warn('[ProduccionService.create] Error, se revirtió la transacción:', error.message);
+      throw error;
+    } finally {
+      client.release();
+    }
   }
 
   static async update(id, data) {
-    const { id_ficha, id_usuario_responsable, fecha_produccion, cantidad_producida, estado, observaciones } = data;
-    const res = await query(
-      `UPDATE lote_produccion 
-       SET id_ficha = COALESCE($1, id_ficha),
-           id_usuario_responsable = COALESCE($2, id_usuario_responsable),
-           fecha_produccion = COALESCE($3, fecha_produccion),
-           cantidad_producida = COALESCE($4, cantidad_producida),
-           estado = COALESCE($5, estado),
-           observaciones = COALESCE($6, observaciones)
-       WHERE id_lote = $7
-       RETURNING *`,
-      [id_ficha, id_usuario_responsable, fecha_produccion, cantidad_producida, estado, observaciones, id]
-    );
-    return res.rows[0] || { id_lote: id, ...data };
+    const { id_ficha, id_usuario_responsable, fecha_produccion, cantidad_producida, estado, observaciones, insumos } = data;
+    const insumosRecibidos = Array.isArray(insumos) ? sanitizeInsumos(insumos) : null;
+
+    const client = await pool.connect();
+    try {
+      await client.query('BEGIN');
+
+      const res = await client.query(
+        `UPDATE lote_produccion
+         SET id_ficha = COALESCE($1, id_ficha),
+             id_usuario_responsable = COALESCE($2, id_usuario_responsable),
+             fecha_produccion = COALESCE($3, fecha_produccion),
+             cantidad_producida = COALESCE($4, cantidad_producida),
+             estado = COALESCE($5, estado),
+             observaciones = COALESCE($6, observaciones)
+         WHERE id_lote = $7
+         RETURNING *`,
+        [id_ficha, id_usuario_responsable, fecha_produccion, cantidad_producida, estado, observaciones, id]
+      );
+      const updatedLote = res.rows[0] || { id_lote: id, ...data };
+
+      // insumosRecibidos === null significa que el payload no incluyó el campo `insumos`:
+      // no se toca la relación existente. Un array (incluso vacío) reemplaza el detalle completo.
+      if (insumosRecibidos !== null) {
+        await client.query('DELETE FROM lote_produccion_insumo WHERE id_lote = $1', [id]);
+
+        for (const item of insumosRecibidos) {
+          await client.query(
+            `INSERT INTO lote_produccion_insumo (id_lote, id_insumo, cantidad_consumida)
+             VALUES ($1, $2, $3)`,
+            [id, item.id_insumo, item.cantidad]
+          );
+        }
+      }
+
+      await client.query('COMMIT');
+      return updatedLote;
+    } catch (error) {
+      await client.query('ROLLBACK');
+      console.warn('[ProduccionService.update] Error, se revirtió la transacción:', error.message);
+      throw error;
+    } finally {
+      client.release();
+    }
   }
 
   static async delete(id) {

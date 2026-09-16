@@ -8,7 +8,7 @@ export function UsuarioFormModal({ open, onClose, usuario = null, onSave, isLoad
   const [correo, setCorreo] = useState('');
   const [idRol, setIdRol] = useState('1');
   const [contrasena, setContrasena] = useState('');
-  const [estado, setEstado] = useState('activo');
+  const [estado, setEstado] = useState('Activo');
   const [roles, setRoles] = useState([]);
 
   useEffect(() => {
@@ -24,13 +24,13 @@ export function UsuarioFormModal({ open, onClose, usuario = null, onSave, isLoad
       setCorreo(usuario.correo || '');
       setIdRol(usuario.id_rol ? String(usuario.id_rol) : '1');
       setContrasena('');
-      setEstado(usuario.estado || 'activo');
+      setEstado(usuario.estado || 'Activo');
     } else {
       setNombre('');
       setCorreo('');
       setIdRol(roles[0]?.id_rol ? String(roles[0].id_rol) : '1');
       setContrasena('');
-      setEstado('activo');
+      setEstado('Activo');
     }
   }, [usuario, open, roles]);
 
@@ -53,7 +53,7 @@ export function UsuarioFormModal({ open, onClose, usuario = null, onSave, isLoad
           nombre: nombre.trim(),
           correo: correo.trim(),
           id_rol: Number(idRol) || 1,
-          estado: estado || 'activo',
+          estado: estado || 'Activo',
           contrasena_hash: contrasena.trim() || 'defaultHash',
         };
 
@@ -141,8 +141,8 @@ export function UsuarioFormModal({ open, onClose, usuario = null, onSave, isLoad
               value={estado}
               onChange={(e) => setEstado(e.target.value)}
               options={[
-                { value: 'activo', label: 'Activo' },
-                { value: 'inactivo', label: 'Inactivo' },
+                { value: 'Activo', label: 'Activo' },
+                { value: 'Inactivo', label: 'Inactivo' },
               ]}
             />
           </div>

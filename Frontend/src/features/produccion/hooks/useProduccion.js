@@ -11,11 +11,23 @@ export function useProduccion() {
   const [deleteDialog, setDeleteDialog] = useState({ isOpen: false, id: null, nombre: '' });
   const [isDeleting, setIsDeleting] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+  const [loadError, setLoadError] = useState(null);
+
+  const fetchLotes = () => {
+    setIsLoading(true);
+    setLoadError(null);
+    return getLotes()
+      .then((data) => setLotes(Array.isArray(data) ? data : []))
+      .catch((error) => {
+        setLotes([]);
+        setLoadError(error?.message || 'No se pudieron cargar los lotes de producción');
+      })
+      .finally(() => setIsLoading(false));
+  };
 
   useEffect(() => {
-    getLotes()
-      .then((data) => setLotes(Array.isArray(data) ? data : []))
-      .catch(() => setLotes([]));
+    fetchLotes();
   }, []);
 
   const filteredLotes = useMemo(() => {
@@ -59,7 +71,7 @@ export function useProduccion() {
     setIsDeleting(true);
     try {
       await anularLote(deleteDialog.id);
-      setLotes((prev) => prev.map((l) => (l.id_lote === deleteDialog.id ? { ...l, estado: 'anulado' } : l)));
+      setLotes((prev) => prev.map((l) => (l.id_lote === deleteDialog.id ? { ...l, estado: 'Anulado' } : l)));
       toast.success('Lote anulado correctamente');
     } catch (error) {
       toast.error('No se pudo anular el lote de producción');
@@ -84,6 +96,9 @@ export function useProduccion() {
     setDeleteDialog,
     isDeleting,
     isSaving,
+    isLoading,
+    loadError,
+    refetch: fetchLotes,
     handleSave,
     handleAnular,
   };
