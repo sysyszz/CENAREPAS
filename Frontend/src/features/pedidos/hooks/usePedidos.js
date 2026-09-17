@@ -9,8 +9,10 @@ export function usePedidos() {
   const [showModal, setShowModal] = useState(false);
   const [detailModal, setDetailModal] = useState({ isOpen: false, data: null });
   const [deleteDialog, setDeleteDialog] = useState({ isOpen: false, id: null, nombre: '' });
+  const [statusDialog, setStatusDialog] = useState({ isOpen: false, pedido: null, nextEstado: 'Activo' });
   const [isDeleting, setIsDeleting] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  const [isUpdatingStatus, setIsUpdatingStatus] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [loadError, setLoadError] = useState(null);
 
@@ -81,6 +83,42 @@ export function usePedidos() {
     }
   };
 
+  const handleRequestStatusChange = (pedido) => {
+    if (!pedido) return;
+    const isCurrentlyActive = !['anulado', 'inactivo', 'cancelado'].includes(String(pedido.estado || '').toLowerCase());
+    const nextEstado = isCurrentlyActive ? 'Inactivo' : 'Activo';
+    setStatusDialog({
+      isOpen: true,
+      pedido,
+      nextEstado,
+    });
+  };
+
+  const handleConfirmStatusChange = async () => {
+    if (!statusDialog.pedido) return;
+    setIsUpdatingStatus(true);
+    try {
+      const { id_pedido } = statusDialog.pedido;
+      await updatePedido(id_pedido, {
+        ...statusDialog.pedido,
+        estado: statusDialog.nextEstado,
+      });
+
+      setPedidos((prev) =>
+        prev.map((p) =>
+          p.id_pedido === id_pedido ? { ...p, estado: statusDialog.nextEstado } : p
+        )
+      );
+
+      toast.success(`Estado del pedido #${id_pedido} cambiado a ${statusDialog.nextEstado}`);
+      setStatusDialog({ isOpen: false, pedido: null, nextEstado: 'Activo' });
+    } catch (error) {
+      toast.error('No se pudo actualizar el estado del pedido');
+    } finally {
+      setIsUpdatingStatus(false);
+    }
+  };
+
   return {
     pedidos: filteredPedidos,
     rawPedidos: pedidos,
@@ -94,13 +132,18 @@ export function usePedidos() {
     setDetailModal,
     deleteDialog,
     setDeleteDialog,
+    statusDialog,
+    setStatusDialog,
     isDeleting,
     isSaving,
+    isUpdatingStatus,
     isLoading,
     loadError,
     refetch: fetchPedidos,
     handleSave,
     handleDelete,
+    handleRequestStatusChange,
+    handleConfirmStatusChange,
   };
 }
 

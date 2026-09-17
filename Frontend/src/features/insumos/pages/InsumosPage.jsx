@@ -30,13 +30,18 @@ export default function InsumosPage() {
     setDetailModal,
     deleteDialog,
     setDeleteDialog,
+    statusDialog,
+    setStatusDialog,
     isDeleting,
     isSaving,
+    isUpdatingStatus,
     isLoading,
     loadError,
     refetch,
     handleSave,
     handleDelete,
+    handleRequestStatusChange,
+    handleConfirmStatusChange,
   } = useInsumos();
 
   const [selectedInsumo, setSelectedInsumo] = useState(null);
@@ -133,7 +138,13 @@ export default function InsumosPage() {
       {
         key: 'estado',
         label: 'Estado',
-        render: (value) => <StatusSwitch value={value} disabled={!can('insumos', 'cambiar_estado')} />,
+        render: (value, insumo) => (
+          <StatusSwitch
+            value={value}
+            disabled={!can('insumos', 'cambiar_estado')}
+            onToggle={() => handleRequestStatusChange(insumo)}
+          />
+        ),
       },
       {
         key: 'acciones',
@@ -158,7 +169,7 @@ export default function InsumosPage() {
         ),
       },
     ],
-    [can, proveedorNames, setDetailModal, setShowModal, setDeleteDialog]
+    [can, proveedorNames, setDetailModal, setShowModal, setDeleteDialog, handleRequestStatusChange]
   );
 
   return (
@@ -275,6 +286,19 @@ export default function InsumosPage() {
         onConfirm={handleDelete}
         onCancel={() => setDeleteDialog({ isOpen: false, id: null, nombre: '' })}
         isLoading={isDeleting}
+      />
+
+      {/* Modal de confirmación para Cambio de Estado */}
+      <ConfirmDialog
+        isOpen={statusDialog.isOpen}
+        title={`Cambiar Estado a ${statusDialog.nextEstado}`}
+        message={`¿Estás seguro de que deseas cambiar el estado del insumo "${statusDialog.insumo?.nombre}" de ${statusDialog.insumo?.estado || 'Disponible'} a ${statusDialog.nextEstado}?`}
+        confirmText={`Cambiar a ${statusDialog.nextEstado}`}
+        confirmVariant={statusDialog.nextEstado === 'Activo' ? 'success' : 'warning'}
+        onConfirm={handleConfirmStatusChange}
+        onCancel={() => setStatusDialog({ isOpen: false, insumo: null, nextEstado: 'Activo' })}
+        isLoading={isUpdatingStatus}
+        loadingText="Cambiando estado…"
       />
     </div>
   );

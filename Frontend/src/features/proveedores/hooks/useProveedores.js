@@ -9,8 +9,10 @@ export function useProveedores() {
   const [showModal, setShowModal] = useState(false);
   const [detailModal, setDetailModal] = useState({ isOpen: false, data: null });
   const [deleteDialog, setDeleteDialog] = useState({ isOpen: false, id: null, nombre: '' });
+  const [statusDialog, setStatusDialog] = useState({ isOpen: false, proveedor: null, nextEstado: 'Activo' });
   const [isDeleting, setIsDeleting] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  const [isUpdatingStatus, setIsUpdatingStatus] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [loadError, setLoadError] = useState(null);
 
@@ -81,6 +83,42 @@ export function useProveedores() {
     }
   };
 
+  const handleRequestStatusChange = (proveedor) => {
+    if (!proveedor) return;
+    const isCurrentlyActive = String(proveedor.estado || '').toLowerCase() === 'activo';
+    const nextEstado = isCurrentlyActive ? 'Inactivo' : 'Activo';
+    setStatusDialog({
+      isOpen: true,
+      proveedor,
+      nextEstado,
+    });
+  };
+
+  const handleConfirmStatusChange = async () => {
+    if (!statusDialog.proveedor) return;
+    setIsUpdatingStatus(true);
+    try {
+      const { id_proveedor, nombre } = statusDialog.proveedor;
+      await updateProveedor(id_proveedor, {
+        ...statusDialog.proveedor,
+        estado: statusDialog.nextEstado,
+      });
+
+      setProveedores((prev) =>
+        prev.map((p) =>
+          p.id_proveedor === id_proveedor ? { ...p, estado: statusDialog.nextEstado } : p
+        )
+      );
+
+      toast.success(`Estado del proveedor "${nombre}" cambiado a ${statusDialog.nextEstado}`);
+      setStatusDialog({ isOpen: false, proveedor: null, nextEstado: 'Activo' });
+    } catch (error) {
+      toast.error('No se pudo actualizar el estado del proveedor');
+    } finally {
+      setIsUpdatingStatus(false);
+    }
+  };
+
   return {
     proveedores: filteredProveedores,
     rawProveedores: proveedores,
@@ -94,13 +132,18 @@ export function useProveedores() {
     setDetailModal,
     deleteDialog,
     setDeleteDialog,
+    statusDialog,
+    setStatusDialog,
     isDeleting,
     isSaving,
+    isUpdatingStatus,
     isLoading,
     loadError,
     refetch: fetchProveedores,
     handleSave,
     handleDelete,
+    handleRequestStatusChange,
+    handleConfirmStatusChange,
   };
 }
 

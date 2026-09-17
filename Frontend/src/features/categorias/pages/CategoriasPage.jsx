@@ -27,13 +27,18 @@ export default function CategoriasPage() {
     setDetailModal,
     deleteDialog,
     setDeleteDialog,
+    statusDialog,
+    setStatusDialog,
     isDeleting,
     isSaving,
+    isUpdatingStatus,
     isLoading,
     loadError,
     refetch,
     handleSave,
     handleDelete,
+    handleRequestStatusChange,
+    handleConfirmStatusChange,
   } = useCategorias();
 
   const [selectedCategoria, setSelectedCategoria] = useState(null);
@@ -78,7 +83,13 @@ export default function CategoriasPage() {
       {
         key: 'estado',
         label: 'Estado',
-        render: (value) => <StatusSwitch value={value} disabled={!can('categorias', 'editar')} />,
+        render: (value, categoria) => (
+          <StatusSwitch
+            value={value}
+            disabled={!can('categorias', 'editar')}
+            onToggle={() => handleRequestStatusChange(categoria)}
+          />
+        ),
       },
       {
         key: 'acciones',
@@ -103,7 +114,7 @@ export default function CategoriasPage() {
         ),
       },
     ],
-    [can, setDetailModal, setShowModal, setDeleteDialog]
+    [can, setDetailModal, setShowModal, setDeleteDialog, handleRequestStatusChange]
   );
 
   return (
@@ -190,6 +201,19 @@ export default function CategoriasPage() {
         onConfirm={handleDelete}
         onCancel={() => setDeleteDialog({ isOpen: false, id: null, nombre: '' })}
         isLoading={isDeleting}
+      />
+
+      {/* Modal de confirmación para Cambio de Estado */}
+      <ConfirmDialog
+        isOpen={statusDialog.isOpen}
+        title={`Cambiar Estado a ${statusDialog.nextEstado}`}
+        message={`¿Estás seguro de que deseas cambiar el estado de la categoría "${statusDialog.categoria?.nombre}" de ${statusDialog.categoria?.estado || 'Activo'} a ${statusDialog.nextEstado}?`}
+        confirmText={`Cambiar a ${statusDialog.nextEstado}`}
+        confirmVariant={statusDialog.nextEstado === 'Activo' ? 'success' : 'warning'}
+        onConfirm={handleConfirmStatusChange}
+        onCancel={() => setStatusDialog({ isOpen: false, categoria: null, nextEstado: 'Activo' })}
+        isLoading={isUpdatingStatus}
+        loadingText="Cambiando estado…"
       />
     </div>
   );

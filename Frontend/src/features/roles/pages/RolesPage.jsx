@@ -27,13 +27,18 @@ export default function RolesPage() {
     setDetailModal,
     deleteDialog,
     setDeleteDialog,
+    statusDialog,
+    setStatusDialog,
     isDeleting,
     isSaving,
+    isUpdatingStatus,
     isLoading,
     loadError,
     refetch,
     handleSave,
     handleDelete,
+    handleRequestStatusChange,
+    handleConfirmStatusChange,
   } = useRoles();
 
   const [selectedRole, setSelectedRole] = useState(null);
@@ -83,7 +88,13 @@ export default function RolesPage() {
       {
         key: 'estado',
         label: 'Estado',
-        render: (value) => <StatusSwitch value={value} disabled={!can('roles', 'cambiar_estado')} />,
+        render: (value, rol) => (
+          <StatusSwitch
+            value={value}
+            disabled={!can('roles', 'cambiar_estado')}
+            onToggle={() => handleRequestStatusChange(rol)}
+          />
+        ),
       },
       {
         key: 'fecha_creacion',
@@ -113,7 +124,7 @@ export default function RolesPage() {
         ),
       },
     ],
-    [can, setDetailModal, setShowModal, setDeleteDialog]
+    [can, setDetailModal, setShowModal, setDeleteDialog, handleRequestStatusChange]
   );
 
   return (
@@ -194,6 +205,19 @@ export default function RolesPage() {
         onConfirm={handleDelete}
         onCancel={() => setDeleteDialog({ isOpen: false, id: null, nombre: '' })}
         isLoading={isDeleting}
+      />
+
+      {/* Modal de confirmación para Cambio de Estado */}
+      <ConfirmDialog
+        isOpen={statusDialog.isOpen}
+        title={`Cambiar Estado a ${statusDialog.nextEstado}`}
+        message={`¿Estás seguro de que deseas cambiar el estado del rol "${statusDialog.rol?.nombre}" de ${statusDialog.rol?.estado || 'Activo'} a ${statusDialog.nextEstado}?`}
+        confirmText={`Cambiar a ${statusDialog.nextEstado}`}
+        confirmVariant={statusDialog.nextEstado === 'Activo' ? 'success' : 'warning'}
+        onConfirm={handleConfirmStatusChange}
+        onCancel={() => setStatusDialog({ isOpen: false, rol: null, nextEstado: 'Activo' })}
+        isLoading={isUpdatingStatus}
+        loadingText="Cambiando estado…"
       />
     </div>
   );

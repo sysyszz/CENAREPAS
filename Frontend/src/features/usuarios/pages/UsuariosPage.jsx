@@ -31,13 +31,18 @@ export default function UsuariosPage() {
     setDetailModal,
     deleteDialog,
     setDeleteDialog,
+    statusDialog,
+    setStatusDialog,
     isDeleting,
     isSaving,
+    isUpdatingStatus,
     isLoading,
     loadError,
     refetch,
     handleSave,
     handleDelete,
+    handleRequestStatusChange,
+    handleConfirmStatusChange,
   } = useUsuarios();
 
   const [selectedUsuario, setSelectedUsuario] = useState(null);
@@ -86,7 +91,13 @@ export default function UsuariosPage() {
       {
         key: 'estado',
         label: 'Estado',
-        render: (value) => <StatusSwitch value={value} disabled={!can('usuarios', 'cambiar_estado')} />,
+        render: (value, usuario) => (
+          <StatusSwitch
+            value={value}
+            disabled={!can('usuarios', 'cambiar_estado')}
+            onToggle={() => handleRequestStatusChange(usuario)}
+          />
+        ),
       },
       {
         key: 'fecha_creacion',
@@ -128,7 +139,7 @@ export default function UsuariosPage() {
         ),
       },
     ],
-    [can, roleNames, setDetailModal, setShowModal, setDeleteDialog]
+    [can, roleNames, setDetailModal, setShowModal, setDeleteDialog, handleRequestStatusChange]
   );
 
   return (
@@ -223,6 +234,19 @@ export default function UsuariosPage() {
         onConfirm={handleDelete}
         onCancel={() => setDeleteDialog({ isOpen: false, id: null, nombre: '' })}
         isLoading={isDeleting}
+      />
+
+      {/* Modal de confirmación para Cambio de Estado */}
+      <ConfirmDialog
+        isOpen={statusDialog.isOpen}
+        title={`Cambiar Estado a ${statusDialog.nextEstado}`}
+        message={`¿Estás seguro de que deseas cambiar el estado del usuario "${statusDialog.usuario?.nombre}" de ${statusDialog.usuario?.estado || 'Activo'} a ${statusDialog.nextEstado}?`}
+        confirmText={`Cambiar a ${statusDialog.nextEstado}`}
+        confirmVariant={statusDialog.nextEstado === 'Activo' ? 'success' : 'warning'}
+        onConfirm={handleConfirmStatusChange}
+        onCancel={() => setStatusDialog({ isOpen: false, usuario: null, nextEstado: 'Activo' })}
+        isLoading={isUpdatingStatus}
+        loadingText="Cambiando estado…"
       />
     </div>
   );

@@ -9,8 +9,10 @@ export function useCompras() {
   const [showModal, setShowModal] = useState(false);
   const [detailModal, setDetailModal] = useState({ isOpen: false, data: null });
   const [deleteDialog, setDeleteDialog] = useState({ isOpen: false, id: null, nombre: '' });
+  const [statusDialog, setStatusDialog] = useState({ isOpen: false, compra: null, nextEstado: 'Registrada' });
   const [isDeleting, setIsDeleting] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  const [isUpdatingStatus, setIsUpdatingStatus] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [loadError, setLoadError] = useState(null);
 
@@ -78,6 +80,42 @@ export function useCompras() {
     }
   };
 
+  const handleRequestStatusChange = (compra) => {
+    if (!compra) return;
+    const isCurrentlyActive = !['anulada', 'anulado', 'inactivo'].includes(String(compra.estado || '').toLowerCase());
+    const nextEstado = isCurrentlyActive ? 'Anulada' : 'Registrada';
+    setStatusDialog({
+      isOpen: true,
+      compra,
+      nextEstado,
+    });
+  };
+
+  const handleConfirmStatusChange = async () => {
+    if (!statusDialog.compra) return;
+    setIsUpdatingStatus(true);
+    try {
+      const { id_compra } = statusDialog.compra;
+      await updateCompra(id_compra, {
+        ...statusDialog.compra,
+        estado: statusDialog.nextEstado,
+      });
+
+      setCompras((prev) =>
+        prev.map((c) =>
+          c.id_compra === id_compra ? { ...c, estado: statusDialog.nextEstado } : c
+        )
+      );
+
+      toast.success(`Estado de la compra #${id_compra} cambiado a ${statusDialog.nextEstado}`);
+      setStatusDialog({ isOpen: false, compra: null, nextEstado: 'Registrada' });
+    } catch (error) {
+      toast.error('No se pudo actualizar el estado de la compra');
+    } finally {
+      setIsUpdatingStatus(false);
+    }
+  };
+
   return {
     compras: filteredCompras,
     rawCompras: compras,
@@ -91,12 +129,17 @@ export function useCompras() {
     setDetailModal,
     deleteDialog,
     setDeleteDialog,
+    statusDialog,
+    setStatusDialog,
     isDeleting,
     isSaving,
+    isUpdatingStatus,
     isLoading,
     loadError,
     refetch: fetchCompras,
     handleSave,
     handleAnular,
+    handleRequestStatusChange,
+    handleConfirmStatusChange,
   };
 }

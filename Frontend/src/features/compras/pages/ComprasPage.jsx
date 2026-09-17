@@ -29,13 +29,18 @@ export default function ComprasPage() {
     setDetailModal,
     deleteDialog,
     setDeleteDialog,
+    statusDialog,
+    setStatusDialog,
     isDeleting,
     isSaving,
+    isUpdatingStatus,
     isLoading,
     loadError,
     refetch,
     handleSave,
     handleAnular,
+    handleRequestStatusChange,
+    handleConfirmStatusChange,
   } = useCompras();
 
   const [selectedCompra, setSelectedCompra] = useState(null);
@@ -136,7 +141,13 @@ export default function ComprasPage() {
       {
         key: 'estado',
         label: 'Estado',
-        render: (value) => <StatusSwitch value={value} disabled={!can('compras', 'cambiar_estado')} />,
+        render: (value, compra) => (
+          <StatusSwitch
+            value={value}
+            disabled={!can('compras', 'cambiar_estado')}
+            onToggle={() => handleRequestStatusChange(compra)}
+          />
+        ),
       },
       {
         key: 'acciones',
@@ -171,7 +182,7 @@ export default function ComprasPage() {
         },
       },
     ],
-    [can, setDetailModal, setShowModal, setDeleteDialog]
+    [can, setDetailModal, setShowModal, setDeleteDialog, handleRequestStatusChange]
   );
 
   return (
@@ -290,6 +301,19 @@ export default function ComprasPage() {
         onConfirm={handleAnular}
         onCancel={() => setDeleteDialog({ isOpen: false, id: null, nombre: '' })}
         isLoading={isDeleting}
+      />
+
+      {/* Modal de confirmación para Cambio de Estado */}
+      <ConfirmDialog
+        isOpen={statusDialog.isOpen}
+        title={`Cambiar Estado a ${statusDialog.nextEstado}`}
+        message={`¿Estás seguro de que deseas cambiar el estado de la compra #${statusDialog.compra?.id_compra} de ${statusDialog.compra?.estado || 'Registrada'} a ${statusDialog.nextEstado}?`}
+        confirmText={`Cambiar a ${statusDialog.nextEstado}`}
+        confirmVariant={statusDialog.nextEstado === 'Registrada' ? 'success' : 'warning'}
+        onConfirm={handleConfirmStatusChange}
+        onCancel={() => setStatusDialog({ isOpen: false, compra: null, nextEstado: 'Registrada' })}
+        isLoading={isUpdatingStatus}
+        loadingText="Cambiando estado…"
       />
     </div>
   );

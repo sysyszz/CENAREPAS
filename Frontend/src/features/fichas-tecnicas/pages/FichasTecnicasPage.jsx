@@ -29,13 +29,18 @@ export default function FichasTecnicasPage() {
     setDetailModal,
     deleteDialog,
     setDeleteDialog,
+    statusDialog,
+    setStatusDialog,
     isDeleting,
     isSaving,
+    isUpdatingStatus,
     isLoading,
     loadError,
     refetch,
     handleSave,
     handleDelete,
+    handleRequestStatusChange,
+    handleConfirmStatusChange,
   } = useFichasTecnicas();
 
   const [selectedFicha, setSelectedFicha] = useState(null);
@@ -110,7 +115,13 @@ export default function FichasTecnicasPage() {
       {
         key: 'estado',
         label: 'Estado',
-        render: (value) => <StatusSwitch value={value} disabled={!can('fichas-tecnicas', 'cambiar_estado')} />,
+        render: (value, ficha) => (
+          <StatusSwitch
+            value={value}
+            disabled={!can('fichas-tecnicas', 'cambiar_estado')}
+            onToggle={() => handleRequestStatusChange(ficha)}
+          />
+        ),
       },
       {
         key: 'acciones',
@@ -135,7 +146,7 @@ export default function FichasTecnicasPage() {
         ),
       },
     ],
-    [can, setDetailModal, setShowModal, setDeleteDialog]
+    [can, setDetailModal, setShowModal, setDeleteDialog, handleRequestStatusChange]
   );
 
   return (
@@ -244,6 +255,19 @@ export default function FichasTecnicasPage() {
         onConfirm={handleDelete}
         onCancel={() => setDeleteDialog({ isOpen: false, id: null, nombre: '' })}
         isLoading={isDeleting}
+      />
+
+      {/* Modal de confirmación para Cambio de Estado */}
+      <ConfirmDialog
+        isOpen={statusDialog.isOpen}
+        title={`Cambiar Estado a ${statusDialog.nextEstado}`}
+        message={`¿Estás seguro de que deseas cambiar el estado de la receta "${statusDialog.ficha?.nombre}" de ${statusDialog.ficha?.estado || 'Vigente'} a ${statusDialog.nextEstado}?`}
+        confirmText={`Cambiar a ${statusDialog.nextEstado}`}
+        confirmVariant={statusDialog.nextEstado === 'Activo' ? 'success' : 'warning'}
+        onConfirm={handleConfirmStatusChange}
+        onCancel={() => setStatusDialog({ isOpen: false, ficha: null, nextEstado: 'Activo' })}
+        isLoading={isUpdatingStatus}
+        loadingText="Cambiando estado…"
       />
     </div>
   );

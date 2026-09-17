@@ -29,13 +29,18 @@ export default function PedidosPage() {
     setDetailModal,
     deleteDialog,
     setDeleteDialog,
+    statusDialog,
+    setStatusDialog,
     isDeleting,
     isSaving,
+    isUpdatingStatus,
     isLoading,
     loadError,
     refetch,
     handleSave,
     handleDelete,
+    handleRequestStatusChange,
+    handleConfirmStatusChange,
   } = usePedidos();
 
   const [selectedPedido, setSelectedPedido] = useState(null);
@@ -138,7 +143,13 @@ export default function PedidosPage() {
       {
         key: 'estado',
         label: 'Estado',
-        render: (value) => <StatusSwitch value={value} disabled={!can('pedidos', 'cambiar_estado')} />,
+        render: (value, pedido) => (
+          <StatusSwitch
+            value={value}
+            disabled={!can('pedidos', 'cambiar_estado')}
+            onToggle={() => handleRequestStatusChange(pedido)}
+          />
+        ),
       },
       {
         key: 'acciones',
@@ -163,7 +174,7 @@ export default function PedidosPage() {
         ),
       },
     ],
-    [can, setDetailModal, setShowModal, setDeleteDialog]
+    [can, setDetailModal, setShowModal, setDeleteDialog, handleRequestStatusChange]
   );
 
   return (
@@ -272,6 +283,19 @@ export default function PedidosPage() {
         onConfirm={handleDelete}
         onCancel={() => setDeleteDialog({ isOpen: false, id: null, nombre: '' })}
         isLoading={isDeleting}
+      />
+
+      {/* Modal de confirmación para Cambio de Estado */}
+      <ConfirmDialog
+        isOpen={statusDialog.isOpen}
+        title={`Cambiar Estado a ${statusDialog.nextEstado}`}
+        message={`¿Estás seguro de que deseas cambiar el estado del pedido #${statusDialog.pedido?.id_pedido} de ${statusDialog.pedido?.estado || 'Pendiente'} a ${statusDialog.nextEstado}?`}
+        confirmText={`Cambiar a ${statusDialog.nextEstado}`}
+        confirmVariant={statusDialog.nextEstado === 'Activo' ? 'success' : 'warning'}
+        onConfirm={handleConfirmStatusChange}
+        onCancel={() => setStatusDialog({ isOpen: false, pedido: null, nextEstado: 'Activo' })}
+        isLoading={isUpdatingStatus}
+        loadingText="Cambiando estado…"
       />
     </div>
   );

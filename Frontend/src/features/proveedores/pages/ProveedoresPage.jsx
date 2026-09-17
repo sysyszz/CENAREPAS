@@ -29,13 +29,18 @@ export default function ProveedoresPage() {
     setDetailModal,
     deleteDialog,
     setDeleteDialog,
+    statusDialog,
+    setStatusDialog,
     isDeleting,
     isSaving,
+    isUpdatingStatus,
     isLoading,
     loadError,
     refetch,
     handleSave,
     handleDelete,
+    handleRequestStatusChange,
+    handleConfirmStatusChange,
   } = useProveedores();
 
   const [selectedProveedor, setSelectedProveedor] = useState(null);
@@ -87,7 +92,13 @@ export default function ProveedoresPage() {
       {
         key: 'estado',
         label: 'Estado',
-        render: (value) => <StatusSwitch value={value} disabled={!can('proveedores', 'cambiar_estado')} />,
+        render: (value, proveedor) => (
+          <StatusSwitch
+            value={value}
+            disabled={!can('proveedores', 'cambiar_estado')}
+            onToggle={() => handleRequestStatusChange(proveedor)}
+          />
+        ),
       },
       {
         key: 'fecha_creacion',
@@ -117,7 +128,7 @@ export default function ProveedoresPage() {
         ),
       },
     ],
-    [can, setDetailModal, setShowModal, setDeleteDialog]
+    [can, setDetailModal, setShowModal, setDeleteDialog, handleRequestStatusChange]
   );
 
   return (
@@ -208,6 +219,19 @@ export default function ProveedoresPage() {
         onConfirm={handleDelete}
         onCancel={() => setDeleteDialog({ isOpen: false, id: null, nombre: '' })}
         isLoading={isDeleting}
+      />
+
+      {/* Modal de confirmación para Cambio de Estado */}
+      <ConfirmDialog
+        isOpen={statusDialog.isOpen}
+        title={`Cambiar Estado a ${statusDialog.nextEstado}`}
+        message={`¿Estás seguro de que deseas cambiar el estado del proveedor "${statusDialog.proveedor?.nombre}" de ${statusDialog.proveedor?.estado || 'Activo'} a ${statusDialog.nextEstado}?`}
+        confirmText={`Cambiar a ${statusDialog.nextEstado}`}
+        confirmVariant={statusDialog.nextEstado === 'Activo' ? 'success' : 'warning'}
+        onConfirm={handleConfirmStatusChange}
+        onCancel={() => setStatusDialog({ isOpen: false, proveedor: null, nextEstado: 'Activo' })}
+        isLoading={isUpdatingStatus}
+        loadingText="Cambiando estado…"
       />
     </div>
   );

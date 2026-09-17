@@ -9,8 +9,10 @@ export function useCategorias() {
   const [showModal, setShowModal] = useState(false);
   const [detailModal, setDetailModal] = useState({ isOpen: false, data: null });
   const [deleteDialog, setDeleteDialog] = useState({ isOpen: false, id: null, nombre: '' });
+  const [statusDialog, setStatusDialog] = useState({ isOpen: false, categoria: null, nextEstado: 'Activo' });
   const [isDeleting, setIsDeleting] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  const [isUpdatingStatus, setIsUpdatingStatus] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [loadError, setLoadError] = useState(null);
 
@@ -75,6 +77,42 @@ export function useCategorias() {
     }
   };
 
+  const handleRequestStatusChange = (categoria) => {
+    if (!categoria) return;
+    const isCurrentlyActive = String(categoria.estado || '').toLowerCase() === 'activo';
+    const nextEstado = isCurrentlyActive ? 'Inactivo' : 'Activo';
+    setStatusDialog({
+      isOpen: true,
+      categoria,
+      nextEstado,
+    });
+  };
+
+  const handleConfirmStatusChange = async () => {
+    if (!statusDialog.categoria) return;
+    setIsUpdatingStatus(true);
+    try {
+      const { id_categoria, nombre } = statusDialog.categoria;
+      await updateCategoria(id_categoria, {
+        ...statusDialog.categoria,
+        estado: statusDialog.nextEstado,
+      });
+
+      setCategorias((prev) =>
+        prev.map((c) =>
+          c.id_categoria === id_categoria ? { ...c, estado: statusDialog.nextEstado } : c
+        )
+      );
+
+      toast.success(`Estado de la categoría "${nombre}" cambiado a ${statusDialog.nextEstado}`);
+      setStatusDialog({ isOpen: false, categoria: null, nextEstado: 'Activo' });
+    } catch (error) {
+      toast.error('No se pudo actualizar el estado de la categoría');
+    } finally {
+      setIsUpdatingStatus(false);
+    }
+  };
+
   return {
     categorias: filteredCategorias,
     rawCategorias: categorias,
@@ -88,13 +126,18 @@ export function useCategorias() {
     setDetailModal,
     deleteDialog,
     setDeleteDialog,
+    statusDialog,
+    setStatusDialog,
     isDeleting,
     isSaving,
+    isUpdatingStatus,
     isLoading,
     loadError,
     refetch: fetchCategorias,
     handleSave,
     handleDelete,
+    handleRequestStatusChange,
+    handleConfirmStatusChange,
   };
 }
 

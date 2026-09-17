@@ -9,8 +9,10 @@ export function useProductos() {
   const [showModal, setShowModal] = useState(false);
   const [detailModal, setDetailModal] = useState({ isOpen: false, data: null });
   const [deleteDialog, setDeleteDialog] = useState({ isOpen: false, id: null, nombre: '' });
+  const [statusDialog, setStatusDialog] = useState({ isOpen: false, producto: null, nextEstado: 'Activo' });
   const [isDeleting, setIsDeleting] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  const [isUpdatingStatus, setIsUpdatingStatus] = useState(false);
   const [productos, setProductos] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [loadError, setLoadError] = useState(null);
@@ -88,6 +90,42 @@ export function useProductos() {
     }
   };
 
+  const handleRequestStatusChange = (producto) => {
+    if (!producto) return;
+    const isCurrentlyActive = String(producto.estado || '').toLowerCase() === 'activo' || String(producto.estado || '').toLowerCase() === 'disponible';
+    const nextEstado = isCurrentlyActive ? 'Inactivo' : 'Activo';
+    setStatusDialog({
+      isOpen: true,
+      producto,
+      nextEstado,
+    });
+  };
+
+  const handleConfirmStatusChange = async () => {
+    if (!statusDialog.producto) return;
+    setIsUpdatingStatus(true);
+    try {
+      const { id_producto, nombre } = statusDialog.producto;
+      await updateProducto(id_producto, {
+        ...statusDialog.producto,
+        estado: statusDialog.nextEstado,
+      });
+
+      setProductos((prev) =>
+        prev.map((p) =>
+          p.id_producto === id_producto ? { ...p, estado: statusDialog.nextEstado } : p
+        )
+      );
+
+      toast.success(`Estado del producto "${nombre}" cambiado a ${statusDialog.nextEstado}`);
+      setStatusDialog({ isOpen: false, producto: null, nextEstado: 'Activo' });
+    } catch (error) {
+      toast.error('No se pudo actualizar el estado del producto');
+    } finally {
+      setIsUpdatingStatus(false);
+    }
+  };
+
   return {
     searchTerm,
     setSearchTerm,
@@ -101,8 +139,11 @@ export function useProductos() {
     setDetailModal,
     deleteDialog,
     setDeleteDialog,
+    statusDialog,
+    setStatusDialog,
     isDeleting,
     isSaving,
+    isUpdatingStatus,
     isLoading,
     loadError,
     refetch: fetchProductos,
@@ -110,6 +151,8 @@ export function useProductos() {
     filteredProductos,
     handleSave,
     handleDelete,
+    handleRequestStatusChange,
+    handleConfirmStatusChange,
   };
 }
 

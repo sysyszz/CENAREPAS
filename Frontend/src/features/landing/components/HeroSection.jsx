@@ -8,19 +8,18 @@ export function HeroSection() {
   const { nombreProyecto, bannerImages, heroVideoUrl } = useConfiguracion();
 
   const showVideo = Boolean(heroVideoUrl);
-  const posterImage = bannerImages && bannerImages.length > 0 ? bannerImages[0].url : defaultBasketImage;
+  const fallbackImage = bannerImages && bannerImages.length > 0 ? bannerImages[0].url : defaultBasketImage;
 
   return (
     <section
       id="inicio"
       className="relative w-full min-h-screen flex flex-col justify-end overflow-hidden bg-[var(--landing-cine)]"
     >
-      <div className="absolute inset-0 w-full h-full overflow-hidden">
+      <div className="absolute inset-0 w-full h-full overflow-hidden bg-[var(--landing-cine)]">
         {showVideo ? (
           <video
             key={heroVideoUrl}
             src={heroVideoUrl}
-            poster={posterImage}
             autoPlay
             muted
             loop
@@ -30,7 +29,7 @@ export function HeroSection() {
           />
         ) : (
           <img
-            src={posterImage}
+            src={fallbackImage}
             alt={nombreProyecto}
             className="w-full h-full object-cover scale-[1.02]"
           />

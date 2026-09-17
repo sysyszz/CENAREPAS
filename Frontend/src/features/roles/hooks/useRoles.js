@@ -10,8 +10,10 @@ export function useRoles() {
   const [selectedRole, setSelectedRole] = useState(null);
   const [detailModal, setDetailModal] = useState({ isOpen: false, data: null });
   const [deleteDialog, setDeleteDialog] = useState({ isOpen: false, id: null, nombre: '' });
+  const [statusDialog, setStatusDialog] = useState({ isOpen: false, rol: null, nextEstado: 'Activo' });
   const [isDeleting, setIsDeleting] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  const [isUpdatingStatus, setIsUpdatingStatus] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [loadError, setLoadError] = useState(null);
 
@@ -81,6 +83,42 @@ export function useRoles() {
     }
   };
 
+  const handleRequestStatusChange = (rol) => {
+    if (!rol) return;
+    const isCurrentlyActive = String(rol.estado || '').toLowerCase() === 'activo';
+    const nextEstado = isCurrentlyActive ? 'Inactivo' : 'Activo';
+    setStatusDialog({
+      isOpen: true,
+      rol,
+      nextEstado,
+    });
+  };
+
+  const handleConfirmStatusChange = async () => {
+    if (!statusDialog.rol) return;
+    setIsUpdatingStatus(true);
+    try {
+      const { id_rol, nombre } = statusDialog.rol;
+      await updateRol(id_rol, {
+        ...statusDialog.rol,
+        estado: statusDialog.nextEstado,
+      });
+
+      setRoles((prev) =>
+        prev.map((r) =>
+          r.id_rol === id_rol ? { ...r, estado: statusDialog.nextEstado } : r
+        )
+      );
+
+      toast.success(`Estado del rol "${nombre}" cambiado a ${statusDialog.nextEstado}`);
+      setStatusDialog({ isOpen: false, rol: null, nextEstado: 'Activo' });
+    } catch (error) {
+      toast.error('No se pudo actualizar el estado del rol');
+    } finally {
+      setIsUpdatingStatus(false);
+    }
+  };
+
   return {
     roles: filteredRoles,
     rawRoles: roles,
@@ -96,13 +134,18 @@ export function useRoles() {
     setDetailModal,
     deleteDialog,
     setDeleteDialog,
+    statusDialog,
+    setStatusDialog,
     isDeleting,
     isSaving,
+    isUpdatingStatus,
     isLoading,
     loadError,
     refetch: fetchRoles,
     handleSave,
     handleDelete,
+    handleRequestStatusChange,
+    handleConfirmStatusChange,
   };
 }
 

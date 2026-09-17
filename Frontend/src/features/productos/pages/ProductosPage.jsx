@@ -32,8 +32,11 @@ export default function ProductosPage() {
     setDetailModal,
     deleteDialog,
     setDeleteDialog,
+    statusDialog,
+    setStatusDialog,
     isDeleting,
     isSaving,
+    isUpdatingStatus,
     isLoading,
     loadError,
     refetch,
@@ -41,6 +44,8 @@ export default function ProductosPage() {
     filteredProductos,
     handleSave,
     handleDelete,
+    handleRequestStatusChange,
+    handleConfirmStatusChange,
   } = useProductos();
 
   const [selectedProducto, setSelectedProducto] = useState(null);
@@ -242,10 +247,16 @@ export default function ProductosPage() {
       {
         key: 'estado',
         label: 'Estado',
-        render: (value) => <StatusSwitch value={value} disabled={!can('productos', 'editar')} />,
+        render: (value, prod) => (
+          <StatusSwitch
+            value={value}
+            disabled={!can('productos', 'editar')}
+            onToggle={() => handleRequestStatusChange(prod)}
+          />
+        ),
       },
     ],
-    [categoryNames]
+    [categoryNames, handleRequestStatusChange, can]
   );
 
   return (
@@ -406,6 +417,19 @@ export default function ProductosPage() {
         onConfirm={handleDelete}
         onCancel={() => setDeleteDialog({ isOpen: false, id: null, nombre: '' })}
         isLoading={isDeleting}
+      />
+
+      {/* Modal de confirmación para Cambio de Estado */}
+      <ConfirmDialog
+        isOpen={statusDialog.isOpen}
+        title={`Cambiar Estado a ${statusDialog.nextEstado}`}
+        message={`¿Estás seguro de que deseas cambiar el estado del producto "${statusDialog.producto?.nombre}" de ${statusDialog.producto?.estado || 'Disponible'} a ${statusDialog.nextEstado}?`}
+        confirmText={`Cambiar a ${statusDialog.nextEstado}`}
+        confirmVariant={statusDialog.nextEstado === 'Activo' ? 'success' : 'warning'}
+        onConfirm={handleConfirmStatusChange}
+        onCancel={() => setStatusDialog({ isOpen: false, producto: null, nextEstado: 'Activo' })}
+        isLoading={isUpdatingStatus}
+        loadingText="Cambiando estado…"
       />
     </div>
   );

@@ -10,8 +10,10 @@ export function useUsuarios() {
   const [showModal, setShowModal] = useState(false);
   const [detailModal, setDetailModal] = useState({ isOpen: false, data: null });
   const [deleteDialog, setDeleteDialog] = useState({ isOpen: false, id: null, nombre: '' });
+  const [statusDialog, setStatusDialog] = useState({ isOpen: false, usuario: null, nextEstado: 'Activo' });
   const [isDeleting, setIsDeleting] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  const [isUpdatingStatus, setIsUpdatingStatus] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [loadError, setLoadError] = useState(null);
 
@@ -83,6 +85,42 @@ export function useUsuarios() {
     }
   };
 
+  const handleRequestStatusChange = (usuario) => {
+    if (!usuario) return;
+    const isCurrentlyActive = String(usuario.estado || '').toLowerCase() === 'activo';
+    const nextEstado = isCurrentlyActive ? 'Inactivo' : 'Activo';
+    setStatusDialog({
+      isOpen: true,
+      usuario,
+      nextEstado,
+    });
+  };
+
+  const handleConfirmStatusChange = async () => {
+    if (!statusDialog.usuario) return;
+    setIsUpdatingStatus(true);
+    try {
+      const { id_usuario, nombre } = statusDialog.usuario;
+      await updateUsuario(id_usuario, {
+        ...statusDialog.usuario,
+        estado: statusDialog.nextEstado,
+      });
+
+      setUsuarios((prev) =>
+        prev.map((u) =>
+          u.id_usuario === id_usuario ? { ...u, estado: statusDialog.nextEstado } : u
+        )
+      );
+
+      toast.success(`Estado del usuario "${nombre}" cambiado a ${statusDialog.nextEstado}`);
+      setStatusDialog({ isOpen: false, usuario: null, nextEstado: 'Activo' });
+    } catch (error) {
+      toast.error('No se pudo actualizar el estado del usuario');
+    } finally {
+      setIsUpdatingStatus(false);
+    }
+  };
+
   return {
     usuarios: filteredUsuarios,
     rawUsuarios: usuarios,
@@ -98,13 +136,18 @@ export function useUsuarios() {
     setDetailModal,
     deleteDialog,
     setDeleteDialog,
+    statusDialog,
+    setStatusDialog,
     isDeleting,
     isSaving,
+    isUpdatingStatus,
     isLoading,
     loadError,
     refetch: fetchUsuarios,
     handleSave,
     handleDelete,
+    handleRequestStatusChange,
+    handleConfirmStatusChange,
   };
 }
 

@@ -9,8 +9,10 @@ export function useFichasTecnicas() {
   const [showModal, setShowModal] = useState(false);
   const [detailModal, setDetailModal] = useState({ isOpen: false, data: null });
   const [deleteDialog, setDeleteDialog] = useState({ isOpen: false, id: null, nombre: '' });
+  const [statusDialog, setStatusDialog] = useState({ isOpen: false, ficha: null, nextEstado: 'Activo' });
   const [isDeleting, setIsDeleting] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  const [isUpdatingStatus, setIsUpdatingStatus] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [loadError, setLoadError] = useState(null);
 
@@ -80,6 +82,42 @@ export function useFichasTecnicas() {
     }
   };
 
+  const handleRequestStatusChange = (ficha) => {
+    if (!ficha) return;
+    const isCurrentlyActive = String(ficha.estado || '').toLowerCase() === 'activo' || String(ficha.estado || '').toLowerCase() === 'vigente';
+    const nextEstado = isCurrentlyActive ? 'Inactivo' : 'Activo';
+    setStatusDialog({
+      isOpen: true,
+      ficha,
+      nextEstado,
+    });
+  };
+
+  const handleConfirmStatusChange = async () => {
+    if (!statusDialog.ficha) return;
+    setIsUpdatingStatus(true);
+    try {
+      const { id_ficha, nombre } = statusDialog.ficha;
+      await updateFichaTecnica(id_ficha, {
+        ...statusDialog.ficha,
+        estado: statusDialog.nextEstado,
+      });
+
+      setFichas((prev) =>
+        prev.map((f) =>
+          f.id_ficha === id_ficha ? { ...f, estado: statusDialog.nextEstado } : f
+        )
+      );
+
+      toast.success(`Estado de la receta "${nombre}" cambiado a ${statusDialog.nextEstado}`);
+      setStatusDialog({ isOpen: false, ficha: null, nextEstado: 'Activo' });
+    } catch (error) {
+      toast.error('No se pudo actualizar el estado de la ficha técnica');
+    } finally {
+      setIsUpdatingStatus(false);
+    }
+  };
+
   return {
     fichas: filteredFichas,
     rawFichas: fichas,
@@ -93,12 +131,17 @@ export function useFichasTecnicas() {
     setDetailModal,
     deleteDialog,
     setDeleteDialog,
+    statusDialog,
+    setStatusDialog,
     isDeleting,
     isSaving,
+    isUpdatingStatus,
     isLoading,
     loadError,
     refetch: fetchFichasTecnicas,
     handleSave,
     handleDelete,
+    handleRequestStatusChange,
+    handleConfirmStatusChange,
   };
 }
