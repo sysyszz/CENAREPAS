@@ -17,8 +17,6 @@ const allowedOrigins = [config.frontendUrl, 'http://localhost:5173', 'http://127
 
 app.use(cors({
   origin: (origin, callback) => {
-    // Permite: sin origen (Postman/curl), el frontend configurado,
-    // y cualquier puerto de localhost/127.0.0.1 (para desarrollo con Flutter web)
     const isLocalhost = !origin || /^http:\/\/(localhost|127\.0\.0\.1):\d+$/.test(origin);
 
     if (isLocalhost || allowedOrigins.includes(origin)) {
@@ -39,6 +37,16 @@ app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
 if (process.env.NODE_ENV !== 'production') {
   app.use(morgan('dev'));
 }
+
+// Ruta raíz — confirma que la API está viva
+app.get('/', (req, res) => {
+  res.json({
+    success: true,
+    message: 'CENAREPAS API funcionando correctamente',
+    docs: '/api/v1',
+    health: '/api/v1/health'
+  });
+});
 
 // API Routes
 app.use('/api/v1', routes);
