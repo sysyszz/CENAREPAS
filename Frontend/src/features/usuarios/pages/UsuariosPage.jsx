@@ -13,6 +13,8 @@ import { usePermissions } from '../../../shared/contexts/PermissionContext';
 import StatusSwitch from '../../../shared/components/StatusSwitch';
 import { CustomSelect } from '../../../shared/components/CustomSelect';
 import ErrorBanner from '../../../shared/components/ErrorBanner';
+import { exportToPdf } from '../../../shared/utils/exportToPdf';
+import { exportToExcel } from '../../../shared/utils/exportToExcel';
 
 export default function UsuariosPage() {
   const { can } = usePermissions();
@@ -142,6 +144,39 @@ export default function UsuariosPage() {
     [can, roleNames, setDetailModal, setShowModal, setDeleteDialog, handleRequestStatusChange]
   );
 
+  const handleExportPdf = () => {
+    exportToPdf({
+      data: filteredData,
+      columns: [
+        { header: 'ID', key: 'id_usuario' },
+        { header: 'Nombre', key: 'nombre' },
+        { header: 'Correo Electrónico', key: 'correo' },
+        { header: 'Rol', accessor: (u) => roleNames[u.id_rol] || 'Sin rol' },
+        { header: 'Estado', key: 'estado' },
+        { header: 'Fecha de Creación', key: 'fecha_creacion' },
+      ],
+      title: 'Reporte de Usuarios',
+      subtitle: 'Listado de usuarios registrados en el sistema CENAREPAS',
+    });
+  };
+
+  const handleExportExcel = () => {
+    exportToExcel({
+      data: filteredData,
+      columns: [
+        { header: 'ID', key: 'id_usuario', align: 'center' },
+        { header: 'Nombre Completo', key: 'nombre' },
+        { header: 'Correo Electrónico', key: 'correo' },
+        { header: 'Rol Asignado', accessor: (u) => roleNames[u.id_rol] || 'Sin rol' },
+        { header: 'Estado', key: 'estado', align: 'center' },
+        { header: 'Fecha de Creación', key: 'fecha_creacion', align: 'center' },
+      ],
+      title: 'Reporte de Usuarios',
+      subtitle: 'Listado de usuarios registrados en el sistema CENAREPAS',
+      sheetName: 'Usuarios',
+    });
+  };
+
   return (
     <div className="space-y-6">
       <PageHeader
@@ -153,6 +188,8 @@ export default function UsuariosPage() {
           setSelectedUsuario(null);
           setShowModal(true);
         }}
+        onExportPdf={handleExportPdf}
+        onExportExcel={handleExportExcel}
       />
 
       {/* Tarjetas de Consolidado */}

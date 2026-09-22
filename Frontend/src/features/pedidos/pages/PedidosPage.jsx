@@ -3,6 +3,7 @@ import { ClipboardList, CheckCircle, Truck, DollarSign } from 'lucide-react';
 import { usePedidos } from '../hooks/usePedidos';
 import { getClientes } from '../../clientes/services/clientesService';
 import { getUsuarios } from '../../usuarios/services/usuariosService';
+import { getSedes } from '../../sedes/services/sedesService';
 import { DataTable } from '../../../shared/components/DataTable';
 import { RowActions } from '../../../shared/components/RowActions';
 import { PedidoFormModal } from '../components/PedidoFormModal';
@@ -14,6 +15,8 @@ import { usePermissions } from '../../../shared/contexts/PermissionContext';
 import StatusSwitch from '../../../shared/components/StatusSwitch';
 import { CustomSelect } from '../../../shared/components/CustomSelect';
 import ErrorBanner from '../../../shared/components/ErrorBanner';
+import { exportToPdf } from '../../../shared/utils/exportToPdf';
+import { exportToExcel } from '../../../shared/utils/exportToExcel';
 
 export default function PedidosPage() {
   const { can } = usePermissions();
@@ -46,6 +49,7 @@ export default function PedidosPage() {
   const [selectedPedido, setSelectedPedido] = useState(null);
   const [clientes, setClientes] = useState([]);
   const [usuarios, setUsuarios] = useState([]);
+  const [sedes, setSedes] = useState([]);
 
   useEffect(() => {
     getClientes().then((data) => {
@@ -53,6 +57,9 @@ export default function PedidosPage() {
     }).catch(() => {});
     getUsuarios().then((data) => {
       if (Array.isArray(data)) setUsuarios(data);
+    }).catch(() => {});
+    getSedes().then((data) => {
+      if (Array.isArray(data)) setSedes(data);
     }).catch(() => {});
   }, []);
 
@@ -64,6 +71,11 @@ export default function PedidosPage() {
   const usuariosNames = useMemo(
     () => Object.fromEntries(usuarios.map((u) => [u.id_usuario, u.nombre])),
     [usuarios]
+  );
+
+  const sedesNames = useMemo(
+    () => Object.fromEntries(sedes.map((s) => [s.id_sede, s.nombre])),
+    [sedes]
   );
 
 
@@ -177,6 +189,59 @@ export default function PedidosPage() {
     [can, setDetailModal, setShowModal, setDeleteDialog, handleRequestStatusChange]
   );
 
+  const handleExportPdf = () => {
+    exportToPdf({
+      data: filteredData,
+      columns: [
+        { header: 'ID', key: 'id_pedido' },
+        {
+          header: 'Cliente',
+          accessor: (p) => p.cliente_nombre || clientesNames[p.id_cliente] || `Cliente #${p.id_cliente}`,
+        },
+        {
+          header: 'Sede Despacho',
+          accessor: (p) => p.sede_nombre || sedesNames[p.id_sede] || `Sede #${p.id_sede}`,
+        },
+        { header: 'Fecha Entrega', key: 'fecha_entrega' },
+        {
+          header: 'Valor Total',
+          accessor: (p) => `$${Number(p.valor_total || 0).toLocaleString('es-CO')}`,
+        },
+        { header: 'Estado', key: 'estado' },
+      ],
+      title: 'Reporte de Pedidos de Clientes',
+      subtitle: 'Órdenes de pedido, sedes de despacho y estado de entrega en CENAREPAS',
+    });
+  };
+
+  const handleExportExcel = () => {
+    exportToExcel({
+      data: filteredData,
+      columns: [
+        { header: 'ID Pedido', key: 'id_pedido', align: 'center' },
+        {
+          header: 'Cliente Solicitante',
+          accessor: (p) => p.cliente_nombre || clientesNames[p.id_cliente] || `Cliente #${p.id_cliente}`,
+        },
+        {
+          header: 'Sede de Despacho',
+          accessor: (p) => p.sede_nombre || sedesNames[p.id_sede] || `Sede #${p.id_sede}`,
+        },
+        { header: 'Fecha Estimada Entrega', key: 'fecha_entrega', align: 'center' },
+        {
+          header: 'Valor Total ($)',
+          accessor: (p) => `$${Number(p.valor_total || 0).toLocaleString('es-CO')}`,
+          align: 'right',
+        },
+        { header: 'Estado', key: 'estado', align: 'center' },
+        { header: 'Observaciones', key: 'observaciones' },
+      ],
+      title: 'Reporte de Pedidos de Clientes',
+      subtitle: 'Órdenes de pedido, sedes de despacho y estado de entrega en CENAREPAS',
+      sheetName: 'Pedidos',
+    });
+  };
+
   return (
     <div className="space-y-6">
       <PageHeader
@@ -188,6 +253,8 @@ export default function PedidosPage() {
           setSelectedPedido(null);
           setShowModal(true);
         }}
+        onExportPdf={handleExportPdf}
+        onExportExcel={handleExportExcel}
       />
 
       {/* Tarjetas de Consolidado */}

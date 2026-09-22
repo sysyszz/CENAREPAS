@@ -25,7 +25,11 @@ import { usePermissions } from './shared/contexts/PermissionContext';
 
 function ProtectedModule({ modulo, children }) {
   const { can, defaultRoute } = usePermissions();
-  return can(modulo, 'ver') ? children : <Navigate to={defaultRoute} replace />;
+  if (can(modulo, 'ver')) {
+    return children;
+  }
+  const safeTarget = defaultRoute && defaultRoute !== '/admin' ? defaultRoute : '/admin/profile';
+  return <Navigate to={safeTarget} replace />;
 }
 
 function AdminIndexRoute() {
@@ -33,7 +37,8 @@ function AdminIndexRoute() {
   if (can('dashboard', 'ver')) {
     return <DashboardPage />;
   }
-  return <Navigate to={defaultRoute} replace />;
+  const safeTarget = defaultRoute && defaultRoute !== '/admin' ? defaultRoute : '/admin/pedidos';
+  return <Navigate to={safeTarget} replace />;
 }
 
 export function AppRoutes({ isAuthenticated, setIsAuthenticated }) {

@@ -15,6 +15,8 @@ import { usePermissions } from '../../../shared/contexts/PermissionContext';
 import EstadoBadge from '../../../shared/ui/EstadoBadge';
 import { CustomSelect } from '../../../shared/components/CustomSelect';
 import ErrorBanner from '../../../shared/components/ErrorBanner';
+import { exportToPdf } from '../../../shared/utils/exportToPdf';
+import { exportToExcel } from '../../../shared/utils/exportToExcel';
 
 export default function ProduccionPage() {
   const { can } = usePermissions();
@@ -184,6 +186,59 @@ export default function ProduccionPage() {
     [can, fichasNames, usuariosNames, setDetailModal, setShowModal, setDeleteDialog]
   );
 
+  const handleExportPdf = () => {
+    exportToPdf({
+      data: filteredData,
+      columns: [
+        { header: 'ID Lote', key: 'id_lote' },
+        {
+          header: 'Ficha / Receta',
+          accessor: (l) => fichasNames[l.id_ficha] || `Ficha #${l.id_ficha}`,
+        },
+        {
+          header: 'Cantidad Producida',
+          accessor: (l) => `${l.cantidad_producida || 0} pqtes`,
+        },
+        { header: 'Fecha Producción', key: 'fecha_produccion' },
+        {
+          header: 'Responsable',
+          accessor: (l) => usuariosNames[l.id_usuario_responsable] || `Usuario #${l.id_usuario_responsable}`,
+        },
+        { header: 'Estado', key: 'estado' },
+      ],
+      title: 'Reporte de Lotes de Producción',
+      subtitle: 'Control de lotes elaborados, fechas y operarios responsables en CENAREPAS',
+    });
+  };
+
+  const handleExportExcel = () => {
+    exportToExcel({
+      data: filteredData,
+      columns: [
+        { header: 'ID Lote', key: 'id_lote', align: 'center' },
+        {
+          header: 'Ficha Técnica / Receta',
+          accessor: (l) => fichasNames[l.id_ficha] || `Ficha #${l.id_ficha}`,
+        },
+        {
+          header: 'Cantidad Producida (pqtes)',
+          accessor: (l) => l.cantidad_producida || 0,
+          align: 'right',
+        },
+        { header: 'Fecha de Producción', key: 'fecha_produccion', align: 'center' },
+        {
+          header: 'Responsable de Turno',
+          accessor: (l) => usuariosNames[l.id_usuario_responsable] || `Usuario #${l.id_usuario_responsable}`,
+        },
+        { header: 'Estado', key: 'estado', align: 'center' },
+        { header: 'Observaciones', key: 'observaciones' },
+      ],
+      title: 'Reporte de Lotes de Producción',
+      subtitle: 'Control de lotes elaborados, fechas y operarios responsables en CENAREPAS',
+      sheetName: 'Produccion',
+    });
+  };
+
   return (
     <div className="space-y-6">
       <PageHeader
@@ -195,6 +250,8 @@ export default function ProduccionPage() {
           setSelectedLote(null);
           setShowModal(true);
         }}
+        onExportPdf={handleExportPdf}
+        onExportExcel={handleExportExcel}
       />
 
       {/* Tarjetas de Consolidado */}

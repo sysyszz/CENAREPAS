@@ -1,6 +1,7 @@
-import { useState, useEffect } from 'react';
-import { X } from 'lucide-react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
+import { Building2, Phone, Mail, MapPin, FileText } from 'lucide-react';
 import { Combobox } from '../../../shared/ui/Combobox';
+import { StepperModal } from '../../../shared/components/StepperModal';
 
 export function ProveedorFormModal({ open, onClose, proveedor = null, onSave, isLoading = false }) {
   const [nombre, setNombre] = useState('');
@@ -9,30 +10,80 @@ export function ProveedorFormModal({ open, onClose, proveedor = null, onSave, is
   const [correo, setCorreo] = useState('');
   const [direccion, setDireccion] = useState('');
   const [estado, setEstado] = useState('Activo');
+  const [currentStep, setCurrentStep] = useState(0);
 
   useEffect(() => {
-    if (proveedor) {
-      setNombre(proveedor.nombre || '');
-      setNit(proveedor.nit || '');
-      setTelefono(proveedor.telefono || '');
-      setCorreo(proveedor.correo || '');
-      setDireccion(proveedor.direccion || '');
-      setEstado(proveedor.estado || 'Activo');
+    if (open) {
+      setCurrentStep(0);
+      if (proveedor) {
+        setNombre(proveedor.nombre || '');
+        setNit(proveedor.nit || '');
+        setTelefono(proveedor.telefono || '');
+        setCorreo(proveedor.correo || '');
+        setDireccion(proveedor.direccion || '');
+        setEstado(proveedor.estado || 'Activo');
+      } else {
+        setNombre('');
+        setNit('');
+        setTelefono('');
+        setCorreo('');
+        setDireccion('');
+        setEstado('Activo');
+      }
     } else {
-      setNombre('');
-      setNit('');
-      setTelefono('');
-      setCorreo('');
-      setDireccion('');
-      setEstado('Activo');
+      setCurrentStep(0);
     }
   }, [proveedor, open]);
 
-  if (!open) return null;
+  const isDirty = useMemo(() => {
+    if (!open) return false;
+    if (!proveedor) {
+      return nombre.trim() !== '' || nit.trim() !== '' || telefono.trim() !== '' || correo.trim() !== '';
+    }
+    return (
+      nombre !== (proveedor.nombre || '') ||
+      nit !== (proveedor.nit || '') ||
+      telefono !== (proveedor.telefono || '') ||
+      correo !== (proveedor.correo || '') ||
+      direccion !== (proveedor.direccion || '') ||
+      estado !== (proveedor.estado || 'Activo')
+    );
+  }, [open, proveedor, nombre, nit, telefono, correo, direccion, estado]);
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    if (!nombre.trim()) return;
+  const validateStep1 = useCallback(() => {
+    if (!nombre.trim()) {
+      return 'El nombre o razón social del proveedor es obligatorio.';
+    }
+    if (nombre.trim().length < 3) {
+      return 'El nombre debe tener al menos 3 caracteres.';
+    }
+    if (!nit.trim()) {
+      return 'El NIT o documento de identificación es obligatorio.';
+    }
+    return true;
+  }, [nombre, nit]);
+
+  const validateStep2 = useCallback(() => {
+    if (correo.trim()) {
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(correo.trim())) {
+        return 'El correo electrónico no tiene un formato válido.';
+      }
+    }
+    return true;
+  }, [correo]);
+
+  const handleSubmit = useCallback(() => {
+    const v1 = validateStep1();
+    if (v1 !== true) {
+      setCurrentStep(0);
+      return;
+    }
+    const v2 = validateStep2();
+    if (v2 !== true) {
+      setCurrentStep(1);
+      return;
+    }
 
     const payload = proveedor
       ? {
@@ -58,89 +109,65 @@ export function ProveedorFormModal({ open, onClose, proveedor = null, onSave, is
     } else {
       onClose();
     }
-  };
+  }, [validateStep1, validateStep2, proveedor, nombre, nit, telefono, correo, direccion, estado, onSave, onClose]);
 
-  return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-      <div className="form-modal-panel bg-card p-6 rounded-lg max-w-lg w-full border border-border space-y-4 max-h-[90vh] overflow-y-auto">
-        <div className="flex items-start justify-between gap-4">
-          <h2 className="text-lg font-bold">{proveedor ? 'Editar Proveedor' : 'Nuevo Proveedor'}</h2>
-          <button
-            type="button"
-            onClick={onClose}
-            className="p-2 -mr-2 -mt-2 rounded-lg hover:bg-muted text-muted-foreground"
-            aria-label="Cerrar formulario"
-          >
-            <X className="w-5 h-5" />
-          </button>
-        </div>
-        <form onSubmit={handleSubmit} className="modal-form-grid space-y-4">
-          <div className="modal-field-wide">
-            <label htmlFor="proveedor_nombre" className="block mb-2 text-sm font-medium">Nombre / Razón Social *</label>
-            <input
-              id="proveedor_nombre"
-              name="nombre"
-              type="text"
-              maxLength={150}
-              required
-              value={nombre}
-              onChange={(e) => setNombre(e.target.value)}
-              className="w-full px-4 py-2 border border-input bg-input-background rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-ring"
-            />
+  const steps = useMemo(() => [
+    {
+      id: 'datos-empresa',
+      title: 'Datos de empresa',
+      description: 'Razón social, identificación fiscal y estado',
+      validate: validateStep1,
+      content: (
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-5 gap-y-4 items-start">
+          {/* Nombre / Razón Social */}
+          <div className="sm:col-span-2">
+            <label htmlFor="proveedor_nombre" className="block text-xs sm:text-sm font-semibold text-foreground mb-1.5">
+              Nombre o Razón Social <span className="text-destructive font-bold ml-0.5">*</span>
+            </label>
+            <div className="relative">
+              <Building2 className="absolute left-3.5 top-1/2 -translate-y-1/2 size-4 text-muted-foreground pointer-events-none" />
+              <input
+                id="proveedor_nombre"
+                name="nombre"
+                type="text"
+                maxLength={150}
+                autoFocus
+                placeholder="Ej. Distribuidora de Maíz El Sol S.A.S."
+                value={nombre}
+                onChange={(e) => setNombre(e.target.value)}
+                className="w-full h-10 pl-10 pr-4 border border-input bg-input-background rounded-lg text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring transition-all"
+              />
+            </div>
+            <p className="text-[11px] text-muted-foreground mt-1">
+              Nombre legal o comercial registrado ante la autoridad tributaria.
+            </p>
           </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div>
-              <label htmlFor="proveedor_nit" className="block mb-2 text-sm font-medium">NIT / Cédula *</label>
+
+          {/* NIT */}
+          <div className="sm:col-span-1">
+            <label htmlFor="proveedor_nit" className="block text-xs sm:text-sm font-semibold text-foreground mb-1.5">
+              NIT / Cédula <span className="text-destructive font-bold ml-0.5">*</span>
+            </label>
+            <div className="relative">
+              <FileText className="absolute left-3.5 top-1/2 -translate-y-1/2 size-4 text-muted-foreground pointer-events-none" />
               <input
                 id="proveedor_nit"
                 name="nit"
                 type="text"
                 maxLength={20}
-                required
+                placeholder="Ej. 900.123.456-7"
                 value={nit}
                 onChange={(e) => setNit(e.target.value)}
-                className="w-full px-4 py-2 border border-input bg-input-background rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-ring"
-              />
-            </div>
-            <div>
-              <label htmlFor="proveedor_telefono" className="block mb-2 text-sm font-medium">Teléfono</label>
-              <input
-                id="proveedor_telefono"
-                name="telefono"
-                type="tel"
-                maxLength={20}
-                value={telefono}
-                onChange={(e) => setTelefono(e.target.value)}
-                className="w-full px-4 py-2 border border-input bg-input-background rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+                className="w-full h-10 pl-10 pr-4 border border-input bg-input-background rounded-lg text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring transition-all"
               />
             </div>
           </div>
-          <div className="modal-field-wide">
-            <label htmlFor="proveedor_correo" className="block mb-2 text-sm font-medium">Correo Electrónico</label>
-            <input
-              id="proveedor_correo"
-              name="correo"
-              type="email"
-              maxLength={150}
-              value={correo}
-              onChange={(e) => setCorreo(e.target.value)}
-              className="w-full px-4 py-2 border border-input bg-input-background rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-ring"
-            />
-          </div>
-          <div className="modal-field-wide">
-            <label htmlFor="proveedor_direccion" className="block mb-2 text-sm font-medium">Dirección</label>
-            <input
-              id="proveedor_direccion"
-              name="direccion"
-              type="text"
-              maxLength={255}
-              value={direccion}
-              onChange={(e) => setDireccion(e.target.value)}
-              className="w-full px-4 py-2 border border-input bg-input-background rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-ring"
-            />
-          </div>
-          <div className="modal-field-wide">
-            <label htmlFor="proveedor_estado" className="block mb-2 text-sm font-medium">Estado</label>
+
+          {/* Estado */}
+          <div className="sm:col-span-1">
+            <label htmlFor="proveedor_estado" className="block text-xs sm:text-sm font-semibold text-foreground mb-1.5">
+              Estado <span className="text-destructive font-bold ml-0.5">*</span>
+            </label>
             <Combobox
               id="proveedor_estado"
               name="estado"
@@ -152,26 +179,117 @@ export function ProveedorFormModal({ open, onClose, proveedor = null, onSave, is
               ]}
             />
           </div>
-          <div className="flex gap-2 pt-4">
-            <button
-              type="button"
-              onClick={onClose}
-              disabled={isLoading}
-              className="flex-1 px-4 py-2 border border-border rounded-lg hover:bg-muted text-sm font-medium transition-colors cursor-pointer"
-            >
-              Cancelar
-            </button>
-            <button
-              type="submit"
-              disabled={isLoading}
-              className="flex-1 px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:opacity-90 disabled:opacity-50 text-sm font-medium transition-colors shadow-xs cursor-pointer"
-            >
-              {isLoading ? 'Guardando...' : proveedor ? 'Guardar Cambios' : 'Guardar'}
-            </button>
+
+          {/* Ayuda contextual */}
+          <div className="sm:col-span-2 p-3.5 rounded-xl bg-muted/40 border border-border/60 flex items-start gap-3 text-xs text-muted-foreground">
+            <Building2 className="size-4 text-[#C1502D] dark:text-[#E8B23D] shrink-0 mt-0.5" />
+            <div>
+              <span className="font-semibold text-foreground block mb-0.5">Gestión de proveedores</span>
+              En el siguiente paso podrás registrar la información de contacto y la ubicación de despacho o bodegas.
+            </div>
           </div>
-        </form>
-      </div>
-    </div>
+        </div>
+      ),
+    },
+    {
+      id: 'contacto-sede',
+      title: 'Contacto y sede',
+      description: 'Canales de comunicación y dirección de despacho',
+      validate: validateStep2,
+      content: (
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-5 gap-y-4 items-start">
+          {/* Teléfono */}
+          <div className="sm:col-span-1">
+            <label htmlFor="proveedor_telefono" className="block text-xs sm:text-sm font-semibold text-foreground mb-1.5">
+              Teléfono de contacto
+            </label>
+            <div className="relative">
+              <Phone className="absolute left-3.5 top-1/2 -translate-y-1/2 size-4 text-muted-foreground pointer-events-none" />
+              <input
+                id="proveedor_telefono"
+                name="telefono"
+                type="tel"
+                maxLength={20}
+                placeholder="+57 310 123 4567"
+                value={telefono}
+                onChange={(e) => setTelefono(e.target.value)}
+                className="w-full h-10 pl-10 pr-4 border border-input bg-input-background rounded-lg text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring transition-all"
+              />
+            </div>
+          </div>
+
+          {/* Correo */}
+          <div className="sm:col-span-1">
+            <label htmlFor="proveedor_correo" className="block text-xs sm:text-sm font-semibold text-foreground mb-1.5">
+              Correo electrónico
+            </label>
+            <div className="relative">
+              <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 size-4 text-muted-foreground pointer-events-none" />
+              <input
+                id="proveedor_correo"
+                name="correo"
+                type="email"
+                maxLength={150}
+                placeholder="ventas@proveedor.com"
+                value={correo}
+                onChange={(e) => setCorreo(e.target.value)}
+                className="w-full h-10 pl-10 pr-4 border border-input bg-input-background rounded-lg text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring transition-all"
+              />
+            </div>
+          </div>
+
+          {/* Dirección */}
+          <div className="sm:col-span-2">
+            <label htmlFor="proveedor_direccion" className="block text-xs sm:text-sm font-semibold text-foreground mb-1.5">
+              Dirección de la sede / bodega
+            </label>
+            <div className="relative">
+              <MapPin className="absolute left-3.5 top-1/2 -translate-y-1/2 size-4 text-muted-foreground pointer-events-none" />
+              <input
+                id="proveedor_direccion"
+                name="direccion"
+                type="text"
+                maxLength={255}
+                placeholder="Ej. Carrera 5 # 18-40, Zona Industrial"
+                value={direccion}
+                onChange={(e) => setDireccion(e.target.value)}
+                className="w-full h-10 pl-10 pr-4 border border-input bg-input-background rounded-lg text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring transition-all"
+              />
+            </div>
+            <p className="text-[11px] text-muted-foreground mt-1">
+              Dirección para remisiones y despachos de compras.
+            </p>
+          </div>
+
+          {/* Ayuda contextual */}
+          <div className="sm:col-span-2 p-3.5 rounded-xl bg-muted/40 border border-border/60 flex items-start gap-3 text-xs text-muted-foreground">
+            <MapPin className="size-4 text-[#5A7A3A] shrink-0 mt-0.5" />
+            <div>
+              <span className="font-semibold text-foreground block mb-0.5">Disponibilidad en compras</span>
+              Los proveedores activos podrán ser seleccionados directamente en el módulo de compras para registrar órdenes y abastecimiento.
+            </div>
+          </div>
+        </div>
+      ),
+    },
+  ], [nombre, nit, estado, telefono, correo, direccion, validateStep1, validateStep2]);
+
+  return (
+    <StepperModal
+      isOpen={open}
+      onClose={onClose}
+      category="COMPRAS"
+      title={proveedor ? 'Editar Proveedor' : 'Nuevo Proveedor'}
+      subtitle="Gestiona la información comercial y de contacto del proveedor"
+      steps={steps}
+      currentStep={currentStep}
+      onStepChange={setCurrentStep}
+      onSubmit={handleSubmit}
+      isLoading={isLoading}
+      submitLabel={proveedor ? 'Guardar Cambios' : 'Crear Proveedor'}
+      isDirty={isDirty}
+    />
   );
 }
 
+export default ProveedorFormModal;

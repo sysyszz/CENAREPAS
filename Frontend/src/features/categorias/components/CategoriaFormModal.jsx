@@ -1,6 +1,7 @@
-import { useState, useEffect } from 'react';
-import { X } from 'lucide-react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
+import { FolderTree } from 'lucide-react';
 import { Combobox } from '../../../shared/ui/Combobox';
+import { StepperModal } from '../../../shared/components/StepperModal';
 
 export function CategoriaFormModal({ open, onClose, categoria = null, onSave, isLoading = false }) {
   const [nombre, setNombre] = useState('');
@@ -8,78 +9,91 @@ export function CategoriaFormModal({ open, onClose, categoria = null, onSave, is
   const [estado, setEstado] = useState('Activo');
 
   useEffect(() => {
-    if (categoria) {
-      setNombre(categoria.nombre || '');
-      setDescripcion(categoria.descripcion || '');
-      const isInactive = String(categoria.estado ?? '').toLowerCase() === 'inactivo';
-      setEstado(isInactive ? 'Inactivo' : 'Activo');
-    } else {
-      setNombre('');
-      setDescripcion('');
-      setEstado('Activo');
+    if (open) {
+      if (categoria) {
+        setNombre(categoria.nombre || '');
+        setDescripcion(categoria.descripcion || '');
+        const isInactive = String(categoria.estado ?? '').toLowerCase() === 'inactivo';
+        setEstado(isInactive ? 'Inactivo' : 'Activo');
+      } else {
+        setNombre('');
+        setDescripcion('');
+        setEstado('Activo');
+      }
     }
   }, [categoria, open]);
 
-  if (!open) return null;
+  const isDirty = useMemo(() => {
+    if (!open) return false;
+    if (!categoria) {
+      return nombre.trim() !== '' || descripcion.trim() !== '';
+    }
+    return (
+      nombre !== (categoria.nombre || '') ||
+      descripcion !== (categoria.descripcion || '') ||
+      estado !== (categoria.estado || 'Activo')
+    );
+  }, [open, categoria, nombre, descripcion, estado]);
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    if (!nombre.trim()) return;
+  const validateStep = useCallback(() => {
+    if (!nombre.trim()) {
+      return 'El nombre de la categoría es obligatorio.';
+    }
+    if (nombre.trim().length < 3) {
+      return 'El nombre debe tener al menos 3 caracteres.';
+    }
+    return true;
+  }, [nombre]);
+
+  const handleSubmit = useCallback(() => {
+    const v = validateStep();
+    if (v !== true) return;
+
     const payload = categoria
       ? { ...categoria, nombre: nombre.trim(), descripcion: descripcion.trim() || null, estado }
       : { nombre: nombre.trim(), descripcion: descripcion.trim() || null, estado };
+
     if (onSave) {
       onSave(payload);
+    } else {
+      onClose();
     }
-  };
+  }, [validateStep, categoria, nombre, descripcion, estado, onSave, onClose]);
 
-  return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-      <div className="form-modal-panel bg-card p-6 rounded-lg max-w-md w-full border border-border space-y-4">
-        <div className="flex items-start justify-between gap-4">
-          <h2 className="text-lg font-bold">{categoria ? 'Editar Categoría' : 'Nueva Categoría'}</h2>
-          <button
-            type="button"
-            onClick={onClose}
-            className="p-2 -mr-2 -mt-2 rounded-lg hover:bg-muted text-muted-foreground"
-            aria-label="Cerrar formulario"
-          >
-            <X className="w-5 h-5" />
-          </button>
-        </div>
-
-        <form onSubmit={handleSubmit} className="modal-form-grid space-y-4">
-          <div className="modal-field-wide">
-            <label htmlFor="categoria_nombre" className="block mb-2 text-sm font-medium">Nombre de la Categoría</label>
-            <input
-              id="categoria_nombre"
-              name="nombre"
-              type="text"
-              maxLength={80}
-              required
-              value={nombre}
-              onChange={(e) => setNombre(e.target.value)}
-              placeholder="Ej. Arepas de Chócolo"
-              className="w-full px-4 py-2 border border-input bg-input-background rounded-lg focus:outline-none focus:ring-2 focus:ring-ring text-sm"
-            />
+  const steps = useMemo(() => [
+    {
+      id: 'datos-categoria',
+      title: 'Datos de categoría',
+      description: 'Nombre, estado y descripción del catálogo',
+      validate: validateStep,
+      content: (
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-5 gap-y-4 items-start">
+          {/* Nombre */}
+          <div className="sm:col-span-1">
+            <label htmlFor="categoria_nombre" className="block text-xs sm:text-sm font-semibold text-foreground mb-1.5">
+              Nombre de la categoría <span className="text-destructive font-bold ml-0.5">*</span>
+            </label>
+            <div className="relative">
+              <FolderTree className="absolute left-3.5 top-1/2 -translate-y-1/2 size-4 text-muted-foreground pointer-events-none" />
+              <input
+                id="categoria_nombre"
+                name="nombre"
+                type="text"
+                maxLength={80}
+                autoFocus
+                placeholder="Ej. Arepas Tradicionales, Línea Queso..."
+                value={nombre}
+                onChange={(e) => setNombre(e.target.value)}
+                className="w-full h-10 pl-10 pr-4 border border-input bg-input-background rounded-lg text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring transition-all"
+              />
+            </div>
           </div>
 
-          <div className="modal-field-wide">
-            <label htmlFor="categoria_descripcion" className="block mb-2 text-sm font-medium">Descripción</label>
-            <textarea
-              id="categoria_descripcion"
-              name="descripcion"
-              maxLength={255}
-              rows={3}
-              value={descripcion}
-              onChange={(e) => setDescripcion(e.target.value)}
-              placeholder="Descripción breve de la categoría..."
-              className="w-full px-4 py-2 border border-input bg-input-background rounded-lg focus:outline-none focus:ring-2 focus:ring-ring text-sm"
-            ></textarea>
-          </div>
-
-          <div className="modal-field-wide">
-            <label htmlFor="categoria_estado" className="block mb-2 text-sm font-medium">Estado</label>
+          {/* Estado */}
+          <div className="sm:col-span-1">
+            <label htmlFor="categoria_estado" className="block text-xs sm:text-sm font-semibold text-foreground mb-1.5">
+              Estado <span className="text-destructive font-bold ml-0.5">*</span>
+            </label>
             <Combobox
               id="categoria_estado"
               name="estado"
@@ -92,25 +106,54 @@ export function CategoriaFormModal({ open, onClose, categoria = null, onSave, is
             />
           </div>
 
-          <div className="flex gap-2 pt-4">
-            <button
-              type="button"
-              onClick={onClose}
-              disabled={isLoading}
-              className="flex-1 px-4 py-2 border border-border rounded-lg hover:bg-muted font-medium transition-colors text-sm cursor-pointer"
-            >
-              Cancelar
-            </button>
-            <button
-              type="submit"
-              disabled={isLoading}
-              className="flex-1 px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:opacity-90 disabled:opacity-50 font-medium transition-colors text-sm cursor-pointer shadow-xs"
-            >
-              {isLoading ? 'Guardando...' : 'Guardar'}
-            </button>
+          {/* Descripción */}
+          <div className="sm:col-span-2">
+            <label htmlFor="categoria_descripcion" className="block text-xs sm:text-sm font-semibold text-foreground mb-1.5">
+              Descripción de la categoría <span className="text-muted-foreground font-normal text-xs">(Opcional)</span>
+            </label>
+            <textarea
+              id="categoria_descripcion"
+              name="descripcion"
+              maxLength={255}
+              rows={3}
+              placeholder="Describe las características principales de los productos en esta categoría..."
+              value={descripcion}
+              onChange={(e) => setDescripcion(e.target.value)}
+              className="w-full p-3 border border-input bg-input-background rounded-lg text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring transition-all resize-none min-h-[75px]"
+            />
+            <div className="flex justify-between items-center mt-1 text-[11px] text-muted-foreground">
+              <span>Ayuda a categorizar y filtrar los productos en el catálogo comercial.</span>
+              <span>{descripcion.length}/255</span>
+            </div>
           </div>
-        </form>
-      </div>
-    </div>
+
+          {/* Ayuda contextual */}
+          <div className="sm:col-span-2 p-3.5 rounded-xl bg-muted/40 border border-border/60 flex items-start gap-3 text-xs text-muted-foreground">
+            <FolderTree className="size-4 text-[#C1502D] dark:text-[#E8B23D] shrink-0 mt-0.5" />
+            <div>
+              <span className="font-semibold text-foreground block mb-0.5">Clasificación en catálogo</span>
+              Las categorías permiten filtrar ágilmente los productos e insumos en los módulos de producción, inventario y ventas.
+            </div>
+          </div>
+        </div>
+      ),
+    },
+  ], [nombre, estado, descripcion, validateStep]);
+
+  return (
+    <StepperModal
+      isOpen={open}
+      onClose={onClose}
+      category="CATEGORÍAS"
+      title={categoria ? 'Editar Categoría' : 'Nueva Categoría'}
+      subtitle="Organiza los productos terminados en familias y líneas de producción"
+      steps={steps}
+      onSubmit={handleSubmit}
+      isLoading={isLoading}
+      submitLabel={categoria ? 'Guardar Cambios' : 'Crear Categoría'}
+      isDirty={isDirty}
+    />
   );
-} 
+}
+
+export default CategoriaFormModal;

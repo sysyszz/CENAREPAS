@@ -13,6 +13,8 @@ import { usePermissions } from '../../../shared/contexts/PermissionContext';
 import StatusSwitch from '../../../shared/components/StatusSwitch';
 import { CustomSelect } from '../../../shared/components/CustomSelect';
 import ErrorBanner from '../../../shared/components/ErrorBanner';
+import { exportToPdf } from '../../../shared/utils/exportToPdf';
+import { exportToExcel } from '../../../shared/utils/exportToExcel';
 
 export default function InsumosPage() {
   const { can } = usePermissions();
@@ -172,6 +174,61 @@ export default function InsumosPage() {
     [can, proveedorNames, setDetailModal, setShowModal, setDeleteDialog, handleRequestStatusChange]
   );
 
+  const handleExportPdf = () => {
+    exportToPdf({
+      data: filteredData,
+      columns: [
+        { header: 'ID', key: 'id_insumo' },
+        { header: 'Insumo', key: 'nombre' },
+        { header: 'Unidad', key: 'unidad_medida' },
+        { header: 'Stock Actual', key: 'stock_actual' },
+        { header: 'Stock Mínimo', key: 'stock_minimo' },
+        {
+          header: 'Proveedor',
+          accessor: (i) =>
+            proveedorNames[i.id_proveedor] ||
+            (typeof i.id_proveedor === 'string' && isNaN(Number(i.id_proveedor))
+              ? i.id_proveedor
+              : i.id_proveedor
+              ? `Proveedor #${i.id_proveedor}`
+              : 'N/A'),
+        },
+        { header: 'Estado', key: 'estado' },
+        { header: 'Vencimiento', key: 'fecha_vencimiento' },
+      ],
+      title: 'Reporte de Insumos y Materias Primas',
+      subtitle: 'Inventario de granos, lácteos y materias primas en CENAREPAS',
+    });
+  };
+
+  const handleExportExcel = () => {
+    exportToExcel({
+      data: filteredData,
+      columns: [
+        { header: 'ID', key: 'id_insumo', align: 'center' },
+        { header: 'Nombre del Insumo', key: 'nombre' },
+        { header: 'Unidad de Medida', key: 'unidad_medida', align: 'center' },
+        { header: 'Stock Actual', key: 'stock_actual', align: 'right' },
+        { header: 'Stock Mínimo', key: 'stock_minimo', align: 'right' },
+        {
+          header: 'Proveedor Asignado',
+          accessor: (i) =>
+            proveedorNames[i.id_proveedor] ||
+            (typeof i.id_proveedor === 'string' && isNaN(Number(i.id_proveedor))
+              ? i.id_proveedor
+              : i.id_proveedor
+              ? `Proveedor #${i.id_proveedor}`
+              : 'N/A'),
+        },
+        { header: 'Estado', key: 'estado', align: 'center' },
+        { header: 'Fecha de Vencimiento', key: 'fecha_vencimiento', align: 'center' },
+      ],
+      title: 'Reporte de Insumos y Materias Primas',
+      subtitle: 'Inventario de granos, lácteos y materias primas en CENAREPAS',
+      sheetName: 'Insumos',
+    });
+  };
+
   return (
     <div className="space-y-6">
       <PageHeader
@@ -183,6 +240,8 @@ export default function InsumosPage() {
           setSelectedInsumo(null);
           setShowModal(true);
         }}
+        onExportPdf={handleExportPdf}
+        onExportExcel={handleExportExcel}
       />
 
       {/* Tarjetas de Consolidado */}

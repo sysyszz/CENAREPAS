@@ -48,15 +48,17 @@ export class RolesService {
       const newRol = res.rows[0];
 
       const cleanPermisos = Array.isArray(permisos)
-        ? permisos.map(Number).filter((id) => !isNaN(id) && id > 0)
+        ? [...new Set(permisos.map(Number).filter((id) => Number.isInteger(id) && id > 0))]
         : [];
 
-      for (const id_permiso of cleanPermisos) {
+      if (cleanPermisos.length > 0) {
         await client.query(
           `INSERT INTO rol_permiso (id_rol, id_permiso)
-           VALUES ($1, $2)
+           SELECT $1, p.id_permiso
+           FROM permiso p
+           WHERE p.id_permiso = ANY($2::int[])
            ON CONFLICT DO NOTHING`,
-          [newRol.id_rol, id_permiso]
+          [newRol.id_rol, cleanPermisos]
         );
       }
 
@@ -90,17 +92,19 @@ export class RolesService {
       const updatedRol = res.rows[0] || { id_rol: id, ...data };
 
       if (Array.isArray(permisos)) {
-        const cleanPermisos = permisos.map(Number).filter((pId) => !isNaN(pId) && pId > 0);
+        const cleanPermisos = [...new Set(permisos.map(Number).filter((pId) => Number.isInteger(pId) && pId > 0))];
 
         // Sincronización completa: eliminar permisos existentes e insertar la nueva selección
         await client.query('DELETE FROM rol_permiso WHERE id_rol = $1', [id]);
 
-        for (const id_permiso of cleanPermisos) {
+        if (cleanPermisos.length > 0) {
           await client.query(
             `INSERT INTO rol_permiso (id_rol, id_permiso)
-             VALUES ($1, $2)
+             SELECT $1, p.id_permiso
+             FROM permiso p
+             WHERE p.id_permiso = ANY($2::int[])
              ON CONFLICT DO NOTHING`,
-            [id, id_permiso]
+            [id, cleanPermisos]
           );
         }
         updatedRol.permisos = cleanPermisos;

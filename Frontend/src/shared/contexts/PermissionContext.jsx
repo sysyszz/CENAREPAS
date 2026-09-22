@@ -63,13 +63,19 @@ export function PermissionProvider({ children }) {
   const getInitialRoleId = () => {
     try {
       const stored = localStorage.getItem('cenarepas_role_id');
-      if (stored) return Number(stored);
+      if (stored) {
+        const num = Number(stored);
+        if (!isNaN(num) && num > 0) return num;
+      }
       const user = JSON.parse(localStorage.getItem('user') || '{}');
-      if (user && user.id_rol) return Number(user.id_rol);
+      if (user && user.id_rol) {
+        const numUser = Number(user.id_rol);
+        if (!isNaN(numUser) && numUser > 0) return numUser;
+      }
     } catch {
       // ignore
     }
-    return ROLES.ADMINISTRADOR;
+    return ROLES.ADMINISTRADOR || 1;
   };
 
   const [roleId, setRoleId] = useState(getInitialRoleId);

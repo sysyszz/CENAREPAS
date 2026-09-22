@@ -1,10 +1,11 @@
 import { useState, useEffect, useMemo } from 'react';
-import { X, Plus, Trash2, ShoppingCart } from 'lucide-react';
+import { Plus, Trash2, ShoppingCart } from 'lucide-react';
 import { getClientes } from '../../clientes/services/clientesService';
 import { getPedidos } from '../../pedidos/services/pedidosService';
 import { getProductos } from '../../productos/services/productosService';
 import { getSedes } from '../../sedes/services/sedesService';
 import { Combobox } from '../../../shared/ui/Combobox';
+import { StepperModal } from '../../../shared/components/StepperModal';
 
 export function VentaFormModal({ open, onClose, venta = null, onSave, isLoading = false }) {
   const [idCliente, setIdCliente] = useState('1');
@@ -25,6 +26,9 @@ export function VentaFormModal({ open, onClose, venta = null, onSave, isLoading 
   const [cantidadProducto, setCantidadProducto] = useState('');
   const [precioUnitario, setPrecioUnitario] = useState('');
 
+  // Errores de validación
+  const [errors, setErrors] = useState({});
+
   useEffect(() => {
     getClientes().then((data) => { if (Array.isArray(data)) setClientes(data); }).catch(() => {});
     getSedes().then((data) => { if (Array.isArray(data)) setSedes(data); }).catch(() => {});
@@ -41,52 +45,58 @@ export function VentaFormModal({ open, onClose, venta = null, onSave, isLoading 
     }
   }, [selectedProductoId, availableProductos]);
 
+  const [currentStep, setCurrentStep] = useState(0);
+
   useEffect(() => {
-    if (venta) {
-      setIdCliente(venta.id_cliente ? String(venta.id_cliente) : (clientes[0]?.id_cliente ? String(clientes[0].id_cliente) : '1'));
-      setIdSede(venta.id_sede ? String(venta.id_sede) : (sedes[0]?.id_sede ? String(sedes[0].id_sede) : '1'));
-      setIdPedido(venta.id_pedido ? String(venta.id_pedido) : '');
-      setFechaVenta(venta.fecha_venta ? venta.fecha_venta.slice(0, 16) : '');
-      setMedioPago(venta.medio_pago || 'Transferencia');
-      setComprobanteUrl(venta.comprobante_url || '');
-      setEstado(venta.estado || 'Pagada');
-      
-      if (Array.isArray(venta.detalles) && venta.detalles.length > 0) {
-        setDetalles(
-          venta.detalles.map((d) => {
-            const prod = availableProductos.find((p) => p.id_producto === d.id_producto);
-            return {
-              id_producto: d.id_producto,
-              nombre_producto: prod?.nombre || d.nombre_producto || `Producto #${d.id_producto}`,
-              cantidad: Number(d.cantidad) || 0,
-              precio_unitario: Number(d.precio_unitario) || 0,
-              subtotal: Number(d.subtotal) || Number(d.cantidad) * Number(d.precio_unitario),
-            };
-          })
-        );
+    if (open) {
+      setCurrentStep(0);
+      if (venta) {
+        setIdCliente(venta.id_cliente ? String(venta.id_cliente) : (clientes[0]?.id_cliente ? String(clientes[0].id_cliente) : '1'));
+        setIdSede(venta.id_sede ? String(venta.id_sede) : (sedes[0]?.id_sede ? String(sedes[0].id_sede) : '1'));
+        setIdPedido(venta.id_pedido ? String(venta.id_pedido) : '');
+        setFechaVenta(venta.fecha_venta ? venta.fecha_venta.slice(0, 16) : '');
+        setMedioPago(venta.medio_pago || 'Transferencia');
+        setComprobanteUrl(venta.comprobante_url || '');
+        setEstado(venta.estado || 'Pagada');
+        
+        if (Array.isArray(venta.detalles) && venta.detalles.length > 0) {
+          setDetalles(
+            venta.detalles.map((d) => {
+              const prod = availableProductos.find((p) => p.id_producto === d.id_producto);
+              return {
+                id_producto: d.id_producto,
+                nombre_producto: prod?.nombre || d.nombre_producto || `Producto #${d.id_producto}`,
+                cantidad: Number(d.cantidad) || 0,
+                precio_unitario: Number(d.precio_unitario) || 0,
+                subtotal: Number(d.subtotal) || Number(d.cantidad) * Number(d.precio_unitario),
+              };
+            })
+          );
+        } else {
+          setDetalles([]);
+        }
       } else {
+        setIdCliente(clientes[0]?.id_cliente ? String(clientes[0].id_cliente) : '1');
+        setIdSede(sedes[0]?.id_sede ? String(sedes[0].id_sede) : '1');
+        setIdPedido('');
+        setFechaVenta(new Date().toISOString().slice(0, 16));
+        setMedioPago('Transferencia');
+        setComprobanteUrl('');
+        setEstado('Pagada');
         setDetalles([]);
       }
+      setSelectedProductoId('');
+      setCantidadProducto('');
+      setPrecioUnitario('');
+      setErrors({});
     } else {
-      setIdCliente(clientes[0]?.id_cliente ? String(clientes[0].id_cliente) : '1');
-      setIdSede(sedes[0]?.id_sede ? String(sedes[0].id_sede) : '1');
-      setIdPedido('');
-      setFechaVenta(new Date().toISOString().slice(0, 16));
-      setMedioPago('Transferencia');
-      setComprobanteUrl('');
-      setEstado('Pagada');
-      setDetalles([]);
+      setCurrentStep(0);
     }
-    setSelectedProductoId('');
-    setCantidadProducto('');
-    setPrecioUnitario('');
   }, [venta, open, clientes, sedes, availableProductos]);
 
   const valorTotalCalculado = useMemo(() => {
     return detalles.reduce((acc, item) => acc + (Number(item.subtotal) || 0), 0);
   }, [detalles]);
-
-  if (!open) return null;
 
   const handleAddDetalle = () => {
     if (!selectedProductoId || !cantidadProducto || Number(cantidadProducto) <= 0 || !precioUnitario || Number(precioUnitario) <= 0) {
@@ -111,18 +121,42 @@ export function VentaFormModal({ open, onClose, venta = null, onSave, isLoading 
     setSelectedProductoId('');
     setCantidadProducto('');
     setPrecioUnitario('');
+    if (errors.detalles) {
+      setErrors((prev) => ({ ...prev, detalles: null }));
+    }
   };
 
   const handleRemoveDetalle = (idProductoToRemove) => {
     setDetalles(detalles.filter((d) => d.id_producto !== idProductoToRemove));
   };
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
+  const validateStep1 = () => {
+    const errs = {};
+    if (!idCliente) errs.idCliente = 'Debes seleccionar un cliente';
+    if (!idSede) errs.idSede = 'Debes seleccionar una sede';
+    setErrors(errs);
+    return Object.keys(errs).length === 0;
+  };
+
+  const validateStep2 = () => {
+    const errs = {};
     if (detalles.length === 0) {
-      alert('Debes agregar al menos un producto a la venta.');
+      errs.detalles = 'Debes agregar al menos un producto a la venta';
+    }
+    setErrors((prev) => ({ ...prev, ...errs }));
+    return Object.keys(errs).length === 0;
+  };
+
+  const handleSubmit = () => {
+    if (!validateStep1()) {
+      setCurrentStep(0);
       return;
     }
+    if (!validateStep2()) {
+      setCurrentStep(1);
+      return;
+    }
+
     const payload = venta
       ? {
           ...venta,
@@ -149,61 +183,67 @@ export function VentaFormModal({ open, onClose, venta = null, onSave, isLoading 
           estado: estado || 'Pagada',
           detalles,
         };
+
     if (onSave) onSave(payload);
     else onClose();
   };
 
-  return (
-    <div className="fixed inset-0 bg-black/50 backdrop-blur-xs flex items-center justify-center z-50 p-4">
-      <div className="form-modal-panel bg-card text-card-foreground p-6 rounded-xl max-w-2xl w-full border border-border shadow-2xl space-y-4 max-h-[90vh] overflow-y-auto custom-scrollbar animate-in fade-in-50 zoom-in-95 duration-200">
-        <div className="flex items-start justify-between gap-4 pb-2 border-b border-border">
-          <div>
-            <h2 className="text-xl font-bold">{venta ? 'Editar Venta' : 'Registrar Venta'}</h2>
-            <p className="text-xs text-muted-foreground mt-0.5">
-              Facturación en mostrador y liquidación de pedidos despachados
-            </p>
-          </div>
-          <button
-            type="button"
-            onClick={onClose}
-            className="p-1.5 rounded-lg hover:bg-muted text-muted-foreground hover:text-foreground transition-colors"
-            aria-label="Cerrar formulario"
-          >
-            <X className="w-5 h-5" />
-          </button>
-        </div>
-        <form onSubmit={handleSubmit} className="modal-form-grid space-y-4">
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div>
-              <label htmlFor="venta_id_cliente" className="block mb-1.5 text-sm font-medium">Cliente *</label>
+  const steps = [
+    {
+      id: 'datos',
+      title: 'Información de la Venta',
+      description: 'Define cliente, sede/punto de venta, pedido asociado y medio de pago',
+      validate: validateStep1,
+      content: (
+        <div className="space-y-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-5 gap-y-4">
+            {/* Cliente */}
+            <div className="sm:col-span-1">
+              <label htmlFor="venta_id_cliente" className="block mb-1.5 text-xs sm:text-sm font-bold text-foreground">
+                Cliente <span className="text-destructive font-bold ml-0.5">*</span>
+              </label>
               <Combobox
                 id="venta_id_cliente"
                 name="id_cliente"
                 value={idCliente}
-                onChange={(e) => setIdCliente(e.target.value)}
+                onChange={(e) => {
+                  setIdCliente(e.target.value);
+                  if (errors.idCliente) setErrors((prev) => ({ ...prev, idCliente: null }));
+                }}
                 options={clientes.map((c) => ({
                   value: String(c.id_cliente),
                   label: c.nombre,
                 }))}
               />
+              {errors.idCliente && <p className="text-xs text-destructive mt-1">{errors.idCliente}</p>}
             </div>
-            <div>
-              <label htmlFor="venta_id_sede" className="block mb-1.5 text-sm font-medium">Sede / Punto de Venta *</label>
+
+            {/* Sede */}
+            <div className="sm:col-span-1">
+              <label htmlFor="venta_id_sede" className="block mb-1.5 text-xs sm:text-sm font-bold text-foreground">
+                Sede / Punto de Venta <span className="text-destructive font-bold ml-0.5">*</span>
+              </label>
               <Combobox
                 id="venta_id_sede"
                 name="id_sede"
                 value={idSede}
-                onChange={(e) => setIdSede(e.target.value)}
+                onChange={(e) => {
+                  setIdSede(e.target.value);
+                  if (errors.idSede) setErrors((prev) => ({ ...prev, idSede: null }));
+                }}
                 options={sedes.map((s) => ({
                   value: String(s.id_sede),
                   label: s.nombre,
                 }))}
               />
+              {errors.idSede && <p className="text-xs text-destructive mt-1">{errors.idSede}</p>}
             </div>
-          </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div>
-              <label htmlFor="venta_id_pedido" className="block mb-1.5 text-sm font-medium">Pedido Asociado (Opcional)</label>
+
+            {/* Pedido Asociado */}
+            <div className="sm:col-span-1">
+              <label htmlFor="venta_id_pedido" className="block mb-1.5 text-xs sm:text-sm font-bold text-foreground">
+                Pedido Asociado (Opcional)
+              </label>
               <Combobox
                 id="venta_id_pedido"
                 name="id_pedido"
@@ -219,21 +259,27 @@ export function VentaFormModal({ open, onClose, venta = null, onSave, isLoading 
                 ]}
               />
             </div>
-            <div>
-              <label htmlFor="venta_fecha_venta" className="block mb-1.5 text-sm font-medium">Fecha y Hora</label>
+
+            {/* Fecha y Hora */}
+            <div className="sm:col-span-1">
+              <label htmlFor="venta_fecha_venta" className="block mb-1.5 text-xs sm:text-sm font-bold text-foreground">
+                Fecha y Hora de Facturación <span className="text-destructive font-bold ml-0.5">*</span>
+              </label>
               <input
                 id="venta_fecha_venta"
                 name="fecha_venta"
                 type="datetime-local"
                 value={fechaVenta}
                 onChange={(e) => setFechaVenta(e.target.value)}
-                className="w-full px-4 py-2 border border-input bg-input-background rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+                className="w-full h-10 px-3.5 border border-border bg-input-background rounded-xl text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-primary/40"
               />
             </div>
-          </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div>
-              <label htmlFor="venta_medio_pago" className="block mb-1.5 text-sm font-medium">Medio de Pago</label>
+
+            {/* Medio de Pago */}
+            <div className="sm:col-span-1">
+              <label htmlFor="venta_medio_pago" className="block mb-1.5 text-xs sm:text-sm font-bold text-foreground">
+                Medio de Pago <span className="text-destructive font-bold ml-0.5">*</span>
+              </label>
               <Combobox
                 id="venta_medio_pago"
                 name="medio_pago"
@@ -246,8 +292,12 @@ export function VentaFormModal({ open, onClose, venta = null, onSave, isLoading 
                 ]}
               />
             </div>
-            <div>
-              <label htmlFor="venta_estado" className="block mb-1.5 text-sm font-medium">Estado</label>
+
+            {/* Estado */}
+            <div className="sm:col-span-1">
+              <label htmlFor="venta_estado" className="block mb-1.5 text-xs sm:text-sm font-bold text-foreground">
+                Estado de la Factura <span className="text-destructive font-bold ml-0.5">*</span>
+              </label>
               <Combobox
                 id="venta_estado"
                 name="estado"
@@ -260,30 +310,52 @@ export function VentaFormModal({ open, onClose, venta = null, onSave, isLoading 
                 ]}
               />
             </div>
+
+            {/* Comprobante URL */}
+            <div className="sm:col-span-2">
+              <label htmlFor="venta_comprobante_url" className="block mb-1.5 text-xs sm:text-sm font-bold text-foreground">
+                URL de Comprobante / Voucher Electrónico
+              </label>
+              <input
+                id="venta_comprobante_url"
+                name="comprobante_url"
+                type="url"
+                maxLength={255}
+                placeholder="https://comprobantes.ejemplo.com/vouchers/voucher-001.pdf"
+                value={comprobanteUrl}
+                onChange={(e) => setComprobanteUrl(e.target.value)}
+                className="w-full h-10 px-3.5 border border-border bg-input-background rounded-xl text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-primary/40 font-mono"
+              />
+            </div>
           </div>
-          <div className="modal-field-wide">
-            <label htmlFor="venta_comprobante_url" className="block mb-1.5 text-sm font-medium">URL de Comprobante / Voucher</label>
-            <input
-              id="venta_comprobante_url"
-              name="comprobante_url"
-              type="url"
-              maxLength={255}
-              placeholder="https://comprobantes.ejemplo.com/vouchers/voucher-001.pdf"
-              value={comprobanteUrl}
-              onChange={(e) => setComprobanteUrl(e.target.value)}
-              className="w-full px-4 py-2 border border-input bg-input-background rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-ring"
-            />
+
+          <div className="p-3.5 bg-muted/40 border border-border/60 rounded-xl text-xs text-muted-foreground flex items-start gap-2.5">
+            <ShoppingCart className="size-4 text-primary shrink-0 mt-0.5" />
+            <p>
+              Si la venta proviene de un pedido previo, selecciónalo arriba para vincular la orden de despacho a este comprobante contable.
+            </p>
           </div>
-          <div className="modal-field-wide space-y-3 p-4 rounded-xl border border-border bg-muted/20">
+        </div>
+      ),
+    },
+    {
+      id: 'productos',
+      title: 'Productos Facturados',
+      description: 'Agrega los productos entregados y liquida los precios unitarios',
+      validate: validateStep2,
+      content: (
+        <div className="space-y-4">
+          <div className="space-y-3 p-4 rounded-xl border border-border bg-muted/20">
             <div>
-              <h4 className="text-sm font-semibold text-foreground flex items-center gap-1.5">
-                <ShoppingCart className="w-4 h-4 text-primary" />
-                Productos Vendidos (Detalle de Venta)
+              <h4 className="text-xs sm:text-sm font-bold text-foreground flex items-center gap-1.5">
+                <ShoppingCart className="size-4 text-primary" />
+                Agregar Producto Facturado
               </h4>
               <p className="text-xs text-muted-foreground mt-0.5">
                 Agrega los productos entregados, cantidades y precio de venta
               </p>
             </div>
+
             <div className="grid grid-cols-1 sm:grid-cols-12 gap-2">
               <div className="sm:col-span-5">
                 <Combobox
@@ -301,6 +373,7 @@ export function VentaFormModal({ open, onClose, venta = null, onSave, isLoading 
                   ]}
                 />
               </div>
+
               <div className="sm:col-span-3">
                 <input
                   id="detalle_venta_cantidad"
@@ -310,9 +383,10 @@ export function VentaFormModal({ open, onClose, venta = null, onSave, isLoading 
                   placeholder="Cantidad (und)"
                   value={cantidadProducto}
                   onChange={(e) => setCantidadProducto(e.target.value)}
-                  className="w-full px-3 py-2 border border-input bg-input-background rounded-lg text-xs focus:outline-none focus:ring-2 focus:ring-ring"
+                  className="w-full h-10 px-3 border border-border bg-input-background rounded-xl text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-primary/40 font-mono"
                 />
               </div>
+
               <div className="sm:col-span-3">
                 <input
                   id="detalle_venta_precio_unitario"
@@ -322,24 +396,27 @@ export function VentaFormModal({ open, onClose, venta = null, onSave, isLoading 
                   placeholder="Precio Unitario ($)"
                   value={precioUnitario}
                   onChange={(e) => setPrecioUnitario(e.target.value)}
-                  className="w-full px-3 py-2 border border-input bg-input-background rounded-lg text-xs focus:outline-none focus:ring-2 focus:ring-ring"
+                  className="w-full h-10 px-3 border border-border bg-input-background rounded-xl text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-primary/40 font-mono"
                 />
               </div>
+
               <div className="sm:col-span-1">
                 <button
                   type="button"
                   onClick={handleAddDetalle}
                   disabled={!selectedProductoId || !cantidadProducto || !precioUnitario}
-                  className="w-full h-full py-2 bg-primary text-primary-foreground rounded-lg hover:opacity-90 disabled:opacity-50 text-xs font-semibold flex items-center justify-center transition-opacity cursor-pointer"
+                  className="w-full h-10 bg-primary text-primary-foreground rounded-xl hover:opacity-90 disabled:opacity-50 text-xs font-semibold flex items-center justify-center transition-opacity cursor-pointer shadow-xs"
                   title="Agregar producto a la venta"
                 >
-                  <Plus className="w-4 h-4" />
+                  <Plus className="size-4" />
                 </button>
               </div>
             </div>
+
+            {/* Listado de productos agregados */}
             {detalles.length > 0 ? (
-              <div className="divide-y divide-border border border-border rounded-lg bg-card overflow-hidden">
-                <div className="grid grid-cols-12 gap-2 p-2 bg-muted/60 text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">
+              <div className="divide-y divide-border border border-border rounded-xl bg-card overflow-hidden max-h-44 overflow-y-auto custom-scrollbar">
+                <div className="grid grid-cols-12 gap-2 p-2 bg-muted/60 text-[11px] font-semibold text-muted-foreground uppercase tracking-wider sticky top-0 bg-card">
                   <div className="col-span-5">Producto</div>
                   <div className="col-span-2 text-center">Cant.</div>
                   <div className="col-span-2 text-right">P. Unitario</div>
@@ -364,46 +441,51 @@ export function VentaFormModal({ open, onClose, venta = null, onSave, isLoading 
                       <button
                         type="button"
                         onClick={() => handleRemoveDetalle(d.id_producto)}
-                        className="text-muted-foreground hover:text-destructive p-1 rounded transition-colors"
+                        className="text-muted-foreground hover:text-destructive p-1 rounded-md transition-colors cursor-pointer"
                         title="Eliminar producto"
                       >
-                        <Trash2 className="w-3.5 h-3.5 mx-auto" />
+                        <Trash2 className="size-3.5 mx-auto" />
                       </button>
                     </div>
                   </div>
                 ))}
               </div>
             ) : (
-              <div className="text-center py-3 border border-dashed border-border rounded-lg text-xs text-muted-foreground">
+              <div className="text-center py-3 border border-dashed border-border rounded-xl text-xs text-muted-foreground">
                 No hay productos agregados en esta venta.
               </div>
             )}
+            {errors.detalles && <p className="text-xs text-destructive">{errors.detalles}</p>}
           </div>
+
+          {/* Campo Calculado: Valor Total */}
           <div className="flex items-center justify-between p-3.5 rounded-xl bg-primary/10 border border-primary/20">
-            <span className="text-sm font-semibold text-foreground">Valor Total de la Venta (Calculado):</span>
-            <span className="text-lg font-bold font-mono text-primary">
+            <span className="text-xs sm:text-sm font-semibold text-foreground">Valor Total de la Venta:</span>
+            <span className="text-base sm:text-lg font-bold font-mono text-primary">
               ${valorTotalCalculado.toLocaleString('es-CO')}
             </span>
           </div>
-          <div className="flex gap-2 pt-4 border-t border-border">
-            <button
-              type="button"
-              onClick={onClose}
-              disabled={isLoading}
-              className="flex-1 px-4 py-2 border border-border rounded-lg hover:bg-muted text-sm font-medium transition-colors cursor-pointer"
-            >
-              Cancelar
-            </button>
-            <button
-              type="submit"
-              disabled={isLoading}
-              className="flex-1 px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:opacity-90 disabled:opacity-50 text-sm font-medium transition-colors shadow-xs cursor-pointer"
-            >
-              {isLoading ? 'Guardando...' : venta ? 'Guardar Cambios' : 'Registrar Venta'}
-            </button>
-          </div>
-        </form>
-      </div>
-    </div>
+        </div>
+      ),
+    },
+  ];
+
+  return (
+    <StepperModal
+      isOpen={open}
+      onClose={onClose}
+      onSubmit={handleSubmit}
+      category="Ventas"
+      title={venta ? 'Editar Venta' : 'Registrar Venta'}
+      subtitle="Facturación en mostrador y liquidación de pedidos despachados"
+      steps={steps}
+      currentStep={currentStep}
+      onStepChange={setCurrentStep}
+      submitLabel={venta ? 'Guardar Cambios' : 'Registrar Venta'}
+      isLoading={isLoading}
+      isDirty={detalles.length > 0 || Boolean(comprobanteUrl)}
+    />
   );
 }
+
+export default VentaFormModal;

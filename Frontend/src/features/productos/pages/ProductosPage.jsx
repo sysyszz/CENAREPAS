@@ -16,6 +16,8 @@ import StatusSwitch from '../../../shared/components/StatusSwitch';
 import { CustomSelect } from '../../../shared/components/CustomSelect';
 import ErrorBanner from '../../../shared/components/ErrorBanner';
 import { getImageUrl } from '../../../shared/services/api';
+import { exportToPdf } from '../../../shared/utils/exportToPdf';
+import { exportToExcel } from '../../../shared/utils/exportToExcel';
 
 export default function ProductosPage() {
   const { can } = usePermissions();
@@ -259,17 +261,69 @@ export default function ProductosPage() {
     [categoryNames, handleRequestStatusChange, can]
   );
 
+  const handleExportPdf = () => {
+    exportToPdf({
+      data: filteredProductos,
+      columns: [
+        { header: 'ID', key: 'id_producto' },
+        { header: 'Producto', key: 'nombre' },
+        {
+          header: 'Categoría',
+          accessor: (p) =>
+            categoryNames[p.id_categoria] ||
+            (p.categoria_nombre || (p.id_categoria ? `Categoría #${p.id_categoria}` : 'Sin categoría')),
+        },
+        {
+          header: 'Precio Venta',
+          accessor: (p) => `$${Number(p.precio_venta || 0).toLocaleString('es-CO')}`,
+        },
+        { header: 'Stock Mínimo', key: 'stock_minimo' },
+        { header: 'Estado', key: 'estado' },
+      ],
+      title: 'Reporte de Productos Terminados',
+      subtitle: 'Catálogo y precios de productos terminados en CENAREPAS',
+    });
+  };
+
+  const handleExportExcel = () => {
+    exportToExcel({
+      data: filteredProductos,
+      columns: [
+        { header: 'ID', key: 'id_producto', align: 'center' },
+        { header: 'Nombre del Producto', key: 'nombre' },
+        {
+          header: 'Categoría',
+          accessor: (p) =>
+            categoryNames[p.id_categoria] ||
+            (p.categoria_nombre || (p.id_categoria ? `Categoría #${p.id_categoria}` : 'Sin categoría')),
+        },
+        {
+          header: 'Precio de Venta',
+          accessor: (p) => `$${Number(p.precio_venta || 0).toLocaleString('es-CO')}`,
+          align: 'right',
+        },
+        { header: 'Stock Mínimo', key: 'stock_minimo', align: 'right' },
+        { header: 'Estado', key: 'estado', align: 'center' },
+      ],
+      title: 'Reporte de Productos Terminados',
+      subtitle: 'Catálogo y precios de productos terminados en CENAREPAS',
+      sheetName: 'Productos',
+    });
+  };
+
   return (
     <div className="space-y-6">
       <PageHeader
-        title="Productos Terminados"
-        subtitle="Catálogo y stock de arepas y derivados de Masarepas"
+        title="Productos"
+        subtitle="Catálogo de productos terminados de Masarepas"
         addLabel="Nuevo Producto"
         addDisabled={!can('productos', 'crear')}
         onAdd={() => {
           setSelectedProducto(null);
           setShowModal(true);
         }}
+        onExportPdf={handleExportPdf}
+        onExportExcel={handleExportExcel}
       />
 
       {/* Tarjetas de Consolidado */}

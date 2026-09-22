@@ -12,6 +12,8 @@ import { usePermissions, mockPermisos } from '../../../shared/contexts/Permissio
 import StatusSwitch from '../../../shared/components/StatusSwitch';
 import { CustomSelect } from '../../../shared/components/CustomSelect';
 import ErrorBanner from '../../../shared/components/ErrorBanner';
+import { exportToPdf } from '../../../shared/utils/exportToPdf';
+import { exportToExcel } from '../../../shared/utils/exportToExcel';
 
 export default function RolesPage() {
   const { can } = usePermissions();
@@ -74,7 +76,19 @@ export default function RolesPage() {
       {
         key: 'nombre',
         label: 'Nombre del Rol',
-        render: (value) => <span className="font-semibold">{value}</span>,
+        render: (value, rol) => {
+          const isRolAdmin = Number(rol?.id_rol) === 1 || ['administrador', 'admin'].includes(String(rol?.nombre || '').toLowerCase().trim());
+          return (
+            <div className="flex items-center gap-2">
+              <span className="font-semibold">{value}</span>
+              {isRolAdmin && (
+                <span className="text-[10px] font-semibold bg-primary/10 text-primary px-1.5 py-0.5 rounded-md border border-primary/20">
+                  Sistema
+                </span>
+              )}
+            </div>
+          );
+        },
       },
       {
         key: 'descripcion',
@@ -88,13 +102,26 @@ export default function RolesPage() {
       {
         key: 'estado',
         label: 'Estado',
-        render: (value, rol) => (
-          <StatusSwitch
-            value={value}
-            disabled={!can('roles', 'cambiar_estado')}
-            onToggle={() => handleRequestStatusChange(rol)}
-          />
-        ),
+        render: (value, rol) => {
+          const isRolAdmin = Number(rol?.id_rol) === 1 || ['administrador', 'admin'].includes(String(rol?.nombre || '').toLowerCase().trim());
+          return (
+            <div
+              className="inline-flex items-center"
+              title={isRolAdmin ? 'El rol Administrador es principal del sistema y no puede ser desactivado' : undefined}
+            >
+              <StatusSwitch
+                value={value}
+                disabled={isRolAdmin || !can('roles', 'cambiar_estado')}
+                onToggle={() => {
+                  if (isRolAdmin) {
+                    return;
+                  }
+                  handleRequestStatusChange(rol);
+                }}
+              />
+            </div>
+          );
+        },
       },
       {
         key: 'fecha_creacion',
@@ -104,28 +131,65 @@ export default function RolesPage() {
       {
         key: 'acciones',
         label: 'Acciones',
-        render: (_, rol) => (
-          <RowActions
-            onView={() => setDetailModal({ isOpen: true, data: rol })}
-            onEdit={() => {
-              setSelectedRole(rol);
-              setShowModal(true);
-            }}
-            editDisabled={!can('roles', 'editar')}
-            onDelete={() =>
-              setDeleteDialog({
-                isOpen: true,
-                id: rol.id_rol,
-                nombre: rol.nombre,
-              })
-            }
-            deleteDisabled={!can('roles', 'eliminar')}
-          />
-        ),
+        render: (_, rol) => {
+          const isRolAdmin = Number(rol?.id_rol) === 1 || ['administrador', 'admin'].includes(String(rol?.nombre || '').toLowerCase().trim());
+          return (
+            <RowActions
+              onView={() => setDetailModal({ isOpen: true, data: rol })}
+              onEdit={() => {
+                setSelectedRole(rol);
+                setShowModal(true);
+              }}
+              editDisabled={!can('roles', 'editar')}
+              onDelete={() => {
+                if (isRolAdmin) {
+                  return;
+                }
+                setDeleteDialog({
+                  isOpen: true,
+                  id: rol.id_rol,
+                  nombre: rol.nombre,
+                });
+              }}
+              deleteDisabled={isRolAdmin || !can('roles', 'eliminar')}
+            />
+          );
+        },
       },
     ],
     [can, setDetailModal, setShowModal, setDeleteDialog, handleRequestStatusChange]
   );
+
+  const handleExportPdf = () => {
+    exportToPdf({
+      data: filteredData,
+      columns: [
+        { header: 'ID', key: 'id_rol' },
+        { header: 'Nombre del Rol', key: 'nombre' },
+        { header: 'Descripción', key: 'descripcion' },
+        { header: 'Estado', key: 'estado' },
+        { header: 'Fecha Creación', key: 'fecha_creacion' },
+      ],
+      title: 'Reporte de Roles y Permisos',
+      subtitle: 'Listado de roles configurados en el sistema CENAREPAS',
+    });
+  };
+
+  const handleExportExcel = () => {
+    exportToExcel({
+      data: filteredData,
+      columns: [
+        { header: 'ID', key: 'id_rol', align: 'center' },
+        { header: 'Nombre del Rol', key: 'nombre' },
+        { header: 'Descripción', key: 'descripcion' },
+        { header: 'Estado', key: 'estado', align: 'center' },
+        { header: 'Fecha de Creación', key: 'fecha_creacion', align: 'center' },
+      ],
+      title: 'Reporte de Roles y Permisos',
+      subtitle: 'Listado de roles configurados en el sistema CENAREPAS',
+      sheetName: 'Roles',
+    });
+  };
 
   return (
     <div className="space-y-6">
@@ -138,6 +202,8 @@ export default function RolesPage() {
           setSelectedRole(null);
           setShowModal(true);
         }}
+        onExportPdf={handleExportPdf}
+        onExportExcel={handleExportExcel}
       />
 
       {/* Tarjetas de consolidado / métricas */}

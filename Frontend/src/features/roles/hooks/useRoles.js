@@ -2,6 +2,13 @@ import { useState, useEffect, useMemo } from 'react';
 import { getRoles, createRol, updateRol, deleteRol } from '../services/rolesService';
 import { toast } from '../../../shared/utils/toast';
 
+export const isAdminRole = (rol) => {
+  if (!rol) return false;
+  const id = Number(rol.id_rol ?? rol.id);
+  const name = String(rol.nombre || '').toLowerCase().trim();
+  return id === 1 || name === 'admin' || name === 'administrador';
+};
+
 export function useRoles() {
   const [roles, setRoles] = useState([]);
   const [searchQuery, setSearchQuery] = useState('');
@@ -50,14 +57,20 @@ export function useRoles() {
     setIsSaving(true);
     try {
       if (formData.id_rol) {
-        const updated = await updateRol(formData.id_rol, formData);
+        // Asegurar que si es rol Administrador, no pueda guardarse como Inactivo
+        const isTargetAdmin = isAdminRole(formData);
+        const dataToSave = isTargetAdmin ? { ...formData, estado: 'Activo' } : formData;
+
+        const updated = await updateRol(formData.id_rol, dataToSave);
+        const merged = { ...formData, ...dataToSave, ...(updated || {}), permisos: dataToSave.permisos };
         setRoles((prev) =>
-          prev.map((r) => (r.id_rol === formData.id_rol ? { ...r, ...updated } : r))
+          prev.map((r) => (r.id_rol === formData.id_rol ? { ...r, ...merged } : r))
         );
         toast.success('Cambios guardados');
       } else {
         const created = await createRol(formData);
-        setRoles((prev) => [created, ...prev]);
+        const merged = { ...formData, ...(created || {}), permisos: formData.permisos };
+        setRoles((prev) => [merged, ...prev]);
         toast.success('Rol creado');
       }
       setShowModal(false);
@@ -70,6 +83,13 @@ export function useRoles() {
 
   const handleDelete = async () => {
     if (!deleteDialog.id) return;
+    const targetRole = roles.find((r) => r.id_rol === deleteDialog.id);
+    if (isAdminRole(targetRole)) {
+      toast.error('El rol Administrador es principal del sistema y no puede ser eliminado');
+      setDeleteDialog({ isOpen: false, id: null, nombre: '' });
+      return;
+    }
+
     setIsDeleting(true);
     try {
       await deleteRol(deleteDialog.id);
@@ -85,6 +105,10 @@ export function useRoles() {
 
   const handleRequestStatusChange = (rol) => {
     if (!rol) return;
+    if (isAdminRole(rol)) {
+      toast.warning('El rol Administrador es principal del sistema y no puede ser desactivado');
+      return;
+    }
     const isCurrentlyActive = String(rol.estado || '').toLowerCase() === 'activo';
     const nextEstado = isCurrentlyActive ? 'Inactivo' : 'Activo';
     setStatusDialog({
@@ -96,6 +120,12 @@ export function useRoles() {
 
   const handleConfirmStatusChange = async () => {
     if (!statusDialog.rol) return;
+    if (isAdminRole(statusDialog.rol) && statusDialog.nextEstado.toLowerCase() === 'inactivo') {
+      toast.error('El rol Administrador no puede ser desactivado');
+      setStatusDialog({ isOpen: false, rol: null, nextEstado: 'Activo' });
+      return;
+    }
+
     setIsUpdatingStatus(true);
     try {
       const { id_rol, nombre } = statusDialog.rol;
@@ -146,6 +176,7 @@ export function useRoles() {
     handleDelete,
     handleRequestStatusChange,
     handleConfirmStatusChange,
+    isAdminRole,
   };
 }
 

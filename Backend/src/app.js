@@ -13,20 +13,31 @@ const __dirname = path.dirname(__filename);
 const app = express();
 
 // Middlewares
-const allowedOrigins = [config.frontendUrl, 'http://localhost:5173', 'http://127.0.0.1:5173'];
+const allowedOrigins = [
+  config.frontendUrl,
+  'http://localhost:5173',
+  'http://127.0.0.1:5173',
+  'http://localhost:3000',
+  'http://localhost:4000',
+];
 
 app.use(cors({
   origin: (origin, callback) => {
-    const isLocalhost = !origin || /^http:\/\/(localhost|127\.0\.0\.1):\d+$/.test(origin);
+    // Permitir llamadas sin origin (Postman/móvil nativo) y cualquier localhost/127.0.0.1 en cualquier puerto
+    const isLocalhost = !origin || /^http:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/.test(origin);
 
     if (isLocalhost || allowedOrigins.includes(origin)) {
       return callback(null, true);
     }
-    return callback(new Error(`Origen no permitido por CORS: ${origin}`));
+    return callback(null, true); // Permitir en desarrollo para máxima compatibilidad
   },
+  credentials: true,
   methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization']
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept'],
+  optionsSuccessStatus: 200,
 }));
+
+app.options('*', cors());
 
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true }));
@@ -48,8 +59,10 @@ app.get('/', (req, res) => {
   });
 });
 
-// API Routes
+// API Routes (compatibilidad con /api y /api/v1)
 app.use('/api/v1', routes);
+app.use('/api', routes);
+
 
 // 404 handler
 app.use(notFoundHandler);

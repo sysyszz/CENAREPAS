@@ -13,6 +13,8 @@ import { usePermissions } from '../../../shared/contexts/PermissionContext';
 import StatusSwitch from '../../../shared/components/StatusSwitch';
 import { CustomSelect } from '../../../shared/components/CustomSelect';
 import ErrorBanner from '../../../shared/components/ErrorBanner';
+import { exportToPdf } from '../../../shared/utils/exportToPdf';
+import { exportToExcel } from '../../../shared/utils/exportToExcel';
 
 export default function ProveedoresPage() {
   const { can } = usePermissions();
@@ -131,6 +133,43 @@ export default function ProveedoresPage() {
     [can, setDetailModal, setShowModal, setDeleteDialog, handleRequestStatusChange]
   );
 
+  const handleExportPdf = () => {
+    exportToPdf({
+      data: filteredData,
+      columns: [
+        { header: 'ID', key: 'id_proveedor' },
+        { header: 'Proveedor', key: 'nombre' },
+        { header: 'NIT', key: 'nit' },
+        { header: 'Teléfono', key: 'telefono' },
+        { header: 'Correo', key: 'correo' },
+        { header: 'Dirección', key: 'direccion' },
+        { header: 'Estado', key: 'estado' },
+        { header: 'Fecha de Creación', key: 'fecha_creacion' },
+      ],
+      title: 'Reporte de Proveedores',
+      subtitle: 'Directorio de proveedores registrados en CENAREPAS',
+    });
+  };
+
+  const handleExportExcel = () => {
+    exportToExcel({
+      data: filteredData,
+      columns: [
+        { header: 'ID', key: 'id_proveedor', align: 'center' },
+        { header: 'Proveedor / Razón Social', key: 'nombre' },
+        { header: 'NIT', key: 'nit', align: 'center' },
+        { header: 'Teléfono', key: 'telefono' },
+        { header: 'Correo Electrónico', key: 'correo' },
+        { header: 'Dirección', key: 'direccion' },
+        { header: 'Estado', key: 'estado', align: 'center' },
+        { header: 'Fecha de Creación', key: 'fecha_creacion', align: 'center' },
+      ],
+      title: 'Reporte de Proveedores',
+      subtitle: 'Directorio de proveedores registrados en CENAREPAS',
+      sheetName: 'Proveedores',
+    });
+  };
+
   return (
     <div className="space-y-6">
       <PageHeader
@@ -142,6 +181,8 @@ export default function ProveedoresPage() {
           setSelectedProveedor(null);
           setShowModal(true);
         }}
+        onExportPdf={handleExportPdf}
+        onExportExcel={handleExportExcel}
       />
 
       {/* Tarjetas de Consolidado */}

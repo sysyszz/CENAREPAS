@@ -12,6 +12,8 @@ import { usePermissions } from '../../../shared/contexts/PermissionContext';
 import StatusSwitch from '../../../shared/components/StatusSwitch';
 import { CustomSelect } from '../../../shared/components/CustomSelect';
 import ErrorBanner from '../../../shared/components/ErrorBanner';
+import { exportToPdf } from '../../../shared/utils/exportToPdf';
+import { exportToExcel } from '../../../shared/utils/exportToExcel';
 
 export default function ClientesPage() {
   const { can } = usePermissions();
@@ -129,6 +131,42 @@ export default function ClientesPage() {
     [can, setDetailModal, setShowModal, setDeleteDialog, handleRequestStatusChange]
   );
 
+  const handleExportPdf = () => {
+    exportToPdf({
+      data: filteredData,
+      columns: [
+        { header: 'ID', key: 'id_cliente' },
+        { header: 'Cliente', key: 'nombre' },
+        { header: 'Documento', key: 'documento' },
+        { header: 'Teléfono', key: 'telefono' },
+        { header: 'Correo', key: 'correo' },
+        { header: 'Dirección', key: 'direccion' },
+        { header: 'Estado', key: 'estado' },
+      ],
+      title: 'Reporte de Clientes',
+      subtitle: 'Directorio y contactos de clientes registrados en CENAREPAS',
+    });
+  };
+
+  const handleExportExcel = () => {
+    exportToExcel({
+      data: filteredData,
+      columns: [
+        { header: 'ID', key: 'id_cliente', align: 'center' },
+        { header: 'Cliente / Razón Social', key: 'nombre' },
+        { header: 'Documento / NIT', key: 'documento', align: 'center' },
+        { header: 'Teléfono', key: 'telefono' },
+        { header: 'Correo Electrónico', key: 'correo' },
+        { header: 'Dirección', key: 'direccion' },
+        { header: 'Estado', key: 'estado', align: 'center' },
+        { header: 'Fecha de Creación', key: 'fecha_creacion', align: 'center' },
+      ],
+      title: 'Reporte de Clientes',
+      subtitle: 'Directorio y contactos de clientes registrados en CENAREPAS',
+      sheetName: 'Clientes',
+    });
+  };
+
   return (
     <div className="space-y-6">
       <PageHeader
@@ -140,6 +178,8 @@ export default function ClientesPage() {
           setSelectedCliente(null);
           setShowModal(true);
         }}
+        onExportPdf={handleExportPdf}
+        onExportExcel={handleExportExcel}
       />
 
       {/* Tarjetas de Consolidado */}

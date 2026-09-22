@@ -14,6 +14,8 @@ import { usePermissions } from '../../../shared/contexts/PermissionContext';
 import StatusSwitch from '../../../shared/components/StatusSwitch';
 import { CustomSelect } from '../../../shared/components/CustomSelect';
 import ErrorBanner from '../../../shared/components/ErrorBanner';
+import { exportToPdf } from '../../../shared/utils/exportToPdf';
+import { exportToExcel } from '../../../shared/utils/exportToExcel';
 
 export default function ComprasPage() {
   const { can } = usePermissions();
@@ -185,6 +187,53 @@ export default function ComprasPage() {
     [can, setDetailModal, setShowModal, setDeleteDialog, handleRequestStatusChange]
   );
 
+  const handleExportPdf = () => {
+    exportToPdf({
+      data: filteredData,
+      columns: [
+        { header: 'ID', key: 'id_compra' },
+        { header: 'Fecha Compra', key: 'fecha_compra' },
+        {
+          header: 'Proveedor',
+          accessor: (c) => proveedoresNames[c.id_proveedor] || `Proveedor #${c.id_proveedor}`,
+        },
+        {
+          header: 'Valor Total',
+          accessor: (c) => `$${Number(c.valor_total || 0).toLocaleString('es-CO')}`,
+        },
+        { header: 'Medio de Pago', key: 'medio_pago' },
+        { header: 'Estado', key: 'estado' },
+      ],
+      title: 'Reporte de Órdenes de Compra',
+      subtitle: 'Histórico de adquisiciones de materias primas a proveedores en CENAREPAS',
+    });
+  };
+
+  const handleExportExcel = () => {
+    exportToExcel({
+      data: filteredData,
+      columns: [
+        { header: 'ID Compra', key: 'id_compra', align: 'center' },
+        { header: 'Fecha de Compra', key: 'fecha_compra', align: 'center' },
+        {
+          header: 'Proveedor',
+          accessor: (c) => proveedoresNames[c.id_proveedor] || `Proveedor #${c.id_proveedor}`,
+        },
+        {
+          header: 'Valor Total ($)',
+          accessor: (c) => `$${Number(c.valor_total || 0).toLocaleString('es-CO')}`,
+          align: 'right',
+        },
+        { header: 'Medio de Pago', key: 'medio_pago' },
+        { header: 'Estado', key: 'estado', align: 'center' },
+        { header: 'Comprobante URL', key: 'comprobante_url' },
+      ],
+      title: 'Reporte de Órdenes de Compra',
+      subtitle: 'Histórico de adquisiciones de materias primas a proveedores en CENAREPAS',
+      sheetName: 'Compras',
+    });
+  };
+
   return (
     <div className="space-y-6">
       <PageHeader
@@ -196,6 +245,8 @@ export default function ComprasPage() {
           setSelectedCompra(null);
           setShowModal(true);
         }}
+        onExportPdf={handleExportPdf}
+        onExportExcel={handleExportExcel}
       />
 
       {/* Tarjetas de Consolidado */}

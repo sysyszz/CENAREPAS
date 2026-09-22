@@ -1,38 +1,6 @@
 import { useMemo } from 'react';
 import { X, Check, Shield, Calendar, Hash, Info, Layers } from 'lucide-react';
-import {
-  Table,
-  TableHeader,
-  TableBody,
-  TableHead,
-  TableRow,
-  TableCell,
-} from '../../../shared/ui/table';
 import { mockPermisos, usePermissions } from '../../../shared/contexts/PermissionContext';
-
-const MODULE_DEFINITIONS = [
-  { key: 'dashboard', label: 'Dashboard', actions: ['ver'] },
-  { key: 'roles', label: 'Roles', actions: ['ver', 'crear', 'editar', 'eliminar'] },
-  { key: 'usuarios', label: 'Usuarios', actions: ['ver', 'crear', 'editar', 'eliminar'] },
-  { key: 'categorias', label: 'Categorías', actions: ['ver', 'crear', 'editar', 'eliminar'] },
-  { key: 'productos', label: 'Productos', actions: ['ver', 'crear', 'editar', 'eliminar'] },
-  { key: 'insumos', label: 'Insumos', actions: ['ver', 'crear', 'editar', 'eliminar'] },
-  { key: 'fichas-tecnicas', label: 'Fichas Técnicas', actions: ['ver', 'crear', 'editar', 'eliminar'] },
-  { key: 'produccion', label: 'Producción', actions: ['ver', 'crear', 'editar', 'eliminar'] },
-  { key: 'compras', label: 'Compras', actions: ['ver', 'crear', 'editar', 'eliminar'] },
-  { key: 'pedidos', label: 'Pedidos', actions: ['ver', 'crear', 'editar', 'eliminar'] },
-  { key: 'ventas', label: 'Ventas', actions: ['ver', 'crear', 'editar', 'eliminar'] },
-  { key: 'clientes', label: 'Clientes', actions: ['ver', 'crear', 'editar', 'eliminar'] },
-  { key: 'proveedores', label: 'Proveedores', actions: ['ver', 'crear', 'editar', 'eliminar'] },
-  { key: 'configuracion', label: 'Configuración', actions: ['ver', 'crear', 'editar', 'eliminar'] },
-];
-
-const ACTIONS = [
-  { key: 'ver', label: 'Ver' },
-  { key: 'crear', label: 'Crear' },
-  { key: 'editar', label: 'Editar' },
-  { key: 'eliminar', label: 'Eliminar' },
-];
 
 // Permisos por defecto para roles predefinidos si aún no se han personalizado
 const DEFAULT_ROLE_PERMISSIONS = {
@@ -46,22 +14,37 @@ const DEFAULT_ROLE_PERMISSIONS = {
 export default function RoleDetailModal({ isOpen, onClose, role }) {
   const { rolePermissions } = usePermissions();
 
+  const permissionsByModule = useMemo(() => {
+    return mockPermisos.reduce((acc, perm) => {
+      if (!acc[perm.modulo]) acc[perm.modulo] = [];
+      acc[perm.modulo].push(perm);
+      return acc;
+    }, {});
+  }, []);
+
   const activePermissionIds = useMemo(() => {
     if (!role) return [];
 
     // 1. Si el rol tiene permisos explícitos en su objeto
-    if (Array.isArray(role.permisos) && role.permisos.length > 0) {
-      return role.permisos.map((p) => (typeof p === 'object' ? p.id_permiso : p));
+    if (Array.isArray(role.permisos)) {
+      return role.permisos
+        .map((p) => (typeof p === 'object' && p?.id_permiso != null ? Number(p.id_permiso) : Number(p)))
+        .filter((id) => !isNaN(id) && id > 0);
     }
 
     // 2. Si existen permisos guardados en el contexto para este id_rol
     if (rolePermissions && rolePermissions[role.id_rol]) {
-      return rolePermissions[role.id_rol];
+      return (rolePermissions[role.id_rol] || []).map(Number);
     }
 
     // 3. Fallback a permisos predeterminados por id_rol
     if (DEFAULT_ROLE_PERMISSIONS[role.id_rol]) {
       return DEFAULT_ROLE_PERMISSIONS[role.id_rol];
+    }
+
+    // 4. Fallback especial para rol Administrador
+    if (role.id_rol === 1 || ['administrador', 'admin'].includes(String(role.nombre || '').toLowerCase().trim())) {
+      return mockPermisos.map((p) => Number(p.id_permiso));
     }
 
     return [];
@@ -111,14 +94,14 @@ export default function RoleDetailModal({ isOpen, onClose, role }) {
                 </span>
               </div>
               <p className="text-xs text-muted-foreground mt-0.5">
-                Información general y matriz de permisos configurados
+                Información general y permisos asignados en el sistema
               </p>
             </div>
           </div>
           <button
             type="button"
             onClick={onClose}
-            className="p-1.5 rounded-lg hover:bg-muted text-muted-foreground hover:text-foreground transition-colors"
+            className="p-1.5 rounded-lg hover:bg-muted text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
             aria-label="Cerrar modal"
           >
             <X className="w-5 h-5" />
@@ -174,97 +157,83 @@ export default function RoleDetailModal({ isOpen, onClose, role }) {
             </div>
           )}
 
-          {/* Permissions Table Section */}
-          <div className="space-y-2.5">
+          {/* Permissions Grouped by Module Section */}
+          <div className="space-y-3">
             <div className="flex items-center justify-between">
               <div>
                 <h3 className="text-sm font-semibold text-foreground">
-                  Matriz de Permisos por Módulo
+                  Permisos por Módulo
                 </h3>
                 <p className="text-xs text-muted-foreground">
-                  Nivel de acceso autorizado para las diferentes áreas del sistema
+                  Acciones configuradas y nivel de acceso asignado para este rol
                 </p>
               </div>
+              <span className="text-xs font-semibold px-2.5 py-1 bg-primary/10 text-primary rounded-full">
+                {activeCount} de {totalSystemPermissions} acciones
+              </span>
             </div>
 
-            <div className="rounded-lg border border-border bg-card overflow-hidden shadow-xs">
-              <Table>
-                <TableHeader>
-                  <TableRow className="bg-muted/70 hover:bg-muted/70 border-b border-border">
-                    <TableHead className="py-2.5 px-4 font-semibold text-xs text-foreground uppercase tracking-wider">
-                      Módulo
-                    </TableHead>
-                    {ACTIONS.map((action) => (
-                      <TableHead
-                        key={action.key}
-                        className="py-2.5 px-4 font-semibold text-xs text-foreground uppercase tracking-wider text-center w-24"
-                      >
-                        {action.label}
-                      </TableHead>
-                    ))}
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {MODULE_DEFINITIONS.map((moduleItem, index) => {
-                    return (
-                      <TableRow
-                        key={moduleItem.key}
-                        className={`hover:bg-muted/30 transition-colors ${
-                          index % 2 === 0 ? 'bg-transparent' : 'bg-muted/15'
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 max-h-72 overflow-y-auto p-1 custom-scrollbar">
+              {Object.entries(permissionsByModule).map(([moduleName, modulePermissions]) => {
+                const activeInModule = modulePermissions.filter((p) =>
+                  activePermissionIds.includes(Number(p.id_permiso))
+                );
+                const hasAnyActive = activeInModule.length > 0;
+
+                return (
+                  <div
+                    key={moduleName}
+                    className={`border rounded-lg p-3 transition-colors ${
+                      hasAnyActive
+                        ? 'border-border bg-card'
+                        : 'border-border/50 bg-muted/10 opacity-60'
+                    }`}
+                  >
+                    <div className="flex items-center justify-between gap-2 mb-2 pb-1.5 border-b border-border/40">
+                      <h4 className="font-semibold text-xs capitalize text-foreground flex items-center gap-1.5">
+                        <span
+                          className={`w-1.5 h-1.5 rounded-full ${
+                            hasAnyActive ? 'bg-primary' : 'bg-muted-foreground/40'
+                          }`}
+                        />
+                        {moduleName}
+                      </h4>
+                      <span
+                        className={`text-[11px] font-semibold px-2 py-0.5 rounded-full ${
+                          hasAnyActive
+                            ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400'
+                            : 'bg-muted text-muted-foreground'
                         }`}
                       >
-                        <TableCell className="py-2.5 px-4 font-medium text-xs text-foreground">
-                          <span className="capitalize">{moduleItem.label}</span>
-                        </TableCell>
+                        {activeInModule.length} de {modulePermissions.length}
+                      </span>
+                    </div>
 
-                        {ACTIONS.map((action) => {
-                          const systemPermission = mockPermisos.find(
-                            (p) => p.modulo === moduleItem.key && p.accion === action.key
-                          );
-
-                          // Si la acción no existe para este módulo (ej. crear en dashboard)
-                          if (!systemPermission) {
-                            return (
-                              <TableCell
-                                key={action.key}
-                                className="py-2.5 px-4 text-center text-muted-foreground/30 text-xs font-mono select-none"
-                              >
-                                —
-                              </TableCell>
-                            );
-                          }
-
-                          const hasPermission = activePermissionIds.includes(
-                            systemPermission.id_permiso
-                          );
-
-                          return (
-                            <TableCell key={action.key} className="py-2.5 px-4 text-center">
-                              <div className="flex items-center justify-center">
-                                {hasPermission ? (
-                                  <span
-                                    className="inline-flex items-center justify-center w-6 h-6 rounded-md bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30"
-                                    aria-label={`Permiso de ${action.label} en ${moduleItem.label} activo`}
-                                  >
-                                    <Check className="w-3.5 h-3.5 stroke-[2.5]" />
-                                  </span>
-                                ) : (
-                                  <span
-                                    className="inline-flex items-center justify-center w-6 h-6 rounded-md bg-muted/50 text-muted-foreground/40 border border-border/40"
-                                    aria-label={`Permiso de ${action.label} en ${moduleItem.label} inactivo`}
-                                  >
-                                    <X className="w-3 h-3 stroke-[2]" />
-                                  </span>
-                                )}
-                              </div>
-                            </TableCell>
-                          );
-                        })}
-                      </TableRow>
-                    );
-                  })}
-                </TableBody>
-              </Table>
+                    <div className="flex flex-wrap gap-2 pt-0.5">
+                      {modulePermissions.map((permiso) => {
+                        const isPermActive = activePermissionIds.includes(Number(permiso.id_permiso));
+                        return isPermActive ? (
+                          <span
+                            key={permiso.id_permiso}
+                            className="inline-flex items-center gap-1.5 px-2 py-1 rounded-md text-xs font-medium bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30 shadow-2xs"
+                          >
+                            <Check className="w-3 h-3 stroke-[2.5]" />
+                            <span className="capitalize">{permiso.accion}</span>
+                          </span>
+                        ) : (
+                          <span
+                            key={permiso.id_permiso}
+                            className="inline-flex items-center gap-1 px-2 py-1 rounded-md text-xs font-normal text-muted-foreground/40 bg-muted/20 border border-border/30 opacity-60"
+                          >
+                            <X className="w-3 h-3" />
+                            <span className="capitalize">{permiso.accion}</span>
+                          </span>
+                        );
+                      })}
+                    </div>
+                  </div>
+                );
+              })}
             </div>
           </div>
         </div>
@@ -274,7 +243,7 @@ export default function RoleDetailModal({ isOpen, onClose, role }) {
           <button
             type="button"
             onClick={onClose}
-            className="px-5 py-2 bg-primary text-primary-foreground hover:opacity-90 rounded-lg text-sm font-medium transition-opacity shadow-xs"
+            className="px-5 py-2 bg-primary text-primary-foreground hover:opacity-90 rounded-lg text-sm font-medium transition-opacity shadow-xs cursor-pointer"
           >
             Cerrar
           </button>

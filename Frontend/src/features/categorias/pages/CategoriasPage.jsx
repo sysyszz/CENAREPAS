@@ -12,6 +12,8 @@ import { usePermissions } from '../../../shared/contexts/PermissionContext';
 import StatusSwitch from '../../../shared/components/StatusSwitch';
 import { CustomSelect } from '../../../shared/components/CustomSelect';
 import ErrorBanner from '../../../shared/components/ErrorBanner';
+import { exportToPdf } from '../../../shared/utils/exportToPdf';
+import { exportToExcel } from '../../../shared/utils/exportToExcel';
 
 export default function CategoriasPage() {
   const { can } = usePermissions();
@@ -117,6 +119,35 @@ export default function CategoriasPage() {
     [can, setDetailModal, setShowModal, setDeleteDialog, handleRequestStatusChange]
   );
 
+  const handleExportPdf = () => {
+    exportToPdf({
+      data: filteredData,
+      columns: [
+        { header: 'ID', key: 'id_categoria' },
+        { header: 'Nombre Categoría', key: 'nombre' },
+        { header: 'Descripción', key: 'descripcion' },
+        { header: 'Estado', key: 'estado' },
+      ],
+      title: 'Reporte de Categorías de Productos',
+      subtitle: 'Clasificación de productos y líneas de producción en CENAREPAS',
+    });
+  };
+
+  const handleExportExcel = () => {
+    exportToExcel({
+      data: filteredData,
+      columns: [
+        { header: 'ID', key: 'id_categoria', align: 'center' },
+        { header: 'Categoría', key: 'nombre' },
+        { header: 'Descripción', key: 'descripcion' },
+        { header: 'Estado', key: 'estado', align: 'center' },
+      ],
+      title: 'Reporte de Categorías de Productos',
+      subtitle: 'Clasificación de productos y líneas de producción en CENAREPAS',
+      sheetName: 'Categorias',
+    });
+  };
+
   return (
     <div className="space-y-6">
       <PageHeader
@@ -128,6 +159,8 @@ export default function CategoriasPage() {
           setSelectedCategoria(null);
           setShowModal(true);
         }}
+        onExportPdf={handleExportPdf}
+        onExportExcel={handleExportExcel}
       />
 
       {/* Tarjetas de Consolidado */}

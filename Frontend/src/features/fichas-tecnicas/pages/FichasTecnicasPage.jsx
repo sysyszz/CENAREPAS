@@ -14,6 +14,8 @@ import { usePermissions } from '../../../shared/contexts/PermissionContext';
 import StatusSwitch from '../../../shared/components/StatusSwitch';
 import { CustomSelect } from '../../../shared/components/CustomSelect';
 import ErrorBanner from '../../../shared/components/ErrorBanner';
+import { exportToPdf } from '../../../shared/utils/exportToPdf';
+import { exportToExcel } from '../../../shared/utils/exportToExcel';
 
 export default function FichasTecnicasPage() {
   const { can } = usePermissions();
@@ -149,6 +151,52 @@ export default function FichasTecnicasPage() {
     [can, setDetailModal, setShowModal, setDeleteDialog, handleRequestStatusChange]
   );
 
+  const handleExportPdf = () => {
+    exportToPdf({
+      data: filteredData,
+      columns: [
+        { header: 'ID', key: 'id_ficha' },
+        { header: 'Nombre Receta', key: 'nombre' },
+        {
+          header: 'Rendimiento',
+          accessor: (f) => `${f.rendimiento_lote || 0} und/lote`,
+        },
+        {
+          header: 'Tiempo Prep.',
+          accessor: (f) => `${f.tiempo_estimado_minutos || 0} min`,
+        },
+        { header: 'Estado', key: 'estado' },
+      ],
+      title: 'Reporte de Fichas Técnicas (Recetas)',
+      subtitle: 'Estándares de producción, tiempos y formulaciones en CENAREPAS',
+    });
+  };
+
+  const handleExportExcel = () => {
+    exportToExcel({
+      data: filteredData,
+      columns: [
+        { header: 'ID', key: 'id_ficha', align: 'center' },
+        { header: 'Nombre de la Receta', key: 'nombre' },
+        {
+          header: 'Rendimiento por Lote',
+          accessor: (f) => `${f.rendimiento_lote || 0} und`,
+          align: 'right',
+        },
+        {
+          header: 'Tiempo Estimado (min)',
+          accessor: (f) => f.tiempo_estimado_minutos || 0,
+          align: 'right',
+        },
+        { header: 'Estado', key: 'estado', align: 'center' },
+        { header: 'Descripción', key: 'descripcion' },
+      ],
+      title: 'Reporte de Fichas Técnicas (Recetas)',
+      subtitle: 'Estándares de producción, tiempos y formulaciones en CENAREPAS',
+      sheetName: 'Fichas_Tecnicas',
+    });
+  };
+
   return (
     <div className="space-y-6">
       <PageHeader
@@ -160,6 +208,8 @@ export default function FichasTecnicasPage() {
           setSelectedFicha(null);
           setShowModal(true);
         }}
+        onExportPdf={handleExportPdf}
+        onExportExcel={handleExportExcel}
       />
 
       {/* Tarjetas de Consolidado */}

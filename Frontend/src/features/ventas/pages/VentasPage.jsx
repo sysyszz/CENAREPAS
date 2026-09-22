@@ -14,6 +14,8 @@ import { usePermissions } from '../../../shared/contexts/PermissionContext';
 import EstadoBadge from '../../../shared/ui/EstadoBadge';
 import { CustomSelect } from '../../../shared/components/CustomSelect';
 import ErrorBanner from '../../../shared/components/ErrorBanner';
+import { exportToPdf } from '../../../shared/utils/exportToPdf';
+import { exportToExcel } from '../../../shared/utils/exportToExcel';
 
 export default function VentasPage() {
   const { can } = usePermissions();
@@ -171,6 +173,60 @@ export default function VentasPage() {
     [can, clientesNames, usuariosNames, setDetailModal, setShowModal, setDeleteDialog]
   );
 
+  const handleExportPdf = () => {
+    exportToPdf({
+      data: filteredData,
+      columns: [
+        { header: 'ID', key: 'id_venta' },
+        {
+          header: 'Cliente',
+          accessor: (v) => v.cliente_nombre || clientesNames[v.id_cliente] || `Cliente #${v.id_cliente}`,
+        },
+        {
+          header: 'Fecha Venta',
+          accessor: (v) => (v.fecha_venta ? new Date(v.fecha_venta).toLocaleDateString('es-CO') : 'N/A'),
+        },
+        { header: 'Medio de Pago', key: 'medio_pago' },
+        {
+          header: 'Valor Total',
+          accessor: (v) => `$${Number(v.totalNum || v.valor_total || 0).toLocaleString('es-CO')}`,
+        },
+        { header: 'Estado', key: 'estado' },
+      ],
+      title: 'Reporte de Ventas',
+      subtitle: 'Facturación en mostrador y pedidos liquidados en CENAREPAS',
+    });
+  };
+
+  const handleExportExcel = () => {
+    exportToExcel({
+      data: filteredData,
+      columns: [
+        { header: 'ID Venta', key: 'id_venta', align: 'center' },
+        {
+          header: 'Cliente',
+          accessor: (v) => v.cliente_nombre || clientesNames[v.id_cliente] || `Cliente #${v.id_cliente}`,
+        },
+        {
+          header: 'Fecha y Hora Venta',
+          accessor: (v) => (v.fecha_venta ? new Date(v.fecha_venta).toLocaleString('es-CO') : 'N/A'),
+          align: 'center',
+        },
+        { header: 'Medio de Pago', key: 'medio_pago' },
+        {
+          header: 'Valor Total ($)',
+          accessor: (v) => `$${Number(v.totalNum || v.valor_total || 0).toLocaleString('es-CO')}`,
+          align: 'right',
+        },
+        { header: 'Estado', key: 'estado', align: 'center' },
+        { header: 'Comprobante URL', key: 'comprobante_url' },
+      ],
+      title: 'Reporte de Ventas',
+      subtitle: 'Facturación en mostrador y pedidos liquidados en CENAREPAS',
+      sheetName: 'Ventas',
+    });
+  };
+
   return (
     <div className="space-y-6">
       <PageHeader
@@ -182,6 +238,8 @@ export default function VentasPage() {
           setSelectedVenta(null);
           setShowModal(true);
         }}
+        onExportPdf={handleExportPdf}
+        onExportExcel={handleExportExcel}
       />
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 items-stretch">
         <MetricCard index={0} title="Ventas Totales ($)" value={`$${ventasHoy.toLocaleString('es-CO')}`} icon={DollarSign} variant="success" />
