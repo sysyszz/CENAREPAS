@@ -4,12 +4,14 @@
 -- Incluye las restricciones ck_* reales de la base (que CenArepa.sql no refleja).
 -- NO reemplaza a CenArepa.sql: es la referencia para actualizar la documentación.
 -- No contiene datos.
+-- Requiere la extensión pg_trgm (índices de búsqueda por nombre).
+
+CREATE EXTENSION IF NOT EXISTS pg_trgm WITH SCHEMA public;
 
 --
 -- PostgreSQL database dump
 --
 
-\restrict 3fn433l0GPCZtC0ETJFHPFIJywcfATGmMXfOl9XOSZb2L7j1adXJiBrTbDHavMr
 
 
 SET statement_timeout = 0;
@@ -2056,5 +2058,4 @@ ALTER TABLE ONLY cenarepas.venta
 -- PostgreSQL database dump complete
 --
 
-\unrestrict 3fn433l0GPCZtC0ETJFHPFIJywcfATGmMXfOl9XOSZb2L7j1adXJiBrTbDHavMr
 
