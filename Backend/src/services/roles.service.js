@@ -1,4 +1,7 @@
 import { pool, query } from '../config/db.js';
+import { conflict, notFound } from '../utils/httpError.js';
+
+const ROLES_SISTEMA = ['Administrador', 'Secretaria', 'Vendedor', 'Cliente'];
 
 export class RolesService {
   static async getAll() {
@@ -125,6 +128,16 @@ export class RolesService {
     const client = await pool.connect();
     try {
       await client.query('BEGIN');
+      // HU-010: solo se elimina un rol sin usuarios; los roles del sistema no se eliminan.
+      const rol = await client.query('SELECT nombre FROM rol WHERE id_rol = $1', [id]);
+      if (rol.rows.length === 0) throw notFound('Rol no encontrado');
+      if (ROLES_SISTEMA.includes(rol.rows[0].nombre)) {
+        throw conflict(`El rol ${rol.rows[0].nombre} es del sistema y no se puede eliminar`);
+      }
+      const usuarios = await client.query('SELECT COUNT(*)::int AS total FROM usuario WHERE id_rol = $1', [id]);
+      if (usuarios.rows[0].total > 0) {
+        throw conflict('No se puede eliminar un rol con usuarios asignados; inactívalo en su lugar');
+      }
       await client.query('DELETE FROM rol_permiso WHERE id_rol = $1', [id]);
       await client.query('DELETE FROM rol WHERE id_rol = $1', [id]);
       await client.query('COMMIT');

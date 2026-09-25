@@ -75,8 +75,12 @@ export class FichasTecnicasService {
     return res.rows[0] || { id_ficha: id, ...data };
   }
 
+  /** Inactiva el registro (sin borrado físico: conserva el historial). */
   static async delete(id) {
-    await query('DELETE FROM ficha_tecnica WHERE id_ficha = $1', [id]);
-    return true;
+    const res = await query(
+      `UPDATE ficha_tecnica SET estado = 'Inactivo' WHERE id_ficha = $1 RETURNING id_ficha`,
+      [id]
+    );
+    return res.rows.length > 0;
   }
 }

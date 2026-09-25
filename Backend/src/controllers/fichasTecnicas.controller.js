@@ -33,8 +33,9 @@ export class FichasTecnicasController {
 
   static async delete(req, res, next) {
     try {
-      await FichasTecnicasService.delete(req.params.id);
-      return successResponse(res, null, 'Ficha técnica eliminada exitosamente');
+      const ok = await FichasTecnicasService.delete(req.params.id);
+      if (!ok) return errorResponse(res, 'Ficha técnica no encontrada', 404);
+      return successResponse(res, null, 'Ficha técnica inactivada exitosamente');
     } catch (e) { next(e); }
   }
 }

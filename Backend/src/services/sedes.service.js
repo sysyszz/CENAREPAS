@@ -44,8 +44,12 @@ export class SedesService {
     return res.rows[0] || { id_sede: id, ...data };
   }
 
+  /** Inactiva el registro (sin borrado físico: conserva el historial). */
   static async delete(id) {
-    await query('DELETE FROM sede WHERE id_sede = $1', [id]);
-    return true;
+    const res = await query(
+      `UPDATE sede SET estado = 'Inactivo' WHERE id_sede = $1 RETURNING id_sede`,
+      [id]
+    );
+    return res.rows.length > 0;
   }
 }

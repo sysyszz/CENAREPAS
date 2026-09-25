@@ -1,13 +1,16 @@
 import { Router } from 'express';
 import { ProduccionController } from '../controllers/produccion.controller.js';
-import { authenticate } from '../middlewares/auth.middleware.js';
+import { protegerModulo } from '../middlewares/auth.middleware.js';
 
 const router = Router();
 
+// GET→ver, POST→crear, PUT→editar, DELETE→anular (sin borrado físico)
+router.use(protegerModulo('produccion', 'anular'));
+
 router.get('/', ProduccionController.getAll);
 router.get('/:id', ProduccionController.getById);
-router.post('/', authenticate, ProduccionController.create);
-router.put('/:id', authenticate, ProduccionController.update);
-router.delete('/:id', authenticate, ProduccionController.delete);
+router.post('/', ProduccionController.create);
+router.put('/:id', ProduccionController.update);
+router.delete('/:id', ProduccionController.delete);
 
 export default router;

@@ -1,25 +1,29 @@
 import { query } from '../config/db.js';
 
 export class ProductosService {
-  static async getAll() {
-    try {
-      const res = await query(`
-        SELECT p.*, c.nombre AS categoria_nombre, f.nombre AS ficha_nombre, pr.nombre AS proveedor_nombre
-        FROM producto p
-        LEFT JOIN categoria_producto c ON p.id_categoria = c.id_categoria
-        LEFT JOIN ficha_tecnica f ON p.id_ficha = f.id_ficha
-        LEFT JOIN proveedor pr ON p.id_proveedor = pr.id_proveedor
-        ORDER BY p.id_producto ASC
-      `);
-      return res.rows || [];
-    } catch (error) {
-      console.warn('[ProductosService.getAll] Fallback:', error.message);
-      return [];
-    }
+  /** soloActivos: el catálogo público solo ve productos activos de categorías activas. */
+  static async getAll({ soloActivos = false } = {}) {
+    const res = await query(
+      `SELECT p.*, c.nombre AS categoria_nombre, f.nombre AS ficha_nombre, pr.nombre AS proveedor_nombre
+       FROM producto p
+       LEFT JOIN categoria_producto c ON p.id_categoria = c.id_categoria
+       LEFT JOIN ficha_tecnica f ON p.id_ficha = f.id_ficha
+       LEFT JOIN proveedor pr ON p.id_proveedor = pr.id_proveedor
+       WHERE ($1::boolean = FALSE OR (p.estado = 'Activo' AND c.estado = 'Activo'))
+       ORDER BY p.id_producto ASC`,
+      [soloActivos]
+    );
+    return res.rows;
   }
 
-  static async getById(id) {
-    const res = await query('SELECT * FROM producto WHERE id_producto = $1', [id]);
+  static async getById(id, { soloActivos = false } = {}) {
+    const res = await query(
+      `SELECT p.*, c.nombre AS categoria_nombre
+       FROM producto p
+       LEFT JOIN categoria_producto c ON p.id_categoria = c.id_categoria
+       WHERE p.id_producto = $1 AND ($2::boolean = FALSE OR (p.estado = 'Activo' AND c.estado = 'Activo'))`,
+      [id, soloActivos]
+    );
     return res.rows[0] || null;
   }
 
@@ -64,11 +68,15 @@ export class ProductosService {
        RETURNING *`,
       [nombre, descripcion, id_categoria, id_ficha, id_proveedor, precio_venta, imagen_url, stock_actual, stock_minimo, fecha_vencimiento, estado, id]
     );
-    return res.rows[0] || { id_producto: id, ...data };
+    return res.rows[0] || null;
   }
 
+  /** Inactiva el registro (sin borrado físico: conserva el historial). */
   static async delete(id) {
-    await query('DELETE FROM producto WHERE id_producto = $1', [id]);
-    return true;
+    const res = await query(
+      `UPDATE producto SET estado = 'Inactivo' WHERE id_producto = $1 RETURNING id_producto`,
+      [id]
+    );
+    return res.rows.length > 0;
   }
 }

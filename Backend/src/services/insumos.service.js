@@ -50,8 +50,12 @@ export class InsumosService {
     return res.rows[0] || { id_insumo: id, ...data };
   }
 
+  /** Inactiva el registro (sin borrado físico: conserva el historial). */
   static async delete(id) {
-    await query('DELETE FROM insumo WHERE id_insumo = $1', [id]);
-    return true;
+    const res = await query(
+      `UPDATE insumo SET estado = 'Inactivo' WHERE id_insumo = $1 RETURNING id_insumo`,
+      [id]
+    );
+    return res.rows.length > 0;
   }
 }

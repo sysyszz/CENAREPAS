@@ -33,8 +33,9 @@ export class ClientesController {
 
   static async delete(req, res, next) {
     try {
-      await ClientesService.delete(req.params.id);
-      return successResponse(res, null, 'Cliente eliminado exitosamente');
+      const ok = await ClientesService.delete(req.params.id);
+      if (!ok) return errorResponse(res, 'Cliente no encontrado', 404);
+      return successResponse(res, null, 'Cliente inactivado exitosamente');
     } catch (e) { next(e); }
   }
 }

@@ -1,13 +1,17 @@
 import { Router } from 'express';
 import { SedesController } from '../controllers/sedes.controller.js';
-import { authenticate } from '../middlewares/auth.middleware.js';
+import { authenticate, authorize } from '../middlewares/auth.middleware.js';
 
 const router = Router();
 
-router.get('/', SedesController.getAll);
-router.get('/:id', SedesController.getById);
-router.post('/', authenticate, SedesController.create);
-router.put('/:id', authenticate, SedesController.update);
-router.delete('/:id', authenticate, SedesController.delete);
+router.use(authenticate);
+
+// Pedidos y ventas necesitan la lista de sedes para asignar la entrega.
+const verSedes = authorize(['sedes', 'ver'], ['pedidos', 'ver'], ['ventas', 'ver']);
+router.get('/', verSedes, SedesController.getAll);
+router.get('/:id', verSedes, SedesController.getById);
+router.post('/', authorize('sedes', 'crear'), SedesController.create);
+router.put('/:id', authorize('sedes', 'editar'), SedesController.update);
+router.delete('/:id', authorize('sedes', 'cambiar_estado'), SedesController.delete);
 
 export default router;

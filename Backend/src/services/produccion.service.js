@@ -125,8 +125,12 @@ export class ProduccionService {
     }
   }
 
+  /** Anula el registro (sin borrado físico: conserva el historial). */
   static async delete(id) {
-    await query('DELETE FROM lote_produccion WHERE id_lote = $1', [id]);
-    return true;
+    const res = await query(
+      `UPDATE lote_produccion SET estado = 'Anulado' WHERE id_lote = $1 RETURNING id_lote`,
+      [id]
+    );
+    return res.rows.length > 0;
   }
 }

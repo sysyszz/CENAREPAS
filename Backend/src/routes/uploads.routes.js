@@ -1,10 +1,15 @@
 import { Router } from 'express';
 import { uploadProductImage } from '../middlewares/upload.middleware.js';
 import { successResponse, errorResponse } from '../utils/response.js';
+import { authenticate, authorize } from '../middlewares/auth.middleware.js';
 
 const router = Router();
 
-router.post('/imagen', (req, res, next) => {
+const puedeSubirImagen = authorize(
+  ['productos', 'crear'], ['productos', 'editar'], ['categorias', 'crear'], ['categorias', 'editar']
+);
+
+router.post('/imagen', authenticate, puedeSubirImagen, (req, res, next) => {
   uploadProductImage.single('imagen')(req, res, (err) => {
     if (err) {
       return errorResponse(res, err.message || 'Error al subir la imagen', 400);

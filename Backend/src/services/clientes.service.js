@@ -44,8 +44,12 @@ export class ClientesService {
     return res.rows[0] || { id_cliente: id, ...data };
   }
 
+  /** Inactiva el registro (sin borrado físico: conserva el historial). */
   static async delete(id) {
-    await query('DELETE FROM cliente WHERE id_cliente = $1', [id]);
-    return true;
+    const res = await query(
+      `UPDATE cliente SET estado = 'Inactivo' WHERE id_cliente = $1 RETURNING id_cliente`,
+      [id]
+    );
+    return res.rows.length > 0;
   }
 }

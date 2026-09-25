@@ -44,8 +44,12 @@ export class ProveedoresService {
     return res.rows[0] || { id_proveedor: id, ...data };
   }
 
+  /** Inactiva el registro (sin borrado físico: conserva el historial). */
   static async delete(id) {
-    await query('DELETE FROM proveedor WHERE id_proveedor = $1', [id]);
-    return true;
+    const res = await query(
+      `UPDATE proveedor SET estado = 'Inactivo' WHERE id_proveedor = $1 RETURNING id_proveedor`,
+      [id]
+    );
+    return res.rows.length > 0;
   }
 }

@@ -33,8 +33,9 @@ export class PedidosController {
 
   static async delete(req, res, next) {
     try {
-      await PedidosService.delete(req.params.id);
-      return successResponse(res, null, 'Pedido eliminado exitosamente');
+      const ok = await PedidosService.delete(req.params.id);
+      if (!ok) return errorResponse(res, 'Pedido no encontrado', 404);
+      return successResponse(res, null, 'Pedido anulado exitosamente');
     } catch (e) { next(e); }
   }
 }

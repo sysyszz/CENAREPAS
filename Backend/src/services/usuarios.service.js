@@ -1,25 +1,26 @@
 import bcrypt from 'bcryptjs';
 import { query } from '../config/db.js';
+import { badRequest } from '../utils/httpError.js';
 
 const SALT_ROUNDS = 10;
+const CONTRASENA_MIN_PERSONAL = 6; // la web valida el mismo mínimo
+const COLUMNAS_PUBLICAS = 'id_usuario, nombre, correo, id_rol, estado, fecha_creacion';
 
 export class UsuariosService {
-  static async getAll() {
-    try {
-      const res = await query(`
-        SELECT u.id_usuario, u.nombre, u.correo, u.id_rol, u.estado, 
-               u.fecha_creacion,
-               r.nombre AS rol_nombre
-        FROM usuario u
-        LEFT JOIN rol r ON u.id_rol = r.id_rol
-        ORDER BY u.id_usuario ASC
-      `);
-      if (res.rows && res.rows.length > 0) return res.rows;
-      return [];
-    } catch (error) {
-      console.warn('[UsuariosService.getAll] Fallback:', error.message);
-      return [];
-    }
+  /** resumido: solo id, nombre y rol (para quien no administra usuarios). */
+  static async getAll({ resumido = false } = {}) {
+    const res = await query(`
+      SELECT u.id_usuario, u.nombre, u.correo, u.id_rol, u.estado,
+             u.fecha_creacion,
+             r.nombre AS rol_nombre
+      FROM usuario u
+      LEFT JOIN rol r ON u.id_rol = r.id_rol
+      ORDER BY u.id_usuario ASC
+    `);
+    if (!resumido) return res.rows;
+    return res.rows.map(({ id_usuario, nombre, id_rol, rol_nombre, estado }) => ({
+      id_usuario, nombre, id_rol, rol_nombre, estado,
+    }));
   }
 
   static async getById(id) {
@@ -35,13 +36,16 @@ export class UsuariosService {
 
   static async create(data) {
     const { nombre, correo, id_rol, estado = 'Activo' } = data;
-    const rawPassword = data.contrasena_hash || data.contrasena || data.password || 'default123';
-    const contrasena_hash = await bcrypt.hash(rawPassword.trim(), SALT_ROUNDS);
+    const rawPassword = String(data.contrasena || data.password || data.contrasena_hash || '').trim();
+    if (rawPassword.length < CONTRASENA_MIN_PERSONAL) {
+      throw badRequest(`La contraseña debe tener al menos ${CONTRASENA_MIN_PERSONAL} caracteres`);
+    }
+    const contrasena_hash = await bcrypt.hash(rawPassword, SALT_ROUNDS);
 
     const res = await query(
       `INSERT INTO usuario (nombre, correo, contrasena_hash, id_rol, estado)
        VALUES ($1, $2, $3, $4, $5)
-       RETURNING *`,
+       RETURNING ${COLUMNAS_PUBLICAS}`,
       [nombre, correo, contrasena_hash, id_rol, estado]
     );
     return res.rows[0];
@@ -49,8 +53,11 @@ export class UsuariosService {
 
   static async update(id, data) {
     const { nombre, correo, id_rol, estado } = data;
-    const rawPassword = data.contrasena_hash || data.contrasena || data.password;
+    const rawPassword = data.contrasena || data.password || data.contrasena_hash;
     const hasNewPassword = typeof rawPassword === 'string' && rawPassword.trim().length > 0;
+    if (hasNewPassword && rawPassword.trim().length < CONTRASENA_MIN_PERSONAL) {
+      throw badRequest(`La contraseña debe tener al menos ${CONTRASENA_MIN_PERSONAL} caracteres`);
+    }
     const contrasena_hash = hasNewPassword ? await bcrypt.hash(rawPassword.trim(), SALT_ROUNDS) : null;
 
     const res = await query(
@@ -61,14 +68,18 @@ export class UsuariosService {
            estado = COALESCE($4, estado),
            contrasena_hash = COALESCE($5, contrasena_hash)
        WHERE id_usuario = $6
-       RETURNING *`,
+       RETURNING ${COLUMNAS_PUBLICAS}`,
       [nombre, correo, id_rol, estado, contrasena_hash, id]
     );
-    return res.rows[0] || { id_usuario: id, ...data };
+    return res.rows[0] || null;
   }
 
+  /** Inactiva el registro (sin borrado físico: conserva el historial). */
   static async delete(id) {
-    await query('DELETE FROM usuario WHERE id_usuario = $1', [id]);
-    return true;
+    const res = await query(
+      `UPDATE usuario SET estado = 'Inactivo' WHERE id_usuario = $1 RETURNING id_usuario`,
+      [id]
+    );
+    return res.rows.length > 0;
   }
 }

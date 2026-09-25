@@ -80,8 +80,9 @@ export class VentasService {
     return res.rows[0] || { id_venta: id, ...data };
   }
 
+  /** Anula (sin borrado físico). */
   static async delete(id) {
-    await query('DELETE FROM venta WHERE id_venta = $1', [id]);
-    return true;
+    const res = await query(`UPDATE venta SET estado = 'Anulada' WHERE id_venta = $1 RETURNING id_venta`, [id]);
+    return res.rows.length > 0;
   }
 }

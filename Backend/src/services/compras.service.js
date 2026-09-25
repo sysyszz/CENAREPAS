@@ -78,8 +78,12 @@ export class ComprasService {
     return res.rows[0] || { id_compra: id, ...data };
   }
 
+  /** Anula el registro (sin borrado físico: conserva el historial). */
   static async delete(id) {
-    await query('DELETE FROM compra WHERE id_compra = $1', [id]);
-    return true;
+    const res = await query(
+      `UPDATE compra SET estado = 'Anulada' WHERE id_compra = $1 RETURNING id_compra`,
+      [id]
+    );
+    return res.rows.length > 0;
   }
 }

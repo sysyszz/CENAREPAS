@@ -33,8 +33,9 @@ export class ComprasController {
 
   static async delete(req, res, next) {
     try {
-      await ComprasService.delete(req.params.id);
-      return successResponse(res, null, 'Compra eliminada exitosamente');
+      const ok = await ComprasService.delete(req.params.id);
+      if (!ok) return errorResponse(res, 'Compra no encontrada', 404);
+      return successResponse(res, null, 'Compra anulada exitosamente');
     } catch (e) { next(e); }
   }
 }

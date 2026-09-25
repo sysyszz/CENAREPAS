@@ -33,8 +33,9 @@ export class VentasController {
 
   static async delete(req, res, next) {
     try {
-      await VentasService.delete(req.params.id);
-      return successResponse(res, null, 'Venta eliminada exitosamente');
+      const ok = await VentasService.delete(req.params.id);
+      if (!ok) return errorResponse(res, 'Venta no encontrada', 404);
+      return successResponse(res, null, 'Venta anulada exitosamente');
     } catch (e) { next(e); }
   }
 }

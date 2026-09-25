@@ -33,8 +33,9 @@ export class ProduccionController {
 
   static async delete(req, res, next) {
     try {
-      await ProduccionService.delete(req.params.id);
-      return successResponse(res, null, 'Lote de producción eliminado exitosamente');
+      const ok = await ProduccionService.delete(req.params.id);
+      if (!ok) return errorResponse(res, 'Lote de producción no encontrado', 404);
+      return successResponse(res, null, 'Lote de producción anulado exitosamente');
     } catch (e) { next(e); }
   }
 }

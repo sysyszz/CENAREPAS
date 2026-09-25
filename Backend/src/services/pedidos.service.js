@@ -80,8 +80,9 @@ export class PedidosService {
     return res.rows[0] || { id_pedido: id, ...data };
   }
 
+  /** Anula (sin borrado físico). */
   static async delete(id) {
-    await query('DELETE FROM pedido WHERE id_pedido = $1', [id]);
-    return true;
+    const res = await query(`UPDATE pedido SET estado = 'Anulado' WHERE id_pedido = $1 RETURNING id_pedido`, [id]);
+    return res.rows.length > 0;
   }
 }
