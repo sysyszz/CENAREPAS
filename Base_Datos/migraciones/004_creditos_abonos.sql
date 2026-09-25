@@ -76,7 +76,30 @@ UPDATE abono SET estado = CASE LOWER(TRIM(estado))
     WHEN 'anulado'     THEN 'Anulado'
     ELSE estado
   END;
-UPDATE abono SET medio_pago = INITCAP(LOWER(medio_pago)) WHERE medio_pago IS NOT NULL;
+-- Medio de pago con la misma conversión del pedido (script 002).
+UPDATE abono SET medio_pago = CASE
+    WHEN medio_pago IS NULL OR TRIM(medio_pago) = '' THEN NULL
+    WHEN LOWER(TRIM(medio_pago)) IN ('efectivo', 'contado', 'contra entrega', 'efectivo contra entrega')
+      THEN 'Efectivo'
+    WHEN LOWER(TRIM(medio_pago)) IN ('tarjeta', 'tarjeta credito', 'tarjeta crédito', 'tarjeta debito',
+                                     'tarjeta débito', 'datafono', 'datáfono', 'tarjeta (datáfono al recibir)')
+      THEN 'Tarjeta'
+    WHEN LOWER(TRIM(medio_pago)) IN ('transferencia', 'transferencia bancaria', 'transferencia bancolombia',
+                                     'bancolombia', 'nequi', 'daviplata', 'pse')
+      THEN 'Transferencia'
+    ELSE medio_pago  -- valor desconocido: lo detiene la verificación siguiente
+  END;
+
+DO $$
+DECLARE desconocidos TEXT;
+BEGIN
+  SELECT string_agg(DISTINCT medio_pago, ', ') INTO desconocidos
+  FROM abono
+  WHERE medio_pago IS NOT NULL AND medio_pago NOT IN ('Efectivo', 'Tarjeta', 'Transferencia');
+  IF desconocidos IS NOT NULL THEN
+    RAISE EXCEPTION 'Medios de pago sin conversión definida en abono: %. Se revierte la migración.', desconocidos;
+  END IF;
+END $$;
 UPDATE abono SET fecha_registro = fecha_abono::timestamp;
 
 ALTER TABLE abono ALTER COLUMN estado SET DEFAULT 'En revisión';
