@@ -1,5 +1,10 @@
 import dotenv from 'dotenv';
-dotenv.config();
+
+// Archivo de entorno: `.env` por defecto; `node src/server.js --env=staging`
+// (o ENV_FILE=.env.staging) carga `.env.staging`.
+const envArg = process.argv.find((arg) => arg.startsWith('--env='));
+const envFile = process.env.ENV_FILE || (envArg ? `.env.${envArg.split('=')[1]}` : '.env');
+dotenv.config({ path: envFile, quiet: true });
 
 export const config = {
   port: process.env.PORT ? parseInt(process.env.PORT.trim(), 10) : 4000,

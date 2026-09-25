@@ -39,3 +39,6 @@ Thumbs.db
 Backend/uploads/*
 !Backend/uploads/productos/
 !Backend/uploads/productos/.gitkeep
+
+# Respaldos locales de base de datos
+Base_Datos/respaldos/
