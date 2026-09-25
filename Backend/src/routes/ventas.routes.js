@@ -1,15 +1,16 @@
 import { Router } from 'express';
 import { VentasController } from '../controllers/ventas.controller.js';
-import { protegerModulo } from '../middlewares/auth.middleware.js';
+import { authenticate, authorize } from '../middlewares/auth.middleware.js';
 
 const router = Router();
 
-router.use(protegerModulo('ventas', 'anular'));
+// Vista de solo lectura: una venta es un pedido Entregado.
+router.use(authenticate);
 
-router.get('/', VentasController.getAll);
-router.get('/:id', VentasController.getById);
-router.post('/', VentasController.create);
-router.put('/:id', VentasController.update);
-router.delete('/:id', VentasController.delete);
+router.get('/', authorize('ventas', 'ver'), VentasController.getAll);
+router.get('/:id', authorize('ventas', 'ver'), VentasController.getById);
+router.post('/', VentasController.soloLectura);
+router.put('/:id', VentasController.soloLectura);
+router.delete('/:id', VentasController.soloLectura);
 
 export default router;

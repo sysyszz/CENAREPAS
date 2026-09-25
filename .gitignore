@@ -42,3 +42,6 @@ Backend/uploads/*
 
 # Respaldos locales de base de datos
 Base_Datos/respaldos/
+
+# Comprobantes de pago (datos de clientes, nunca al repositorio)
+Backend/comprobantes/

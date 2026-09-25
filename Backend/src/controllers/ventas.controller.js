@@ -1,6 +1,9 @@
 import { VentasService } from '../services/ventas.service.js';
 import { successResponse, errorResponse } from '../utils/response.js';
 
+const SOLO_LECTURA =
+  'Las ventas son de solo lectura: una venta se registra marcando un pedido como Entregado (y se anula anulando el pedido).';
+
 export class VentasController {
   static async getAll(req, res, next) {
     try {
@@ -17,25 +20,9 @@ export class VentasController {
     } catch (e) { next(e); }
   }
 
-  static async create(req, res, next) {
-    try {
-      const data = await VentasService.create(req.body);
-      return successResponse(res, data, 'Venta creada exitosamente', 201);
-    } catch (e) { next(e); }
-  }
-
-  static async update(req, res, next) {
-    try {
-      const data = await VentasService.update(req.params.id, req.body);
-      return successResponse(res, data, 'Venta actualizada exitosamente');
-    } catch (e) { next(e); }
-  }
-
-  static async delete(req, res, next) {
-    try {
-      const ok = await VentasService.delete(req.params.id);
-      if (!ok) return errorResponse(res, 'Venta no encontrada', 404);
-      return successResponse(res, null, 'Venta anulada exitosamente');
-    } catch (e) { next(e); }
+  /** POST, PUT y DELETE: 405 con la explicación para la web. */
+  static soloLectura(req, res) {
+    res.set('Allow', 'GET');
+    return errorResponse(res, SOLO_LECTURA, 405);
   }
 }
