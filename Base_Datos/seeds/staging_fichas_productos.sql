@@ -1,4 +1,4 @@
-﻿-- Datos de prueba de Staging: asigna las 3 fichas técnicas existentes a su
+-- Datos de prueba de Staging: asigna las 3 fichas técnicas existentes a su
 -- producto, por nombre, para poder ver la ficha en el detalle del producto.
 -- NO es una migración: no cambia la estructura ni permisos.
 --   - Solo corre en cenarepas_staging.
@@ -53,12 +53,12 @@ BEGIN
     RAISE EXCEPTION 'No se asignó nada: %', problemas;
   END IF;
 
-  -- Actualizar únicamente cuando id_ficha sea nulo o no esté asignado
+  -- Solo productos sin ficha: nunca pisa una asignación existente.
   UPDATE producto p
   SET id_ficha = f.id_ficha
   FROM pares pa
   JOIN ficha_tecnica f ON f.nombre = pa.ficha
-  WHERE p.nombre = pa.producto AND (p.id_ficha IS NULL OR p.id_ficha <> f.id_ficha);
+  WHERE p.nombre = pa.producto AND p.id_ficha IS NULL;
   GET DIAGNOSTICS asignados = ROW_COUNT;
   RAISE NOTICE 'Productos con ficha asignada en esta corrida: %', asignados;
 END $$;

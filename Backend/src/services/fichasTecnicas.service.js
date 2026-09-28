@@ -1,4 +1,4 @@
-﻿import { query } from '../config/db.js';
+import { query } from '../config/db.js';
 
 /** Ficha con sus insumos; lo usan el listado y el detalle. */
 const SELECT_FICHA = `
@@ -8,10 +8,8 @@ const SELECT_FICHA = `
              json_build_object(
                'id_ficha_insumo', fti.id_ficha_insumo,
                'id_insumo', fti.id_insumo,
-               'nombre', i.nombre,
                'insumo_nombre', i.nombre,
                'cantidad', fti.cantidad,
-               'unidad', fti.unidad_medida,
                'unidad_medida', fti.unidad_medida
              )
            ) FILTER (WHERE fti.id_ficha_insumo IS NOT NULL),
@@ -54,7 +52,7 @@ export class FichasTecnicasService {
         await query(
           `INSERT INTO ficha_tecnica_insumo (id_ficha, id_insumo, cantidad, unidad_medida)
            VALUES ($1, $2, $3, $4)`,
-          [newFicha.id_ficha, item.id_insumo, item.cantidad, item.unidad || item.unidad_medida || 'kg']
+          [newFicha.id_ficha, item.id_insumo, item.cantidad, item.unidad_medida || 'kg']
         );
       }
     }
