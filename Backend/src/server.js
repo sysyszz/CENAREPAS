@@ -1,6 +1,6 @@
 import app from './app.js';
 import { env } from './config/env.js';
-import { checkDbConnection } from './config/db.js';
+import { checkDbConnection, checkMigraciones } from './config/db.js';
 
 const PORT = env.PORT || 4000;
 
@@ -13,6 +13,8 @@ async function startServer() {
   const dbConnected = await checkDbConnection();
   if (!dbConnected) {
     console.warn('⚠️  El servidor correrá en modo resiliente. Cuando configures la base de datos PostgreSQL en el archivo .env, las consultas responderán directamente de la base de datos.');
+  } else {
+    await checkMigraciones();
   }
 
   app.listen(PORT, () => {

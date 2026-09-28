@@ -53,4 +53,33 @@ export const checkDbConnection = async () => {
   }
 };
 
-export default { pool, query, checkDbConnection };
+// La rama prototipo-movil necesita las migraciones 001-006 (solo aplicadas en
+// cenarepas_staging). Sin ellas el login y todas las rutas protegidas fallan
+// con 500, porque consultan cliente.id_usuario.
+export const checkMigraciones = async () => {
+  try {
+    const res = await pool.query(
+      `SELECT 1 FROM information_schema.columns
+       WHERE table_schema = $1 AND table_name = 'cliente' AND column_name = 'id_usuario'`,
+      [config.db.schema]
+    );
+    if (res.rowCount > 0) return true;
+  } catch (err) {
+    console.warn(`⚠️ [Database]: No se pudieron verificar las migraciones (${err.message}).`);
+    return false;
+  }
+  console.error('\n==========================================');
+  console.error(`❌ [Database]: La base "${config.db.database}" NO tiene las migraciones 001-006`);
+  console.error('   (falta la columna cliente.id_usuario).');
+  console.error('   El login y las rutas protegidas responderán 500 con cualquier usuario.');
+  console.error('');
+  console.error('   Detén este servidor y arráncalo contra Staging con:');
+  console.error('');
+  console.error('       npm run dev:staging');
+  console.error('');
+  console.error('   (o "npm run start:staging" sin recarga automática)');
+  console.error('==========================================\n');
+  return false;
+};
+
+export default { pool, query, checkDbConnection, checkMigraciones };
