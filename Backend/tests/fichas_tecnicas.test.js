@@ -1,5 +1,5 @@
-// GET /fichas-tecnicas/:id devuelve los insumos igual que el listado
-// (nombre, cantidad y unidad), y el Vendedor solo puede ver (migración 007).
+﻿// GET /fichas-tecnicas/:id devuelve los insumos igual que el listado
+// con las mismas propiedades estándar (nombre, cantidad y unidad).
 //
 // Corre contra el backend de Staging en marcha (npm run dev:staging):
 //   npm run test:staging
@@ -40,7 +40,7 @@ before(async () => {
   assert.ok(fichas.some((f) => f.insumos.length > 0), 'hace falta al menos una ficha con insumos en Staging');
 });
 
-test('el detalle trae los mismos insumos que el listado', async () => {
+test('el detalle trae los mismos insumos que el listado general con idéntica estructura', async () => {
   for (const ficha of fichas) {
     const { status, body } = await api(vendedor, 'GET', `/fichas-tecnicas/${ficha.id_ficha}`);
     assert.equal(status, 200, `ficha ${ficha.id_ficha}`);
@@ -49,22 +49,31 @@ test('el detalle trae los mismos insumos que el listado', async () => {
   }
 });
 
-test('cada insumo trae nombre, cantidad y unidad', async () => {
+test('cada insumo en GET /fichas-tecnicas/:id tiene explícitamente nombre, cantidad y unidad', async () => {
   const conInsumos = fichas.find((f) => f.insumos.length > 0);
-  const { body } = await api(vendedor, 'GET', `/fichas-tecnicas/${conInsumos.id_ficha}`);
+  const { status, body } = await api(vendedor, 'GET', `/fichas-tecnicas/${conInsumos.id_ficha}`);
+  assert.equal(status, 200);
+  assert.ok(Array.isArray(body.data.insumos), 'insumos debe ser un arreglo');
+  assert.ok(body.data.insumos.length > 0, 'debe tener insumos');
+
   for (const insumo of body.data.insumos) {
-    assert.ok(insumo.insumo_nombre, 'insumo_nombre');
-    assert.ok(Number(insumo.cantidad) > 0, 'cantidad');
-    assert.ok(insumo.unidad_medida, 'unidad_medida');
+    // Validar explícitamente las tres propiedades requeridas: nombre, cantidad, unidad
+    assert.ok(insumo.nombre, 'el insumo debe tener propiedad nombre');
+    assert.ok(insumo.cantidad !== undefined && insumo.cantidad !== null, 'el insumo debe tener propiedad cantidad');
+    assert.ok(Number(insumo.cantidad) > 0, 'cantidad debe ser numérica positiva');
+    assert.ok(insumo.unidad, 'el insumo debe tener propiedad unidad');
+    // Compatibilidad retroactiva
+    assert.ok(insumo.insumo_nombre, 'mantiene insumo_nombre por compatibilidad');
+    assert.ok(insumo.unidad_medida, 'mantiene unidad_medida por compatibilidad');
   }
 });
 
-test('ficha inexistente → 404', async () => {
+test('ficha inexistente -> 404', async () => {
   const { status } = await api(vendedor, 'GET', '/fichas-tecnicas/999999');
   assert.equal(status, 404);
 });
 
-test('el Vendedor solo ve: crear y editar → 403', async () => {
+test('el Vendedor solo ve: crear y editar -> 403', async () => {
   const id = fichas[0].id_ficha;
   assert.equal((await api(vendedor, 'POST', '/fichas-tecnicas', { nombre: 'No se crea' })).status, 403);
   assert.equal((await api(vendedor, 'PUT', `/fichas-tecnicas/${id}`, { nombre: 'No se edita' })).status, 403);
