@@ -29,7 +29,7 @@ trae un mensaje por campo.
 
 | Método | Ruta | Cambio |
 |---|---|---|
-| POST | `/auth/login` | **Modificado:** solo bcrypt; sin contraseñas demo, texto plano ni usuarios fallback. 401 si las credenciales fallan y 403 si la cuenta está inactiva. La respuesta trae `usuario.id_cliente`. |
+| POST | `/auth/login` | **Modificado:** solo bcrypt; sin contraseñas demo, texto plano ni usuarios fallback. 401 si las credenciales fallan y 403 si la cuenta está inactiva. La respuesta trae `usuario.id_cliente` y `usuario.permisos` (permisos activos del rol, `{ "modulo": ["accion", …] }`), que la app usa solo para mostrar u ocultar acciones: cada ruta sigue autorizando en el servidor. |
 | POST | `/auth/register` | **Modificado:** registro público de **clientes** (HU-150). Ignora `id_rol` y siempre asigna Cliente. Crea `usuario` + `cliente` vinculados en una transacción. 409 si el correo o el documento ya existen. |
 
 ```http
@@ -39,7 +39,8 @@ POST /auth/register
   "contrasena": "Cliente123*", "id_rol": 1 }
 
 201 → { "data": { "token": "eyJ…", "usuario": { "id_usuario": 52, "nombre": "Laura Restrepo",
-        "correo": "laura@correo.com", "id_rol": 26, "rol": "Cliente", "estado": "Activo", "id_cliente": 26 } } }
+        "correo": "laura@correo.com", "id_rol": 26, "rol": "Cliente", "estado": "Activo", "id_cliente": 26,
+        "permisos": {} } } }
 409 → { "message": "Ya existe un cliente registrado con ese número de documento" }
 400 → { "message": "Revisa los datos del registro", "errors": { "municipio": "Selecciona un municipio del Área Metropolitana", … } }
 ```

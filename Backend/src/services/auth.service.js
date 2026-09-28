@@ -9,8 +9,26 @@ const CORREO_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 const texto = (valor) => (typeof valor === 'string' ? valor.trim() : '');
 
-/** Arma la respuesta de sesión: token + datos públicos del usuario. */
-const crearSesion = (user) => {
+/**
+ * Permisos activos del rol como { modulo: [acciones] }. La app los usa solo
+ * para mostrar u ocultar acciones; cada ruta sigue autorizando con
+ * authorize/protegerModulo.
+ */
+const permisosDelRol = async (idRol) => {
+  const res = await query(
+    `SELECT p.modulo, array_agg(p.accion ORDER BY p.accion) AS acciones
+     FROM rol_permiso rp
+     JOIN permiso p ON p.id_permiso = rp.id_permiso
+     WHERE rp.id_rol = $1 AND LOWER(p.estado) = 'activo'
+     GROUP BY p.modulo
+     ORDER BY p.modulo`,
+    [idRol]
+  );
+  return Object.fromEntries(res.rows.map((r) => [r.modulo, r.acciones]));
+};
+
+/** Arma la respuesta de sesión: token + datos públicos y permisos del usuario. */
+const crearSesion = async (user) => {
   const payload = {
     id_usuario: user.id_usuario,
     nombre: user.nombre,
@@ -24,6 +42,7 @@ const crearSesion = (user) => {
       ...payload,
       estado: user.estado,
       id_cliente: user.id_cliente || null,
+      permisos: await permisosDelRol(user.id_rol),
     },
   };
 };
