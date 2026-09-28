@@ -1,5 +1,4 @@
 ﻿import { FichasTecnicasService } from '../services/fichasTecnicas.service.js';
-import { AuditoriaFichasService } from '../services/auditoriaFichas.service.js';
 import { successResponse, errorResponse } from '../utils/response.js';
 
 /** Normaliza la lista de insumos asegurando propiedades estándar: nombre, cantidad, unidad */
@@ -32,25 +31,8 @@ export class FichasTecnicasController {
     try {
       const data = await FichasTecnicasService.getById(req.params.id);
       if (!data) return errorResponse(res, 'Ficha técnica no encontrada', 404);
-
-      // Opción D: Auditoría asíncrona de acceso a receta/ficha técnica
-      AuditoriaFichasService.registrarAcceso({
-        id_usuario: req.user?.id_usuario,
-        id_ficha: req.params.id,
-        ip_origen: req.ip || req.connection?.remoteAddress,
-        user_agent: req.headers['user-agent'],
-        detalle: `Consulta de receta: ${data.nombre}`,
-      });
-
       data.insumos = formatInsumos(data.insumos);
       return successResponse(res, data);
-    } catch (e) { next(e); }
-  }
-
-  static async getAuditoria(req, res, next) {
-    try {
-      const data = await AuditoriaFichasService.getAccesosPorFicha(req.params.id);
-      return successResponse(res, data, 'Historial de accesos recuperado correctamente');
     } catch (e) { next(e); }
   }
 

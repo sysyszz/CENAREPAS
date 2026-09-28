@@ -1,9 +1,9 @@
 ﻿// GET /fichas-tecnicas/:id devuelve los insumos igual que el listado
-// con las mismas propiedades estándar (nombre, cantidad y unidad),
-// audita el acceso a la receta (Opción D) y respeta permisos por rol.
+// con las mismas propiedades estándar (nombre, cantidad y unidad).
 //
 // Corre contra el backend de Staging en marcha (npm run dev:staging):
 //   npm run test:staging
+// Solo lectura, salvo los intentos de escribir que deben responder 403.
 
 import { before, test } from 'node:test';
 import assert from 'node:assert/strict';
@@ -57,32 +57,15 @@ test('cada insumo en GET /fichas-tecnicas/:id tiene explícitamente nombre, cant
   assert.ok(body.data.insumos.length > 0, 'debe tener insumos');
 
   for (const insumo of body.data.insumos) {
+    // Validar explícitamente las tres propiedades requeridas: nombre, cantidad, unidad
     assert.ok(insumo.nombre, 'el insumo debe tener propiedad nombre');
     assert.ok(insumo.cantidad !== undefined && insumo.cantidad !== null, 'el insumo debe tener propiedad cantidad');
     assert.ok(Number(insumo.cantidad) > 0, 'cantidad debe ser numérica positiva');
     assert.ok(insumo.unidad, 'el insumo debe tener propiedad unidad');
+    // Compatibilidad retroactiva
     assert.ok(insumo.insumo_nombre, 'mantiene insumo_nombre por compatibilidad');
     assert.ok(insumo.unidad_medida, 'mantiene unidad_medida por compatibilidad');
   }
-});
-
-test('Opción D: GET /fichas-tecnicas/:id registra auditoría de acceso', async () => {
-  const ficha = fichas[0];
-  const { status: getStatus } = await api(vendedor, 'GET', `/fichas-tecnicas/${ficha.id_ficha}`);
-  assert.equal(getStatus, 200);
-
-  // Dar tiempo al microtask asíncrono
-  await new Promise((r) => setTimeout(r, 100));
-
-  const { status: auditStatus, body: auditBody } = await api(vendedor, 'GET', `/fichas-tecnicas/${ficha.id_ficha}/auditoria`);
-  assert.equal(auditStatus, 200);
-  assert.ok(Array.isArray(auditBody.data), 'el historial de auditoría debe ser un array');
-  assert.ok(auditBody.data.length > 0, 'debe registrar al menos un evento de auditoría de acceso');
-  
-  const ultimoAcceso = auditBody.data[0];
-  assert.equal(Number(ultimoAcceso.id_ficha), Number(ficha.id_ficha));
-  assert.ok(ultimoAcceso.fecha_acceso, 'debe registrar fecha_acceso');
-  assert.ok(ultimoAcceso.detalle, 'debe registrar detalle del acceso');
 });
 
 test('ficha inexistente -> 404', async () => {
