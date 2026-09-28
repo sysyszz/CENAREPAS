@@ -1,9 +1,12 @@
 import bcrypt from 'bcryptjs';
 import { query } from '../config/db.js';
+import { CONTRASENA_MIN } from '../config/negocio.js';
 import { badRequest } from '../utils/httpError.js';
 
 const SALT_ROUNDS = 10;
-const CONTRASENA_MIN_PERSONAL = 6; // la web valida el mismo mínimo
+// f: el mínimo del personal pasa de 6 a CONTRASENA_MIN (8). Solo aplica a
+// contraseñas nuevas o cambiadas; el login no valida la longitud.
+// Pendiente del equipo: el formulario web de usuarios aún valida 6.
 const COLUMNAS_PUBLICAS = 'id_usuario, nombre, correo, id_rol, estado, fecha_creacion';
 
 export class UsuariosService {
@@ -37,8 +40,8 @@ export class UsuariosService {
   static async create(data) {
     const { nombre, correo, id_rol, estado = 'Activo' } = data;
     const rawPassword = String(data.contrasena || data.password || data.contrasena_hash || '').trim();
-    if (rawPassword.length < CONTRASENA_MIN_PERSONAL) {
-      throw badRequest(`La contraseña debe tener al menos ${CONTRASENA_MIN_PERSONAL} caracteres`);
+    if (rawPassword.length < CONTRASENA_MIN) {
+      throw badRequest(`La contraseña debe tener al menos ${CONTRASENA_MIN} caracteres`);
     }
     const contrasena_hash = await bcrypt.hash(rawPassword, SALT_ROUNDS);
 
@@ -55,8 +58,8 @@ export class UsuariosService {
     const { nombre, correo, id_rol, estado } = data;
     const rawPassword = data.contrasena || data.password || data.contrasena_hash;
     const hasNewPassword = typeof rawPassword === 'string' && rawPassword.trim().length > 0;
-    if (hasNewPassword && rawPassword.trim().length < CONTRASENA_MIN_PERSONAL) {
-      throw badRequest(`La contraseña debe tener al menos ${CONTRASENA_MIN_PERSONAL} caracteres`);
+    if (hasNewPassword && rawPassword.trim().length < CONTRASENA_MIN) {
+      throw badRequest(`La contraseña debe tener al menos ${CONTRASENA_MIN} caracteres`);
     }
     const contrasena_hash = hasNewPassword ? await bcrypt.hash(rawPassword.trim(), SALT_ROUNDS) : null;
 

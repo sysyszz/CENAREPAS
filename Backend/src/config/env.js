@@ -18,6 +18,14 @@ export const config = {
     database: process.env.DB_NAME ? process.env.DB_NAME.trim() : 'cenarepas_db',
     schema: process.env.DB_SCHEMA ? process.env.DB_SCHEMA.trim() : 'cenarepas',
   },
+  // Correo (f). Fuera de producción, por defecto "consola" (no envía nada).
+  correo: {
+    proveedor: (process.env.CORREO_PROVEEDOR ||
+      ((process.env.NODE_ENV || '').trim() === 'production' ? 'brevo' : 'consola')).trim(),
+    brevoApiKey: process.env.BREVO_API_KEY ? process.env.BREVO_API_KEY.trim() : '',
+    remitente: process.env.CORREO_REMITENTE ? process.env.CORREO_REMITENTE.trim() : '',
+    remitenteNombre: process.env.CORREO_REMITENTE_NOMBRE ? process.env.CORREO_REMITENTE_NOMBRE.trim() : 'CENAREPAS',
+  },
   jwt: {
     secret: process.env.JWT_SECRET ? process.env.JWT_SECRET.trim() : 'cenarepas_super_secret_jwt_key_2026_masarepas',
     expiresIn: process.env.JWT_EXPIRES_IN ? process.env.JWT_EXPIRES_IN.trim() : '24h',

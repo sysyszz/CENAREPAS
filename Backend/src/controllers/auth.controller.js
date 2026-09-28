@@ -1,4 +1,5 @@
 import { AuthService } from '../services/auth.service.js';
+import { RecuperacionService } from '../services/recuperacion.service.js';
 import { successResponse, errorResponse } from '../utils/response.js';
 
 export class AuthController {
@@ -14,6 +15,37 @@ export class AuthController {
 
       const result = await AuthService.login(userEmail, userPassword);
       return successResponse(res, result, 'Inicio de sesión exitoso');
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  /** POST /auth/recuperar { correo } → siempre la misma respuesta (429 si pide otro en menos de 1 minuto). */
+  static async recuperar(req, res, next) {
+    try {
+      const data = await RecuperacionService.solicitar(req.body?.correo);
+      return successResponse(res, data, data.mensaje);
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  /** POST /auth/verificar-codigo { correo, codigo } */
+  static async verificarCodigo(req, res, next) {
+    try {
+      const data = await RecuperacionService.verificar(req.body?.correo, req.body?.codigo);
+      return successResponse(res, data, 'Código válido');
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  /** POST /auth/restablecer { correo, codigo, contrasena, confirmacion } */
+  static async restablecer(req, res, next) {
+    try {
+      const b = req.body || {};
+      const data = await RecuperacionService.restablecer(b.correo, b.codigo, b.contrasena, b.confirmacion);
+      return successResponse(res, data, data.mensaje);
     } catch (error) {
       next(error);
     }

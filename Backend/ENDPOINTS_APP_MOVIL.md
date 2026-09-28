@@ -30,6 +30,9 @@ trae un mensaje por campo.
 | Método | Ruta | Cambio |
 |---|---|---|
 | POST | `/auth/login` | **Modificado:** solo bcrypt; sin contraseñas demo, texto plano ni usuarios fallback. 401 si las credenciales fallan y 403 si la cuenta está inactiva. La respuesta trae `usuario.id_cliente` y `usuario.permisos` (permisos activos del rol, `{ "modulo": ["accion", …] }`), que la app usa solo para mostrar u ocultar acciones: cada ruta sigue autorizando en el servidor. |
+| POST | `/auth/recuperar` | **Nuevo (f):** `{ correo }`. Genera un código de 6 dígitos que vence en 15 minutos y lo envía por correo (Brevo; en Staging `CORREO_PROVEEDOR=consola` lo escribe en la consola). **Siempre la misma respuesta**, exista o no el correo. **429** si se pide otro para el mismo correo en menos de 1 minuto. Solo se guarda el hash del código. |
+| POST | `/auth/verificar-codigo` | **Nuevo (f):** `{ correo, codigo }`. 200 si es válido (no lo consume). 400 con `errors.codigo`: vencido o inexistente, incorrecto ("te quedan N intentos") y, al 5.º intento fallido, el código se invalida. |
+| POST | `/auth/restablecer` | **Nuevo (f):** `{ correo, codigo, contrasena, confirmacion }`. Mínimo 8 caracteres y que coincidan (400 por campo, sin gastar intentos). El código se usa una sola vez. |
 | POST | `/auth/register` | **Modificado:** registro público de **clientes** (HU-150). Ignora `id_rol` y siempre asigna Cliente. Crea `usuario` + `cliente` vinculados en una transacción. 409 si el correo o el documento ya existen. |
 
 ```http

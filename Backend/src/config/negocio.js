@@ -41,4 +41,15 @@ export const TIPOS_DOCUMENTO = ['CC', 'CE', 'NIT', 'PP', 'TI'];
 export const COMPROBANTE_MAX_BYTES = 5 * 1024 * 1024;
 export const COMPROBANTE_MIME = ['image/jpeg', 'image/png', 'application/pdf'];
 
+/**
+ * Mínimo de la contraseña (f: unificado en 8 para clientes y personal). Se
+ * aplica SOLO a contraseñas nuevas o cambiadas (registro, perfil, usuarios y
+ * recuperación): el login no valida la longitud, así que las contraseñas de
+ * 6 o 7 caracteres que ya existen siguen funcionando.
+ */
 export const CONTRASENA_MIN = 8;
+
+/** Recuperación de contraseña (f; HU-003, HU-004, CA-003-002). */
+export const RECUPERACION_CODIGO_MINUTOS = 15; // vigencia del código de 6 dígitos
+export const RECUPERACION_INTENTOS_MAX = 5; // al 5.º intento fallido el código se invalida
+export const RECUPERACION_ESPERA_SEGUNDOS = 60; // una solicitud por minuto por correo
