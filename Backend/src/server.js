@@ -2,7 +2,8 @@ import app from './app.js';
 import { env } from './config/env.js';
 import { checkDbConnection, checkMigraciones } from './config/db.js';
 
-const PORT = env.PORT || 4000;
+// Variable de entorno PORT (la asigna Render); config.port usa 4000 si no llega.
+const PORT = env.port;
 
 async function startServer() {
   console.log('==========================================');
