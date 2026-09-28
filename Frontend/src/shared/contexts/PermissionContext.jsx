@@ -1,4 +1,4 @@
-import { createContext, useContext, useMemo, useState } from 'react';
+﻿import { createContext, useContext, useMemo, useState } from 'react';
 import {
   ROLES,
   ROLE_NAMES,
@@ -33,6 +33,7 @@ export const defaultRolePermissions = {
   // 2: Secretaria (Proveedores, Compras, Categorías, Insumos, Producción, Productos, Clientes, Pedidos, Ventas, Dashboard)
   2: [
     1, // Dashboard
+    26, // fichas-tecnicas:ver
     10, 11, 12, 13, // Proveedores
     14, 15, 16, 17, // Clientes
     18, 19, 20, 21, // Compras
@@ -46,6 +47,7 @@ export const defaultRolePermissions = {
   // 3: Vendedor (Categorías [solo lectura], Productos [solo lectura], Clientes [sin eliminar], Pedidos, Ventas)
   3: [
     22, // Categorías ver
+    26, // fichas-tecnicas:ver
     38, // Productos ver
     14, 15, 16, // Clientes (ver, crear, editar)
     42, 43, 44, 45, // Pedidos (ver, crear, editar, anular/eliminar)

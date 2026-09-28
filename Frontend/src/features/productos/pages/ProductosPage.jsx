@@ -3,7 +3,8 @@ import { motion } from 'framer-motion';
 import { Box, CheckCircle, AlertTriangle, DollarSign, Calendar } from 'lucide-react';
 import { useProductos } from '../hooks/useProductos';
 import { getCategorias } from '../../categorias/services/categoriasService';
-import { getFichasTecnicas } from '../../fichas-tecnicas/services/fichasTecnicasService';
+import { getFichasTecnicas, getFichaTecnicaInsumos } from '../../fichas-tecnicas/services/fichasTecnicasService';
+import { FichaTecnicaInsumosAccordion } from '../components/FichaTecnicaInsumosAccordion';
 import { getProveedores } from '../../proveedores/services/proveedoresService';
 import { ProductosTable } from '../components/ProductosTable';
 import { ProductoFormModal } from '../components/ProductoFormModal';
@@ -53,6 +54,22 @@ export default function ProductosPage() {
   const [selectedProducto, setSelectedProducto] = useState(null);
   const [categorias, setCategorias] = useState([]);
   const [fichas, setFichas] = useState([]);
+  const [modalFicha, setModalFicha] = useState(null);
+
+  useEffect(() => {
+    if (detailModal.isOpen && detailModal.data?.id_ficha && can('fichas-tecnicas', 'ver')) {
+      const existing = fichas.find((f) => f.id_ficha === detailModal.data.id_ficha);
+      if (existing) {
+        setModalFicha(existing);
+      } else {
+        getFichaTecnicaInsumos(detailModal.data.id_ficha)
+          .then((res) => setModalFicha(res?.data || res))
+          .catch(() => setModalFicha(null));
+      }
+    } else {
+      setModalFicha(null);
+    }
+  }, [detailModal.isOpen, detailModal.data?.id_ficha, can, fichas]);
   const [proveedores, setProveedores] = useState([]);
 
   useEffect(() => {
@@ -434,12 +451,58 @@ export default function ProductosPage() {
                   label: 'Fecha de Vencimiento',
                   value: detailModal.data.fecha_vencimiento || 'N/A',
                 },
-                {
-                  label: 'Ficha Técnica / Receta',
-                  value: detailModal.data.id_ficha
-                    ? fichasNames[detailModal.data.id_ficha] || `Ficha #${detailModal.data.id_ficha}`
-                    : 'Sin ficha asociada',
-                },
+                ...(can('fichas-tecnicas', 'ver') && detailModal.data.id_ficha
+                  ? [
+                      {
+                        label: 'Ficha Técnica / Receta',
+                        value:
+                          (modalFicha || fichas.find((f) => f.id_ficha === detailModal.data.id_ficha))?.nombre ||
+                          fichasNames[detailModal.data.id_ficha] ||
+                          `Ficha #${detailModal.data.id_ficha}`,
+                      },
+                      {
+                        label: 'Descripción Técnica',
+                        value:
+                          (modalFicha || fichas.find((f) => f.id_ficha === detailModal.data.id_ficha))?.descripcion ||
+                          'N/A',
+                      },
+                      {
+                        label: 'Tiempo Estimado',
+                        value: (modalFicha || fichas.find((f) => f.id_ficha === detailModal.data.id_ficha))
+                          ?.tiempo_estimado_minutos
+                          ? `${(modalFicha || fichas.find((f) => f.id_ficha === detailModal.data.id_ficha)).tiempo_estimado_minutos} min`
+                          : 'N/A',
+                      },
+                      {
+                        label: 'Rendimiento Esperado',
+                        value: (modalFicha || fichas.find((f) => f.id_ficha === detailModal.data.id_ficha))
+                          ?.rendimiento_lote
+                          ? `${(modalFicha || fichas.find((f) => f.id_ficha === detailModal.data.id_ficha)).rendimiento_lote} und`
+                          : 'N/A',
+                      },
+                      {
+                        label: 'Instrucciones de Preparación',
+                        value:
+                          (modalFicha || fichas.find((f) => f.id_ficha === detailModal.data.id_ficha))
+                            ?.instrucciones_preparacion || 'N/A',
+                      },
+                      {
+                        label: 'Insumos Requeridos',
+                        value: (
+                          <FichaTecnicaInsumosAccordion
+                            insumos={
+                              (modalFicha || fichas.find((f) => f.id_ficha === detailModal.data.id_ficha))?.insumos || []
+                            }
+                          />
+                        ),
+                      },
+                    ]
+                  : [
+                      {
+                        label: 'Ficha Técnica / Receta',
+                        value: detailModal.data.id_ficha ? detailModal.data.nombre : 'Sin ficha técnica',
+                      },
+                    ]),
                 {
                   label: 'Proveedor / Fabricante',
                   value: detailModal.data.id_proveedor
