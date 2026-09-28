@@ -1,4 +1,5 @@
 import { CreditosService } from '../services/creditos.service.js';
+import { validarComprobanteDelSistema } from '../middlewares/comprobante.middleware.js';
 import { badRequest } from '../utils/httpError.js';
 import { fechaValida } from '../utils/normalizar.js';
 import { successResponse, errorResponse } from '../utils/response.js';
@@ -54,8 +55,20 @@ export class AbonosController {
   /** POST /abonos { id_pedido, valor_abonado, medio_pago, comprobante_url?, fecha_abono? } → Aprobado */
   static async create(req, res, next) {
     try {
-      const data = await CreditosService.registrarPorPersonal(req.user, req.body || {});
+      const body = req.body || {};
+      const comprobante = validarComprobanteDelSistema(body.comprobante_url);
+      const data = await CreditosService.registrarPorPersonal(req.user, { ...body, comprobante_url: comprobante });
       return successResponse(res, data, 'Abono registrado exitosamente', 201);
+    } catch (e) { next(e); }
+  }
+
+  /** PUT /abonos/:id { valor_abonado?, medio_pago?, fecha_abono?, comprobante_url? }: solo En revisión */
+  static async update(req, res, next) {
+    try {
+      const body = { ...(req.body || {}) };
+      if (body.comprobante_url !== undefined) body.comprobante_url = validarComprobanteDelSistema(body.comprobante_url);
+      const data = await CreditosService.editar(req.params.id, body);
+      return successResponse(res, data, 'Abono actualizado');
     } catch (e) { next(e); }
   }
 

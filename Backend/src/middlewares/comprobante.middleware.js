@@ -64,6 +64,22 @@ const NOMBRE_VALIDO = /^u(\d+)_\d+_[0-9a-f]{24}\.(jpg|png|pdf)$/;
 export const urlComprobante = (archivo) => `${RUTA_PUBLICA}${archivo}`;
 
 /**
+ * Comprobante que adjunta el personal (POST y PUT /abonos): debe ser
+ * exactamente la URL que devuelve POST /comprobantes y el archivo debe
+ * existir; una URL externa u otra ruta → 400 en comprobante_url. Aún no se
+ * valida quién lo subió. Devuelve la URL o null si no se envió.
+ */
+export const validarComprobanteDelSistema = (url) => {
+  const valor = typeof url === 'string' ? url.trim() : url;
+  if (valor === undefined || valor === null || valor === '') return null;
+  const error = (mensaje) => badRequest(mensaje, { comprobante_url: mensaje });
+  const archivo = typeof valor === 'string' && valor.startsWith(RUTA_PUBLICA) ? valor.slice(RUTA_PUBLICA.length) : '';
+  if (!NOMBRE_VALIDO.test(archivo)) throw error('El comprobante no es válido: súbelo con la opción de adjuntar comprobante');
+  if (!fs.existsSync(path.join(COMPROBANTES_DIR, archivo))) throw error('El comprobante no existe; súbelo de nuevo');
+  return urlComprobante(archivo);
+};
+
+/**
  * Valida la URL de comprobante que llega al crear un pedido o un abono:
  * debe ser un archivo subido por este mismo usuario y existir en disco.
  * Devuelve la URL normalizada o null si no se envió.

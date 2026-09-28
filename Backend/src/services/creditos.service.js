@@ -26,7 +26,14 @@ const SELECT_CREDITO = `
   JOIN pedido p ON p.id_pedido = cr.id_pedido
   JOIN cliente c ON c.id_cliente = cr.id_cliente`;
 
-const estadoPorSaldo = (saldo) => (Number(saldo) <= 0 ? 'Pagado' : 'Activo');
+/** PUT /abonos/:id: por qué no se edita un abono que ya salió de revisión (409). */
+const ABONO_NO_EDITABLE = {
+  Aprobado: 'El abono ya fue aprobado; anúlalo y registra uno nuevo.',
+  Rechazado: 'El abono fue rechazado y no se puede editar; registra uno nuevo.',
+  Anulado: 'El abono está anulado y no se puede editar; registra uno nuevo.',
+};
+
+const estadoPorSaldo =(saldo) => (Number(saldo) <= 0 ? 'Pagado' : 'Activo');
 
 export class CreditosService {
   // ─── Núcleo (dentro de una transacción) ───
@@ -65,14 +72,36 @@ export class CreditosService {
     return res.rows[0];
   }
 
-  /** Suma de abonos en revisión: el nuevo abono no puede superar saldo − pendientes. */
-  static async #enRevision(db, idCredito) {
+  /**
+   * Suma de abonos en revisión: el nuevo abono no puede superar saldo − pendientes.
+   * Al editar, [excluirAbono] deja fuera el abono que se corrige.
+   */
+  static async #enRevision(db, idCredito, excluirAbono = null) {
     const res = await db.query(
       `SELECT COALESCE(SUM(valor_abonado), 0)::numeric AS total
-       FROM abono WHERE id_credito = $1 AND estado = 'En revisión'`,
-      [idCredito]
+       FROM abono WHERE id_credito = $1 AND estado = 'En revisión'
+         AND ($2::int IS NULL OR id_abono <> $2)`,
+      [idCredito, excluirAbono]
     );
     return Number(res.rows[0].total);
+  }
+
+  /** Reglas comunes al registrar y al editar: crédito activo, saldo disponible y comprobante. */
+  static async #validarAbono(db, credito, { valor, medioPago, comprobanteUrl, excluirAbono = null }) {
+    if (credito.estado !== 'Activo') {
+      throw conflict(credito.estado === 'Pagado' ? 'El crédito ya está pagado' : 'El crédito está anulado');
+    }
+    const disponible = Number(credito.saldo_pendiente) - (await this.#enRevision(db, credito.id_credito, excluirAbono));
+    if (valor > disponible) {
+      const mensaje = disponible <= 0
+        ? 'El saldo pendiente ya está cubierto por abonos en revisión'
+        : `El abono no puede superar el saldo pendiente (${disponible})`;
+      throw badRequest(mensaje, { valor_abonado: mensaje });
+    }
+    if (medioPago === 'Transferencia' && !comprobanteUrl) {
+      const mensaje = 'Para pagos por transferencia debes adjuntar el comprobante';
+      throw badRequest(mensaje, { comprobante_url: mensaje });
+    }
   }
 
   /**
@@ -80,20 +109,7 @@ export class CreditosService {
    * momento; 'En revisión' (cliente) espera la aprobación (CA-167-003).
    */
   static async #insertarAbono(db, credito, { valor, medioPago, comprobanteUrl, estado, idUsuario, fechaAbono = null }) {
-    if (credito.estado !== 'Activo') {
-      throw conflict(credito.estado === 'Pagado' ? 'El crédito ya está pagado' : 'El crédito está anulado');
-    }
-    const disponible = Number(credito.saldo_pendiente) - (await this.#enRevision(db, credito.id_credito));
-    if (valor > disponible) {
-      throw badRequest(
-        disponible <= 0
-          ? 'El saldo pendiente ya está cubierto por abonos en revisión'
-          : `El abono no puede superar el saldo pendiente (${disponible})`
-      );
-    }
-    if (medioPago === 'Transferencia' && !comprobanteUrl) {
-      throw badRequest('Para pagos por transferencia debes adjuntar el comprobante');
-    }
+    await this.#validarAbono(db, credito, { valor, medioPago, comprobanteUrl });
 
     const aprobado = estado === 'Aprobado';
     const saldoNuevo = Number(credito.saldo_pendiente) - valor;
@@ -173,6 +189,45 @@ export class CreditosService {
       return this.#insertarAbono(db, bloqueado, {
         valor, medioPago, comprobanteUrl, estado: 'Aprobado', idUsuario: usuario.id_usuario, fechaAbono,
       });
+    });
+    return this.obtenerAbono(idAbono);
+  }
+
+  /**
+   * Corrige un abono En revisión: valor, medio de pago, fecha o comprobante
+   * (los campos que no llegan se conservan). Mismas reglas del registro,
+   * incluida la fecha (#fechaAbono). Aprobado, Rechazado o Anulado → 409: el
+   * abono no se edita, se anula y se registra otro.
+   */
+  static async editar(idAbono, datos) {
+    const valorEnviado = datos.valor_abonado ?? datos.valor;
+    const valor = valorEnviado === undefined ? null : enteroPositivo(valorEnviado, 'El valor del abono');
+    const medioPago = datos.medio_pago === undefined ? null : normalizarMedioPago(datos.medio_pago, { requerido: true });
+
+    await enTransaccion(async (db) => {
+      const res = await db.query('SELECT * FROM abono WHERE id_abono = $1 FOR UPDATE', [idAbono]);
+      const abono = res.rows[0];
+      if (!abono) throw notFound('Abono no encontrado');
+      if (abono.estado !== 'En revisión') throw conflict(ABONO_NO_EDITABLE[abono.estado] ?? `El abono ya está ${abono.estado.toLowerCase()}`);
+
+      const pedido = await db.query('SELECT * FROM pedido WHERE id_pedido = $1', [abono.id_pedido]);
+      const fechaAbono = await this.#fechaAbono(db, datos.fecha_abono, pedido.rows[0]);
+      const credito = await this.#bloquearCredito(db, abono.id_credito);
+      const nuevo = {
+        valor: valor ?? Number(abono.valor_abonado),
+        medioPago: medioPago ?? abono.medio_pago,
+        comprobanteUrl: datos.comprobante_url === undefined ? abono.comprobante_url : datos.comprobante_url,
+      };
+      await this.#validarAbono(db, credito, { ...nuevo, excluirAbono: abono.id_abono });
+
+      await db.query(
+        `UPDATE abono
+         SET valor_abonado = $1, medio_pago = $2, comprobante_url = $3,
+             fecha_abono = COALESCE($4::date, fecha_abono), saldo_pendiente = $5
+         WHERE id_abono = $6`,
+        [nuevo.valor, nuevo.medioPago, nuevo.comprobanteUrl, fechaAbono,
+          Math.max(Number(credito.saldo_pendiente) - nuevo.valor, 0), abono.id_abono]
+      );
     });
     return this.obtenerAbono(idAbono);
   }
