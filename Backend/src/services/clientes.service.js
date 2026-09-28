@@ -1,4 +1,32 @@
 import { query } from '../config/db.js';
+import { MUNICIPIOS_ENTREGA, TIPOS_DOCUMENTO } from '../config/negocio.js';
+import { badRequest } from '../utils/httpError.js';
+
+const texto = (valor) => (typeof valor === 'string' ? valor.trim() : '');
+
+/**
+ * Tipo de documento, municipio y barrio del cliente (antes el personal no los
+ * guardaba). Solo valida lo que llega: la web no los envía y no se afecta.
+ * Devuelve los valores normalizados (undefined = no se envió).
+ */
+const ubicacionYDocumento = (data) => {
+  const errores = {};
+  let tipoDocumento;
+  if (data.tipo_documento !== undefined && data.tipo_documento !== null) {
+    tipoDocumento = texto(data.tipo_documento).toUpperCase();
+    if (!TIPOS_DOCUMENTO.includes(tipoDocumento)) errores.tipo_documento = 'Selecciona un tipo de documento válido';
+  }
+  let municipio;
+  if (data.municipio !== undefined && data.municipio !== null) {
+    municipio = texto(data.municipio) || null;
+    if (municipio && !MUNICIPIOS_ENTREGA.includes(municipio)) {
+      errores.municipio = 'Selecciona un municipio del Área Metropolitana';
+    }
+  }
+  const barrio = data.barrio === undefined || data.barrio === null ? undefined : texto(data.barrio) || null;
+  if (Object.keys(errores).length > 0) throw badRequest('Revisa los datos del cliente', errores);
+  return { tipoDocumento, municipio, barrio };
+};
 
 export class ClientesService {
   static async getAll() {
@@ -18,28 +46,35 @@ export class ClientesService {
 
   static async create(data) {
     const { nombre, documento, telefono, correo, direccion, estado = 'Activo' } = data;
+    const { tipoDocumento = 'CC', municipio = null, barrio = null } = ubicacionYDocumento(data);
     const res = await query(
-      `INSERT INTO cliente (nombre, documento, telefono, correo, direccion, estado)
-       VALUES ($1, $2, $3, $4, $5, $6)
+      `INSERT INTO cliente (nombre, tipo_documento, documento, telefono, correo, direccion, municipio, barrio, estado)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
        RETURNING *`,
-      [nombre, documento, telefono, correo, direccion, estado]
+      [nombre, tipoDocumento, documento, telefono, correo, direccion, municipio, barrio, estado]
     );
     return res.rows[0];
   }
 
   static async update(id, data) {
     const { nombre, documento, telefono, correo, direccion, estado } = data;
+    const { tipoDocumento, municipio, barrio } = ubicacionYDocumento(data);
+    // municipio y barrio: sin enviar → se conservan; enviados vacíos → se borran.
     const res = await query(
-      `UPDATE cliente 
+      `UPDATE cliente
        SET nombre = COALESCE($1, nombre),
            documento = COALESCE($2, documento),
            telefono = COALESCE($3, telefono),
            correo = COALESCE($4, correo),
            direccion = COALESCE($5, direccion),
-           estado = COALESCE($6, estado)
-       WHERE id_cliente = $7
+           estado = COALESCE($6, estado),
+           tipo_documento = COALESCE($7, tipo_documento),
+           municipio = CASE WHEN $8::boolean THEN $9 ELSE municipio END,
+           barrio = CASE WHEN $10::boolean THEN $11 ELSE barrio END
+       WHERE id_cliente = $12
        RETURNING *`,
-      [nombre, documento, telefono, correo, direccion, estado, id]
+      [nombre, documento, telefono, correo, direccion, estado, tipoDocumento ?? null,
+        municipio !== undefined, municipio ?? null, barrio !== undefined, barrio ?? null, id]
     );
     return res.rows[0] || { id_cliente: id, ...data };
   }
