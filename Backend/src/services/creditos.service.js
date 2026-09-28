@@ -1,7 +1,8 @@
 import { query } from '../config/db.js';
 import { enTransaccion } from '../utils/transaccion.js';
 import { badRequest, conflict, notFound } from '../utils/httpError.js';
-import { enteroPositivo, normalizarMedioPago, texto } from '../utils/normalizar.js';
+import { ABONO_DIAS_ATRAS_MAX } from '../config/negocio.js';
+import { enteroPositivo, fechaValida, normalizarMedioPago, texto } from '../utils/normalizar.js';
 import { NotificacionesService } from './notificaciones.service.js';
 
 const SELECT_ABONO = `
@@ -78,7 +79,7 @@ export class CreditosService {
    * Inserta un abono. estado 'Aprobado' (personal) actualiza el saldo al
    * momento; 'En revisión' (cliente) espera la aprobación (CA-167-003).
    */
-  static async #insertarAbono(db, credito, { valor, medioPago, comprobanteUrl, estado, idUsuario }) {
+  static async #insertarAbono(db, credito, { valor, medioPago, comprobanteUrl, estado, idUsuario, fechaAbono = null }) {
     if (credito.estado !== 'Activo') {
       throw conflict(credito.estado === 'Pagado' ? 'El crédito ya está pagado' : 'El crédito está anulado');
     }
@@ -98,11 +99,13 @@ export class CreditosService {
     const saldoNuevo = Number(credito.saldo_pendiente) - valor;
     const res = await db.query(
       `INSERT INTO abono (id_cliente, id_pedido, id_credito, valor_abonado, saldo_pendiente, medio_pago,
-                          comprobante_url, estado, id_usuario_registra, id_usuario_revisa, fecha_revision)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
+                          comprobante_url, estado, id_usuario_registra, id_usuario_revisa, fecha_revision,
+                          fecha_abono)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, COALESCE($12::date, CURRENT_DATE))
        RETURNING id_abono`,
       [credito.id_cliente, credito.id_pedido, credito.id_credito, valor, Math.max(saldoNuevo, 0), medioPago,
-        comprobanteUrl, estado, idUsuario, aprobado ? idUsuario : null, aprobado ? new Date() : null]
+        comprobanteUrl, estado, idUsuario, aprobado ? idUsuario : null, aprobado ? new Date() : null,
+        fechaAbono]
     );
     if (aprobado) {
       await db.query(
@@ -125,6 +128,34 @@ export class CreditosService {
 
   // ─── Personal (HU-117, HU-171) ───
 
+  /**
+   * Fecha del abono que registra el personal (e). Sin fecha → hoy. No puede
+   * ser futura, ni anterior a la fecha del pedido, ni de hace más de
+   * ABONO_DIAS_ATRAS_MAX días. Se valida con el reloj de la base (hora de
+   * Colombia) y antes de tocar el crédito.
+   */
+  static async #fechaAbono(db, valor, pedido) {
+    if (valor === undefined || valor === null || texto(valor) === '') return null;
+    const fecha = fechaValida(valor);
+    const error = (mensaje) => badRequest(mensaje, { fecha_abono: mensaje });
+    if (!fecha) throw error('La fecha del abono no es válida (AAAA-MM-DD)');
+    const res = await db.query(
+      `SELECT $1::date > CURRENT_DATE AS futura,
+              $1::date < $3::date AS antes_pedido,
+              $1::date < CURRENT_DATE - $2::int AS antigua,
+              to_char($3::date, 'DD/MM/YYYY') AS fecha_pedido,
+              to_char(CURRENT_DATE - $2::int, 'DD/MM/YYYY') AS limite`,
+      [fecha, ABONO_DIAS_ATRAS_MAX, pedido.fecha_pedido]
+    );
+    const r = res.rows[0];
+    if (r.futura) throw error('La fecha del abono no puede ser futura');
+    if (r.antes_pedido) throw error(`La fecha del abono no puede ser anterior a la fecha del pedido (${r.fecha_pedido})`);
+    if (r.antigua) {
+      throw error(`La fecha del abono no puede ser de hace más de ${ABONO_DIAS_ATRAS_MAX} días (la más antigua permitida es el ${r.limite})`);
+    }
+    return fecha;
+  }
+
   /** El personal registra un abono a un pedido; queda aprobado de inmediato. */
   static async registrarPorPersonal(usuario, datos) {
     const idPedido = enteroPositivo(datos.id_pedido, 'id_pedido');
@@ -136,10 +167,11 @@ export class CreditosService {
       const pedido = await db.query('SELECT * FROM pedido WHERE id_pedido = $1 FOR UPDATE', [idPedido]);
       if (pedido.rows.length === 0) throw notFound('Pedido no encontrado');
       if (pedido.rows[0].estado === 'Anulado') throw conflict('No se pueden registrar abonos a un pedido anulado');
+      const fechaAbono = await this.#fechaAbono(db, datos.fecha_abono, pedido.rows[0]);
       const credito = await this.crearParaPedido(db, pedido.rows[0]);
       const bloqueado = await this.#bloquearCredito(db, credito.id_credito);
       return this.#insertarAbono(db, bloqueado, {
-        valor, medioPago, comprobanteUrl, estado: 'Aprobado', idUsuario: usuario.id_usuario,
+        valor, medioPago, comprobanteUrl, estado: 'Aprobado', idUsuario: usuario.id_usuario, fechaAbono,
       });
     });
     return this.obtenerAbono(idAbono);
@@ -232,14 +264,18 @@ export class CreditosService {
     return res.rows[0] || null;
   }
 
-  static async listarAbonos({ estado, idPedido, idCredito } = {}) {
+  /** Filtros opcionales; desde y hasta ("AAAA-MM-DD", incluidas) van sobre fecha_abono. */
+  static async listarAbonos({ estado, idPedido, idCredito, idCliente, desde, hasta } = {}) {
     const res = await query(
       `${SELECT_ABONO}
        WHERE ($1::text IS NULL OR a.estado = $1)
          AND ($2::int IS NULL OR a.id_pedido = $2)
          AND ($3::int IS NULL OR a.id_credito = $3)
+         AND ($4::int IS NULL OR a.id_cliente = $4)
+         AND ($5::date IS NULL OR a.fecha_abono >= $5::date)
+         AND ($6::date IS NULL OR a.fecha_abono <= $6::date)
        ORDER BY a.fecha_registro DESC, a.id_abono DESC`,
-      [estado || null, idPedido || null, idCredito || null]
+      [estado || null, idPedido || null, idCredito || null, idCliente || null, desde || null, hasta || null]
     );
     return res.rows;
   }

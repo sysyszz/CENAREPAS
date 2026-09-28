@@ -1,16 +1,44 @@
 import { CreditosService } from '../services/creditos.service.js';
+import { badRequest } from '../utils/httpError.js';
+import { fechaValida } from '../utils/normalizar.js';
 import { successResponse, errorResponse } from '../utils/response.js';
+
+/** Filtros de GET /abonos validados: 400 con el error por campo. */
+const filtrosAbonos = (q) => {
+  const errores = {};
+  const entero = (campo) => {
+    if (q[campo] === undefined || q[campo] === '') return null;
+    const n = Number(q[campo]);
+    if (!Number.isInteger(n) || n <= 0) errores[campo] = `${campo} debe ser un número entero positivo`;
+    return n;
+  };
+  const fecha = (campo) => {
+    if (q[campo] === undefined || q[campo] === '') return null;
+    const f = fechaValida(q[campo]);
+    if (!f) errores[campo] = `"${campo}" debe ser una fecha AAAA-MM-DD`;
+    return f;
+  };
+  const filtros = {
+    estado: q.estado,
+    idPedido: entero('id_pedido'),
+    idCredito: entero('id_credito'),
+    idCliente: entero('id_cliente'),
+    desde: fecha('desde'),
+    hasta: fecha('hasta'),
+  };
+  if (filtros.desde && filtros.hasta && filtros.desde > filtros.hasta) {
+    errores.desde = 'La fecha "desde" no puede ser posterior a "hasta"';
+  }
+  if (Object.keys(errores).length > 0) throw badRequest(Object.values(errores)[0], errores);
+  return filtros;
+};
 
 /** Abonos y créditos para el personal (HU-117, HU-171). */
 export class AbonosController {
-  /** GET /abonos?estado=En revisión&id_pedido=&id_credito= */
+  /** GET /abonos?estado=&id_pedido=&id_credito=&id_cliente=&desde=AAAA-MM-DD&hasta=AAAA-MM-DD */
   static async getAll(req, res, next) {
     try {
-      const data = await CreditosService.listarAbonos({
-        estado: req.query.estado,
-        idPedido: req.query.id_pedido ? Number(req.query.id_pedido) : null,
-        idCredito: req.query.id_credito ? Number(req.query.id_credito) : null,
-      });
+      const data = await CreditosService.listarAbonos(filtrosAbonos(req.query));
       return successResponse(res, data, 'Abonos recuperados correctamente');
     } catch (e) { next(e); }
   }
@@ -23,7 +51,7 @@ export class AbonosController {
     } catch (e) { next(e); }
   }
 
-  /** POST /abonos { id_pedido, valor_abonado, medio_pago, comprobante_url? } → Aprobado */
+  /** POST /abonos { id_pedido, valor_abonado, medio_pago, comprobante_url?, fecha_abono? } → Aprobado */
   static async create(req, res, next) {
     try {
       const data = await CreditosService.registrarPorPersonal(req.user, req.body || {});

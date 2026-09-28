@@ -29,6 +29,12 @@ export const TRANSICIONES_PEDIDO = {
 
 export const MEDIOS_PAGO = ['Efectivo', 'Tarjeta', 'Transferencia'];
 
+/**
+ * Días hacia atrás que el personal puede poner como fecha de un abono (e).
+ * La fecha tampoco puede ser futura ni anterior a la fecha del pedido.
+ */
+export const ABONO_DIAS_ATRAS_MAX = 7;
+
 export const TIPOS_DOCUMENTO = ['CC', 'CE', 'NIT', 'PP', 'TI'];
 
 /** Comprobantes de pago (CA-159-002). */

@@ -50,3 +50,16 @@ export const enteroPositivo = (valor, campo) => {
 };
 
 export const texto = (valor) => (typeof valor === 'string' ? valor.trim() : '');
+
+/**
+ * "AAAA-MM-DD" si [valor] es una fecha de calendario real (rechaza 2026-02-31);
+ * null si no.
+ */
+export const fechaValida = (valor) => {
+  const t = texto(valor);
+  const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(t);
+  if (!m) return null;
+  const [anio, mes, dia] = [Number(m[1]), Number(m[2]), Number(m[3])];
+  const d = new Date(Date.UTC(anio, mes - 1, dia));
+  return d.getUTCFullYear() === anio && d.getUTCMonth() === mes - 1 && d.getUTCDate() === dia ? t : null;
+};
