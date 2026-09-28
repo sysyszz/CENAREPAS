@@ -64,7 +64,9 @@ export function useUsuarios() {
       }
       setShowModal(false);
     } catch (error) {
-      toast.error('No se pudo guardar el usuario');
+      // El mensaje del backend (p. ej. el mínimo de la contraseña o el correo repetido);
+      // si no hubo respuesta del servidor, el mensaje genérico.
+      toast.error(error?.data?.message || 'No se pudo guardar el usuario');
     } finally {
       setIsSaving(false);
     }

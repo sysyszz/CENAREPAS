@@ -4,6 +4,9 @@ import { getRoles } from '../../roles/services/rolesService';
 import { Combobox } from '../../../shared/ui/Combobox';
 import { StepperModal } from '../../../shared/components/StepperModal';
 
+// Igual que CONTRASENA_MIN del backend (Backend/src/config/negocio.js).
+const CONTRASENA_MIN = 8;
+
 export function UsuarioFormModal({ open, onClose, usuario = null, onSave, isLoading = false }) {
   const [nombre, setNombre] = useState('');
   const [correo, setCorreo] = useState('');
@@ -77,8 +80,8 @@ export function UsuarioFormModal({ open, onClose, usuario = null, onSave, isLoad
     if (!usuario && !contrasena.trim()) {
       return 'La contraseña es obligatoria para nuevos usuarios.';
     }
-    if (contrasena.trim() && contrasena.trim().length < 6) {
-      return 'La contraseña debe tener al menos 6 caracteres.';
+    if (contrasena.trim() && contrasena.trim().length < CONTRASENA_MIN) {
+      return `La contraseña debe tener al menos ${CONTRASENA_MIN} caracteres.`;
     }
     return true;
   }, [usuario, contrasena]);
@@ -238,14 +241,14 @@ export function UsuarioFormModal({ open, onClose, usuario = null, onSave, isLoad
                 name="contrasena_hash"
                 type="password"
                 maxLength={255}
-                placeholder={usuario ? '••••••••' : 'Mínimo 6 caracteres'}
+                placeholder={usuario ? '••••••••' : `Mínimo ${CONTRASENA_MIN} caracteres`}
                 value={contrasena}
                 onChange={(e) => setContrasena(e.target.value)}
                 className="w-full h-10 pl-10 pr-4 border border-input bg-input-background rounded-lg text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring transition-all"
               />
             </div>
             <p className="text-[11px] text-muted-foreground mt-1">
-              {usuario ? 'Ingresa una nueva contraseña únicamente si deseas restablecerla.' : 'Utiliza una combinación segura de al menos 6 caracteres.'}
+              {usuario ? 'Ingresa una nueva contraseña únicamente si deseas restablecerla.' : `Utiliza una combinación segura de al menos ${CONTRASENA_MIN} caracteres.`}
             </p>
           </div>
 

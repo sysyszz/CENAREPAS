@@ -6,7 +6,7 @@ import { badRequest } from '../utils/httpError.js';
 const SALT_ROUNDS = 10;
 // f: el mínimo del personal pasa de 6 a CONTRASENA_MIN (8). Solo aplica a
 // contraseñas nuevas o cambiadas; el login no valida la longitud.
-// Pendiente del equipo: el formulario web de usuarios aún valida 6.
+// El formulario web de usuarios (UsuarioFormModal.jsx) usa el mismo mínimo.
 const COLUMNAS_PUBLICAS = 'id_usuario, nombre, correo, id_rol, estado, fecha_creacion';
 
 export class UsuariosService {
