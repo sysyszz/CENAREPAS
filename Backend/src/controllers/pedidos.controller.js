@@ -21,6 +21,15 @@ export class PedidosController {
     } catch (e) { next(e); }
   }
 
+  /** GET /pedidos/:id/historial: cambios de estado, del más antiguo al más reciente. */
+  static async historial(req, res, next) {
+    try {
+      const data = await PedidosService.historial(req.params.id);
+      if (!data) return errorResponse(res, 'Pedido no encontrado', 404);
+      return successResponse(res, data, 'Historial de estados recuperado correctamente');
+    } catch (e) { next(e); }
+  }
+
   static async create(req, res, next) {
     try {
       const data = await PedidosService.crearPorPersonal(req.user, req.body || {});

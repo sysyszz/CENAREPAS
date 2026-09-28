@@ -82,6 +82,31 @@ export class PedidosService {
     return { ...pedido, abonos };
   }
 
+  /**
+   * Historial de estados (migración 010), del más antiguo al más reciente.
+   * Del usuario solo se devuelven el nombre y el rol (nada de correo ni otros
+   * datos personales). null si el pedido no existe (o no es del cliente, con
+   * idCliente).
+   */
+  static async historial(id, { idCliente } = {}) {
+    const existe = await query(
+      'SELECT 1 FROM pedido WHERE id_pedido = $1 AND ($2::int IS NULL OR id_cliente = $2)',
+      [id, idCliente || null]
+    );
+    if (existe.rows.length === 0) return null;
+    const res = await query(
+      `SELECT h.id_historial, h.id_pedido, h.estado_anterior, h.estado_nuevo, h.id_usuario,
+              u.nombre AS usuario_nombre, r.nombre AS rol_nombre, h.motivo, h.fecha_cambio, h.reconstruido
+       FROM pedido_estado_historial h
+       LEFT JOIN usuario u ON u.id_usuario = h.id_usuario
+       LEFT JOIN rol r ON r.id_rol = u.id_rol
+       WHERE h.id_pedido = $1
+       ORDER BY h.fecha_cambio, h.id_historial`,
+      [id]
+    );
+    return res.rows;
+  }
+
   // ─── Validaciones comunes ───
 
   static #fechaEntrega(valor) {
@@ -187,6 +212,7 @@ export class PedidosService {
           medioPago, texto(datos.direccion_entrega) || null]
       );
       await this.#guardarDetalles(db, res.rows[0].id_pedido, lineas);
+      await this.#registrarEstado(db, res.rows[0].id_pedido, null, 'Pendiente', usuario.id_usuario);
       await NotificacionesService.pedidoCreado(db, res.rows[0]);
       return res.rows[0].id_pedido;
     });
@@ -244,6 +270,7 @@ export class PedidosService {
       );
       const pedido = res.rows[0];
       await this.#guardarDetalles(db, pedido.id_pedido, lineas);
+      await this.#registrarEstado(db, pedido.id_pedido, null, 'Pendiente', usuario.id_usuario);
 
       let saldo = 0;
       if (valorAbono > 0) {
@@ -397,7 +424,20 @@ export class PedidosService {
       await db.query('UPDATE pedido SET estado = $1 WHERE id_pedido = $2', [nuevoEstado, id]);
     }
 
+    await this.#registrarEstado(db, id, pedido.estado, nuevoEstado, usuario.id_usuario, motivoNotificado);
     await NotificacionesService.pedidoEstado(db, { id_pedido: Number(id), estado: nuevoEstado }, motivoNotificado);
+  }
+
+  /**
+   * Fila del historial de estados, dentro de la misma transacción del cambio:
+   * si el cambio falla, tampoco queda la fila.
+   */
+  static async #registrarEstado(db, idPedido, anterior, nuevo, idUsuario, motivo = null) {
+    await db.query(
+      `INSERT INTO pedido_estado_historial (id_pedido, estado_anterior, estado_nuevo, id_usuario, motivo)
+       VALUES ($1, $2, $3, $4, $5)`,
+      [idPedido, anterior, nuevo, idUsuario || null, motivo]
+    );
   }
 
   /** DELETE de la web: anula (nunca borra). */
