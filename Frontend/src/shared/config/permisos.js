@@ -1,4 +1,4 @@
-﻿/**
+/**
  * Matriz Oficial de Permisos por Rol (CENAREPAS)
  * Fuente: Story Mapping oficial del proyecto (aprobado por la instructora)
  *
@@ -88,7 +88,6 @@ export const MATRIZ_PERMISOS = {
   // Módulos NO visibles: Roles, Usuarios, Ficha Técnica, Configuración.
   2: {
     dashboard: ['ver', 'exportar'],
-    'fichas-tecnicas': ['ver'],
     proveedores: ['ver', 'crear', 'editar', 'eliminar'],
     compras: ['ver', 'crear', 'editar', 'anular'], // Anular compra en vez de eliminar
     categorias: ['ver', 'crear', 'editar', 'eliminar', 'cambiar_estado'],
@@ -106,7 +105,6 @@ export const MATRIZ_PERMISOS = {
   // Módulos NO visibles: Roles, Usuarios, Proveedores, Compras, Ficha Técnica, Insumos, Producción, Dashboard, Configuración.
   3: {
     categorias: ['ver'], // Solo lectura: Listar, Buscar, Ver detalle, Paginar, Filtrar
-    'fichas-tecnicas': ['ver'], // Solo lectura: Ver ficha en detalle de producto
     productos: ['ver'],  // Solo lectura: Listar, Buscar, Ver detalle, Paginar, Filtrar
     clientes: ['ver', 'crear', 'editar'], // Acceso completo sin eliminar
     pedidos: ['ver', 'crear', 'editar', 'anular', 'cambiar_estado', 'abonos'], // Acceso completo
