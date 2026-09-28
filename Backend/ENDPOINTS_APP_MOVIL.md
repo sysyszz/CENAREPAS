@@ -139,6 +139,7 @@ Tipos de notificación: `pedido_creado`, `pedido_estado`, `abono_aprobado` y `ab
 | GET | `/usuarios` | usuarios:ver, o pedidos/ventas:ver en versión resumida | **Modificado:** nunca devuelve el hash; sin contraseña por defecto |
 | GET | `/sedes` | sedes:ver o pedidos/ventas:ver | **Modificado** |
 | DELETE | clientes, usuarios, productos, categorías, proveedores, insumos, fichas y sedes | cambiar_estado | **Modificado:** inactiva (no borra) |
+| GET | `/fichas-tecnicas/:id` | ver | **Modificado:** trae `insumos` igual que el listado (`insumo_nombre`, `cantidad`, `unidad_medida`). Vendedor y Secretaria tienen `ver` (migración 007). |
 | POST/PUT | `/clientes`, `/clientes/:id` | crear / editar | **Modificado:** guardan `tipo_documento` (CC, CE, NIT, PP o TI; en mayúsculas; `CC` si no llega al crear), `municipio` (Área Metropolitana, `MUNICIPIOS_ENTREGA`) y `barrio`. Solo se valida lo que llega (400 con error por campo); en `PUT`, lo que no llega se conserva. |
 | PUT | `/clientes/:id` con `estado` | editar (+ cambiar_estado si cambia) | **Modificado:** un `estado` igual al actual (sin distinguir mayúsculas) se ignora; uno distinto exige `clientes:cambiar_estado`, si no **403** "No tienes permiso para cambiar el estado del cliente". Pruebas: `npm run test:staging`. |
 | DELETE | compras y producción | anular | **Modificado:** anula |

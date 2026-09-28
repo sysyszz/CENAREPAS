@@ -1,28 +1,29 @@
 import { query } from '../config/db.js';
 
+/** Ficha con sus insumos; lo usan el listado y el detalle. */
+const SELECT_FICHA = `
+  SELECT f.*,
+         COALESCE(
+           json_agg(
+             json_build_object(
+               'id_ficha_insumo', fti.id_ficha_insumo,
+               'id_insumo', fti.id_insumo,
+               'insumo_nombre', i.nombre,
+               'cantidad', fti.cantidad,
+               'unidad_medida', fti.unidad_medida
+             )
+           ) FILTER (WHERE fti.id_ficha_insumo IS NOT NULL),
+           '[]'
+         ) AS insumos
+  FROM ficha_tecnica f
+  LEFT JOIN ficha_tecnica_insumo fti ON f.id_ficha = fti.id_ficha
+  LEFT JOIN insumo i ON fti.id_insumo = i.id_insumo
+`;
+
 export class FichasTecnicasService {
   static async getAll() {
     try {
-      const res = await query(`
-        SELECT f.*,
-               COALESCE(
-                 json_agg(
-                   json_build_object(
-                     'id_ficha_insumo', fti.id_ficha_insumo,
-                     'id_insumo', fti.id_insumo,
-                     'insumo_nombre', i.nombre,
-                     'cantidad', fti.cantidad,
-                     'unidad_medida', fti.unidad_medida
-                   )
-                 ) FILTER (WHERE fti.id_ficha_insumo IS NOT NULL),
-                 '[]'
-               ) AS insumos
-        FROM ficha_tecnica f
-        LEFT JOIN ficha_tecnica_insumo fti ON f.id_ficha = fti.id_ficha
-        LEFT JOIN insumo i ON fti.id_insumo = i.id_insumo
-        GROUP BY f.id_ficha
-        ORDER BY f.id_ficha ASC
-      `);
+      const res = await query(`${SELECT_FICHA} GROUP BY f.id_ficha ORDER BY f.id_ficha ASC`);
       return res.rows || [];
     } catch (error) {
       console.warn('[FichasTecnicasService.getAll] Fallback:', error.message);
@@ -30,8 +31,9 @@ export class FichasTecnicasService {
     }
   }
 
+  /** Igual que el listado: con sus insumos (nombre, cantidad y unidad). */
   static async getById(id) {
-    const res = await query('SELECT * FROM ficha_tecnica WHERE id_ficha = $1', [id]);
+    const res = await query(`${SELECT_FICHA} WHERE f.id_ficha = $1 GROUP BY f.id_ficha`, [id]);
     return res.rows[0] || null;
   }
 
