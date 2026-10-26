@@ -1,4 +1,22 @@
+import fs from 'fs';
 import { query } from '../config/db.js';
+import { notFound } from '../utils/httpError.js';
+import { cloudinaryConfigurado } from '../utils/almacenamiento.js';
+import { archivoComprobante, urlTemporalComprobante } from '../middlewares/comprobante.middleware.js';
+
+/**
+ * Comprobante de la venta: nombre del archivo (sale de comprobante_url,
+ * "/api/v1/comprobantes/<archivo>") y su ruta en disco, o null si no tiene
+ * uno subido por el sistema. 404 si la venta no existe.
+ */
+async function comprobanteDeVenta(id) {
+  if (!/^\d+$/.test(String(id))) throw notFound('Venta no encontrada');
+  const res = await query(`SELECT comprobante_url FROM pedido WHERE id_pedido = $1 AND estado = 'Entregado'`, [id]);
+  if (!res.rows[0]) throw notFound('Venta no encontrada');
+  const nombre = String(res.rows[0].comprobante_url || '').split('/').pop();
+  const archivo = archivoComprobante(nombre);
+  return archivo ? { nombre, ruta: archivo.ruta } : null;
+}
 
 /**
  * Vista de SOLO LECTURA de ventas: una venta es un pedido Entregado.
@@ -49,5 +67,24 @@ export class VentasService {
   static async getById(id) {
     const res = await query(`${SELECT_VENTA} AND p.id_pedido = $1 ${GROUP_VENTA}`, [id]);
     return res.rows[0] || null;
+  }
+
+  /**
+   * Cómo abrir el comprobante de pago de la venta: { tipo, url }. tipo
+   * "temporal" (URL firmada de Cloudinary, 10 minutos) o "local" (ruta
+   * autenticada que entrega el archivo del disco). null si no tiene.
+   */
+  static async enlaceComprobante(id) {
+    const comprobante = await comprobanteDeVenta(id);
+    if (!comprobante) return null;
+    if (fs.existsSync(comprobante.ruta)) return { tipo: 'local', url: `/api/v1/ventas/${id}/comprobante/archivo` };
+    if (cloudinaryConfigurado()) return { tipo: 'temporal', url: urlTemporalComprobante(comprobante.nombre) };
+    return null;
+  }
+
+  /** Ruta en disco del comprobante local (para GET /ventas/:id/comprobante/archivo). */
+  static async rutaComprobanteLocal(id) {
+    const comprobante = await comprobanteDeVenta(id);
+    return comprobante && fs.existsSync(comprobante.ruta) ? comprobante.ruta : null;
   }
 }

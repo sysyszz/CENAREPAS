@@ -1,6 +1,7 @@
 import { useState, useMemo, useEffect } from 'react';
 import { DollarSign, BarChart3, TrendingUp, ShoppingBag } from 'lucide-react';
 import { useVentas } from '../hooks/useVentas';
+import ComprobanteVentaButton from '../components/ComprobanteVentaButton';
 import { getClientes } from '../../clientes/services/clientesService';
 import { getUsuarios } from '../../usuarios/services/usuariosService';
 import { DataTable } from '../../../shared/components/DataTable';
@@ -268,14 +269,7 @@ export default function VentasPage() {
           {
             label: 'Comprobante de Pago',
             value: detailModal.data.comprobante_url ? (
-              <a
-                href={detailModal.data.comprobante_url}
-                target="_blank"
-                rel="noreferrer"
-                className="text-primary hover:underline font-medium text-xs inline-flex items-center gap-1"
-              >
-                Ver comprobante adjunto
-              </a>
+              <ComprobanteVentaButton key={detailModal.data.id_venta} idVenta={detailModal.data.id_venta} />
             ) : (
               'Sin comprobante adjunto'
             ),

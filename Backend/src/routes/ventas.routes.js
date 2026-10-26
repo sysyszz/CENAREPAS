@@ -9,6 +9,9 @@ router.use(authenticate);
 
 router.get('/', authorize('ventas', 'ver'), VentasController.getAll);
 router.get('/:id', authorize('ventas', 'ver'), VentasController.getById);
+// Comprobante de pago (privado): mismo permiso que ver la venta.
+router.get('/:id/comprobante', authorize('ventas', 'ver'), VentasController.enlaceComprobante);
+router.get('/:id/comprobante/archivo', authorize('ventas', 'ver'), VentasController.archivoComprobante);
 router.post('/', VentasController.soloLectura);
 router.put('/:id', VentasController.soloLectura);
 router.delete('/:id', VentasController.soloLectura);
