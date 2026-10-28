@@ -307,23 +307,6 @@ export function CompraFormModal({ open, onClose, compra = null, onSave, isLoadin
               />
             </div>
 
-            {/* Estado */}
-            <div className="sm:col-span-1">
-              <label htmlFor="compra_estado" className="block mb-1.5 text-xs sm:text-sm font-bold text-foreground">
-                Estado de la Compra <span className="text-destructive font-bold ml-0.5">*</span>
-              </label>
-              <Combobox
-                id="compra_estado"
-                name="estado"
-                value={estado}
-                onChange={(e) => setEstado(e.target.value)}
-                options={[
-                  { value: 'Registrada', label: 'Registrada' },
-                  { value: 'Anulada', label: 'Anulada' },
-                ]}
-              />
-            </div>
-
             {/* Soporte: factura o comprobante */}
             <div className="sm:col-span-2 p-4 rounded-xl border border-border bg-muted/20 space-y-2">
               <span className="text-xs sm:text-sm font-bold text-foreground flex items-center gap-2">
@@ -504,6 +487,23 @@ export function CompraFormModal({ open, onClose, compra = null, onSave, isLoadin
             <span className="text-base sm:text-lg font-bold font-mono text-primary">
               ${valorTotalCalculado.toLocaleString('es-CO')}
             </span>
+          </div>
+
+          {/* Estado */}
+          <div>
+            <label htmlFor="compra_estado" className="block mb-1.5 text-xs sm:text-sm font-bold text-foreground">
+              Estado de la Compra <span className="text-destructive font-bold ml-0.5">*</span>
+            </label>
+            <Combobox
+              id="compra_estado"
+              name="estado"
+              value={estado}
+              onChange={(e) => setEstado(e.target.value)}
+              options={[
+                { value: 'Registrada', label: 'Registrada' },
+                { value: 'Anulada', label: 'Anulada' },
+              ]}
+            />
           </div>
         </div>
       ),
