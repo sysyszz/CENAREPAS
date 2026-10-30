@@ -27,6 +27,19 @@ export const TRANSICIONES_PEDIDO = {
   Anulado: [],
 };
 
+/**
+ * Anular una venta (pedido Entregado → Anulado): solo dentro de estas horas
+ * contadas desde fecha_entregado (cambiar a 24 aquí o con la variable de entorno).
+ */
+export const HORAS_LIMITE_ANULACION = Number(process.env.HORAS_LIMITE_ANULACION || 48);
+
+/** Roles (por nombre) que pueden anular una venta. */
+export const ROLES_ANULAR_VENTA = ['Administrador'];
+
+/** Largo del motivo al anular una venta (motivo_anulacion es VARCHAR(255)). */
+export const MOTIVO_ANULACION_MIN = 10;
+export const MOTIVO_ANULACION_MAX = 255;
+
 export const MEDIOS_PAGO = ['Efectivo', 'Tarjeta', 'Transferencia'];
 
 /**

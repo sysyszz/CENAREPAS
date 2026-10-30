@@ -2,6 +2,14 @@ import { useState, useEffect, useMemo } from 'react';
 import { getPedidos, createPedido, updatePedido, deletePedido } from '../services/pedidosService';
 import { toast } from '../../../shared/utils/toast';
 
+// Pedidos y Ventas son la misma entidad: un pedido Entregado es una venta y se
+// muestra en el módulo de Ventas, no aquí.
+export const esEntregado = (pedido) => String(pedido?.estado || '').toLowerCase() === 'entregado';
+
+// Venta: entregado, o anulado después de entregarse (fecha_entregado). Ambos viven en Ventas.
+export const esVenta = (pedido) =>
+  esEntregado(pedido) || (String(pedido?.estado || '').toLowerCase() === 'anulado' && Boolean(pedido?.fecha_entregado));
+
 export function usePedidos() {
   const [pedidos, setPedidos] = useState([]);
   const [searchQuery, setSearchQuery] = useState('');
@@ -34,6 +42,7 @@ export function usePedidos() {
 
   const filteredPedidos = useMemo(() => {
     return pedidos.filter((p) => {
+      if (esVenta(p)) return false;
       const q = searchQuery.toLowerCase().trim();
       const matchesSearch =
         !q ||
@@ -47,14 +56,24 @@ export function usePedidos() {
   }, [pedidos, searchQuery, estadoFilter]);
 
   const handleSave = async (formData) => {
+    if (formData.id_pedido && esVenta(pedidos.find((p) => p.id_pedido === formData.id_pedido))) {
+      toast.error(`El pedido #${formData.id_pedido} ya fue entregado: se consulta en Ventas`);
+      setShowModal(false);
+      return;
+    }
     setIsSaving(true);
     try {
       if (formData.id_pedido) {
         const updated = await updatePedido(formData.id_pedido, formData);
+        // Al quedar Entregado sale de la tabla de Pedidos (ver filtro) y aparece en Ventas.
         setPedidos((prev) =>
           prev.map((p) => (p.id_pedido === formData.id_pedido ? { ...p, ...updated } : p))
         );
-        toast.success('Cambios guardados');
+        if (esEntregado(updated) || (!updated?.estado && esEntregado(formData))) {
+          toast.success(`El pedido #${formData.id_pedido} fue entregado y ahora aparece en Ventas`);
+        } else {
+          toast.success('Cambios guardados');
+        }
       } else {
         const created = await createPedido(formData);
         setPedidos((prev) => [created, ...prev]);

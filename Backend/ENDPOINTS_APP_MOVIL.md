@@ -133,7 +133,9 @@ Tipos de notificación: `pedido_creado`, `pedido_estado`, `abono_aprobado` y `ab
 | PUT | `/pedidos/:id` | pedidos:editar | **Modificado:** productos, cliente y fecha solo en Pendiente. Si el `estado` cambia, aplica la transición con sus permisos |
 | PATCH | `/pedidos/:id/estado` `{ estado, motivo? }` | pedidos:cambiar_estado (+ anular) | **Nuevo:** notifica al cliente |
 | DELETE | `/pedidos/:id` | pedidos:anular | **Modificado:** anula (no borra) |
-| GET | `/ventas`, `/ventas/:id` | ventas:ver | **Modificado:** vista de **solo lectura** de los pedidos Entregado |
+| GET | `/ventas`, `/ventas/:id` | ventas:ver | **Modificado:** vista de **solo lectura** de los pedidos Entregado. Con `?incluir_anuladas=1` (lo usa la web) incluye también las ventas anuladas (`estado` = `Anulada`). Cada fila trae `fecha_entregado`, `fecha_anulacion`, `motivo_anulacion`, `anulado_por` y `horas_para_anular` (null si ya no se puede) |
+| POST | `/ventas/:id/anular` `{ motivo }` | ventas:anular + rol en `ROLES_ANULAR_VENTA` (por defecto Administrador) | **Nuevo:** la venta pasa a Anulado (no se borra). 400 si no está Entregado, si el motivo no tiene 10 a 255 caracteres o si pasaron `HORAS_LIMITE_ANULACION` (48) desde la entrega; 403 si el rol no puede. Mismos efectos de siempre: repone stock, anula el crédito y rechaza los abonos en revisión |
+| — | Anular un pedido **Entregado** por `/pedidos` (DELETE, PUT o PATCH) | — | **Modificado:** aplica la misma regla de rol, motivo y plazo que `POST /ventas/:id/anular` |
 | POST, PUT, DELETE | `/ventas` | — | **Modificado:** 405 |
 | GET | `/abonos?estado=En revisión&id_pedido=&id_credito=` | abonos:ver | **Nuevo** (HU-171) |
 | GET | `/abonos/creditos?estado=&id_cliente=` | abonos:ver | **Nuevo** |
