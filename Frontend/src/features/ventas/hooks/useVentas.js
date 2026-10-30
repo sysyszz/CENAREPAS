@@ -1,10 +1,13 @@
 import { useState, useEffect, useMemo } from 'react';
 import { getVentas } from '../services/ventasService';
 
+export const esVentaAnulada = (v) => String(v?.estado || '').toLowerCase() === 'anulada';
+
 export function useVentas() {
   const [ventas, setVentas] = useState([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [estadoFilter, setEstadoFilter] = useState('Todos');
+  const [mostrarAnuladas, setMostrarAnuladas] = useState(true);
   const [detailModal, setDetailModal] = useState({ isOpen: false, data: null });
   const [isLoading, setIsLoading] = useState(true);
   const [loadError, setLoadError] = useState(null);
@@ -27,6 +30,7 @@ export function useVentas() {
 
   const filteredVentas = useMemo(() => {
     return ventas.filter((v) => {
+      if (!mostrarAnuladas && esVentaAnulada(v)) return false;
       const q = searchQuery.toLowerCase().trim();
       const matchesSearch =
         !q ||
@@ -38,11 +42,13 @@ export function useVentas() {
       const matchesEstado = isTodosEstado || String(v.estado).toLowerCase() === String(estadoFilter).toLowerCase();
       return matchesSearch && matchesEstado;
     });
-  }, [ventas, searchQuery, estadoFilter]);
+  }, [ventas, searchQuery, estadoFilter, mostrarAnuladas]);
 
-  // Solo lectura: el backend responde 405 a crear, editar o anular ventas (una venta
-  // es un pedido Entregado; se anula desde Pedidos).
+  // Solo lectura: el backend responde 405 a crear o editar ventas (una venta es un
+  // pedido Entregado). Anular: useAnularVenta, dentro del plazo.
   return {
+    mostrarAnuladas,
+    setMostrarAnuladas,
     ventas: filteredVentas,
     rawVentas: ventas,
     searchQuery,

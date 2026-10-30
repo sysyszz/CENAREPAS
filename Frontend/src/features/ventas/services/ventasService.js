@@ -1,8 +1,14 @@
 // ventasService.js - Servicio para la gestión de ventas en Masarepas
 import { api, apiBlob } from '../../../shared/services/api.js';
 
+// incluir_anuladas=1: también las ventas anuladas (siguen visibles en Ventas).
 export const getVentas = async () => {
-  return api.get('/ventas');
+  return api.get('/ventas?incluir_anuladas=1');
+};
+
+/** Anula la venta (queda Anulada, no se borra). El backend valida rol, motivo y plazo. */
+export const anularVenta = async (idVenta, motivo) => {
+  return api.post(`/ventas/${idVenta}/anular`, { motivo });
 };
 
 /**
@@ -19,4 +25,5 @@ export const obtenerUrlComprobante = async (idVenta) => {
   return { url: enlace?.url, local: false };
 };
 
-// Ventas de solo lectura: son los pedidos Entregado (POST, PUT y DELETE /ventas → 405).
+// Ventas de solo lectura: son los pedidos Entregado (POST, PUT y DELETE /ventas → 405);
+// la única acción es anular, dentro del plazo (POST /ventas/:id/anular).

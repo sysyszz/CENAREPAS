@@ -3,7 +3,8 @@ import { enTransaccion } from '../utils/transaccion.js';
 import { badRequest, conflict, forbidden, notFound } from '../utils/httpError.js';
 import { enteroPositivo, normalizarEstadoPedido, normalizarMedioPago, texto } from '../utils/normalizar.js';
 import {
-  ANTICIPACION_ANULAR_HORAS, COSTO_ENVIO, MUNICIPIOS_ENTREGA, SEDE_PEDIDOS_CLIENTE, TRANSICIONES_PEDIDO,
+  ANTICIPACION_ANULAR_HORAS, COSTO_ENVIO, HORAS_LIMITE_ANULACION, MOTIVO_ANULACION_MAX, MOTIVO_ANULACION_MIN,
+  MUNICIPIOS_ENTREGA, ROLES_ANULAR_VENTA, SEDE_PEDIDOS_CLIENTE, TRANSICIONES_PEDIDO,
 } from '../config/negocio.js';
 import { CreditosService } from './creditos.service.js';
 import { eliminarSinAsociados } from '../utils/eliminacion.js';
@@ -381,6 +382,9 @@ export class PedidosService {
     if (!TRANSICIONES_PEDIDO[pedido.estado].includes(nuevoEstado)) {
       throw conflict(`Un pedido ${pedido.estado} no puede pasar a ${nuevoEstado}`);
     }
+    if (pedido.estado === 'Entregado' && nuevoEstado === 'Anulado') {
+      await this.#validarAnulacionVenta(db, usuario, id, motivo);
+    }
     let motivoNotificado = null;
 
     if (nuevoEstado === 'Entregado') {
@@ -427,6 +431,35 @@ export class PedidosService {
 
     await this.#registrarEstado(db, id, pedido.estado, nuevoEstado, usuario.id_usuario, motivoNotificado);
     await NotificacionesService.pedidoEstado(db, { id_pedido: Number(id), estado: nuevoEstado }, motivoNotificado);
+  }
+
+  /**
+   * Anular una venta (Entregado → Anulado), venga de Ventas o de Pedidos: solo
+   * los ROLES_ANULAR_VENTA, con motivo y dentro de HORAS_LIMITE_ANULACION desde
+   * fecha_entregado (una venta antigua sin esa fecha ya no se puede anular).
+   */
+  static async #validarAnulacionVenta(db, usuario, id, motivo) {
+    if (!ROLES_ANULAR_VENTA.includes(usuario?.rol)) {
+      throw forbidden(`Solo ${ROLES_ANULAR_VENTA.join(' o ')} puede anular una venta`);
+    }
+    const largo = texto(motivo).length;
+    if (largo < MOTIVO_ANULACION_MIN || largo > MOTIVO_ANULACION_MAX) {
+      throw badRequest(
+        `Escribe el motivo de la anulación (entre ${MOTIVO_ANULACION_MIN} y ${MOTIVO_ANULACION_MAX} caracteres)`,
+        { motivo: `Entre ${MOTIVO_ANULACION_MIN} y ${MOTIVO_ANULACION_MAX} caracteres` }
+      );
+    }
+    const res = await db.query(
+      `SELECT fecha_entregado IS NOT NULL
+              AND fecha_entregado + make_interval(hours => $2) > LOCALTIMESTAMP AS a_tiempo
+       FROM pedido WHERE id_pedido = $1`,
+      [id, HORAS_LIMITE_ANULACION]
+    );
+    if (!res.rows[0]?.a_tiempo) {
+      throw badRequest(
+        `El plazo para anular esta venta ya venció: solo se puede anular durante las ${HORAS_LIMITE_ANULACION} horas siguientes a la entrega`
+      );
+    }
   }
 
   /**

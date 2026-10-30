@@ -1,6 +1,6 @@
 import { useState, useMemo, useEffect } from 'react';
 import { ClipboardList, CheckCircle, Truck, DollarSign } from 'lucide-react';
-import { usePedidos } from '../hooks/usePedidos';
+import { usePedidos, esVenta } from '../hooks/usePedidos';
 import { getClientes } from '../../clientes/services/clientesService';
 import { getUsuarios } from '../../usuarios/services/usuariosService';
 import { getSedes } from '../../sedes/services/sedesService';
@@ -17,6 +17,12 @@ import { CustomSelect } from '../../../shared/components/CustomSelect';
 import ErrorBanner from '../../../shared/components/ErrorBanner';
 import { exportToPdf } from '../../../shared/utils/exportToPdf';
 import { exportToExcel } from '../../../shared/utils/exportToExcel';
+
+// La columna Estado siempre va de última, aunque se agreguen columnas nuevas.
+const conEstadoAlFinal = (columns) => [
+  ...columns.filter((c) => c.key !== 'estado'),
+  ...columns.filter((c) => c.key === 'estado'),
+];
 
 export default function PedidosPage() {
   const { can } = usePermissions();
@@ -88,6 +94,8 @@ export default function PedidosPage() {
 
   const filteredData = useMemo(() => {
     return rawPedidos.filter((p) => {
+      // Un pedido Entregado (o una venta anulada) es una venta: se consulta en Ventas.
+      if (esVenta(p)) return false;
       const q = searchQuery.toLowerCase().trim();
       const clienteNombre = (clientesNames[p.id_cliente] || '').toLowerCase();
       const usuarioNombre = (usuariosNames[p.id_usuario] || '').toLowerCase();
@@ -108,7 +116,7 @@ export default function PedidosPage() {
   }, [rawPedidos, searchQuery, estadoFilter, clientesNames, usuariosNames]);
 
   const columns = useMemo(
-    () => [
+    () => conEstadoAlFinal([
       {
         key: 'id_pedido',
         label: 'ID',
@@ -173,7 +181,7 @@ export default function PedidosPage() {
               setSelectedPedido(pedido);
               setShowModal(true);
             }}
-            editDisabled={!can('pedidos', 'editar')}
+            editDisabled={!can('pedidos', 'editar') || esVenta(pedido)}
             onDelete={() =>
               setDeleteDialog({
                 isOpen: true,
@@ -185,7 +193,7 @@ export default function PedidosPage() {
           />
         ),
       },
-    ],
+    ]),
     [can, setDetailModal, setShowModal, setDeleteDialog, handleRequestStatusChange]
   );
 
@@ -294,7 +302,6 @@ export default function PedidosPage() {
             <option value="Pendiente">Pendiente</option>
             <option value="En preparacion">En Preparación</option>
             <option value="Listo para entregar">Listo para Entregar</option>
-            <option value="Entregado">Entregado</option>
             <option value="Anulado">Anulado</option>
           </CustomSelect>
         }

@@ -1,7 +1,10 @@
 import { useState, useMemo, useEffect } from 'react';
 import { DollarSign, BarChart3, TrendingUp, ShoppingBag } from 'lucide-react';
-import { useVentas } from '../hooks/useVentas';
+import { useVentas, esVentaAnulada } from '../hooks/useVentas';
+import { useAnularVenta } from '../hooks/useAnularVenta';
 import ComprobanteVentaButton from '../components/ComprobanteVentaButton';
+import AnularVentaButton from '../components/AnularVentaButton';
+import AnularVentaModal from '../components/AnularVentaModal';
 import { getClientes } from '../../clientes/services/clientesService';
 import { getUsuarios } from '../../usuarios/services/usuariosService';
 import { DataTable } from '../../../shared/components/DataTable';
@@ -15,6 +18,12 @@ import ErrorBanner from '../../../shared/components/ErrorBanner';
 import { exportToPdf } from '../../../shared/utils/exportToPdf';
 import { exportToExcel } from '../../../shared/utils/exportToExcel';
 
+// La columna Estado siempre va de última, aunque se agreguen columnas nuevas.
+const conEstadoAlFinal = (columns) => [
+  ...columns.filter((c) => c.key !== 'estado'),
+  ...columns.filter((c) => c.key === 'estado'),
+];
+
 export default function VentasPage() {
   const {
     rawVentas,
@@ -27,7 +36,10 @@ export default function VentasPage() {
     isLoading,
     loadError,
     refetch,
+    mostrarAnuladas,
+    setMostrarAnuladas,
   } = useVentas();
+  const anulacion = useAnularVenta(refetch);
   const [clientes, setClientes] = useState([]);
   const [usuarios, setUsuarios] = useState([]);
 
@@ -50,15 +62,18 @@ export default function VentasPage() {
   );
 
 
-  const totalVentas = rawVentas.length;
+  // Las tarjetas no cuentan las ventas anuladas (su dinero ya no es una venta).
+  const vigentes = useMemo(() => rawVentas.filter((v) => !esVentaAnulada(v)), [rawVentas]);
+  const totalVentas = vigentes.length;
   const ventasHoy = useMemo(
-    () => rawVentas.reduce((acc, v) => acc + (Number(v.valor_total) || 0), 0),
-    [rawVentas]
+    () => vigentes.reduce((acc, v) => acc + (Number(v.valor_total) || 0), 0),
+    [vigentes]
   );
   const promedioVentas = totalVentas > 0 ? ventasHoy / totalVentas : 0;
 
   const filteredData = useMemo(() => {
     return rawVentas.filter((v) => {
+      if (!mostrarAnuladas && esVentaAnulada(v)) return false;
       const q = (searchQuery || '').toLowerCase().trim();
       const clienteNombre = (clientesNames[v.id_cliente] || '').toLowerCase();
       const usuarioNombre = (usuariosNames[v.id_usuario] || '').toLowerCase();
@@ -74,10 +89,10 @@ export default function VentasPage() {
       const matchesEstado = isTodosEstado || String(v.estado).toLowerCase() === String(estadoFilter).toLowerCase();
       return matchesSearch && matchesEstado;
     });
-  }, [rawVentas, searchQuery, estadoFilter, clientesNames, usuariosNames]);
+  }, [rawVentas, searchQuery, estadoFilter, clientesNames, usuariosNames, mostrarAnuladas]);
 
   const columns = useMemo(
-    () => [
+    () => conEstadoAlFinal([
       {
         key: 'id_venta',
         label: 'ID',
@@ -138,12 +153,15 @@ export default function VentasPage() {
         key: 'acciones',
         label: 'Acciones',
         render: (_, venta) => (
-          // Solo lectura: una venta es un pedido Entregado (se anula desde Pedidos).
-          <RowActions onView={() => setDetailModal({ isOpen: true, data: venta })} />
+          // Solo lectura: Ver detalle y, si no está anulada, Anular venta (dentro del plazo).
+          <RowActions
+            onView={() => setDetailModal({ isOpen: true, data: venta })}
+            extra={esVentaAnulada(venta) ? null : <AnularVentaButton venta={venta} onAnular={anulacion.abrir} />}
+          />
         ),
       },
-    ],
-    [clientesNames, usuariosNames, setDetailModal]
+    ]),
+    [clientesNames, usuariosNames, setDetailModal, anulacion.abrir]
   );
 
   const handleExportPdf = () => {
@@ -228,16 +246,27 @@ export default function VentasPage() {
         searchValue={searchQuery}
         onSearchChange={setSearchQuery}
         filters={
-          <CustomSelect
-            value={estadoFilter}
-            onChange={(e) => setEstadoFilter(e.target.value)}
-            className="w-full sm:w-48"
-          >
-            <option value="Todos">Todos los estados</option>
-            <option value="Pendiente">Pendiente</option>
-            <option value="Pagada">Pagada</option>
-            <option value="Anulada">Anulada</option>
-          </CustomSelect>
+          <>
+            <CustomSelect
+              value={estadoFilter}
+              onChange={(e) => setEstadoFilter(e.target.value)}
+              className="w-full sm:w-48"
+            >
+              <option value="Todos">Todos los estados</option>
+              <option value="Pendiente">Pendiente</option>
+              <option value="Pagada">Pagada</option>
+              <option value="Anulada">Anulada</option>
+            </CustomSelect>
+            <label className="inline-flex items-center gap-2 text-sm text-foreground whitespace-nowrap cursor-pointer">
+              <input
+                type="checkbox"
+                checked={mostrarAnuladas}
+                onChange={(e) => setMostrarAnuladas(e.target.checked)}
+                className="size-4 accent-[#C1502D] cursor-pointer"
+              />
+              Mostrar anuladas
+            </label>
+          </>
         }
       />
       <DetailModal
@@ -274,8 +303,26 @@ export default function VentasPage() {
               'Sin comprobante adjunto'
             ),
           },
+          // La anulación (quién, cuándo y por qué) justo antes del Estado, que sigue de último.
+          ...(esVentaAnulada(detailModal.data) ? [
+            { label: 'Anulada por', value: detailModal.data.anulado_por || 'Sin registro' },
+            {
+              label: 'Fecha de Anulación',
+              value: detailModal.data.fecha_anulacion ? new Date(detailModal.data.fecha_anulacion).toLocaleString('es-CO') : 'N/A',
+            },
+            { label: 'Motivo de Anulación', value: detailModal.data.motivo_anulacion || 'Sin motivo registrado' },
+          ] : []),
           { label: 'Estado', value: detailModal.data.estado },
         ] : []}
+      />
+
+      <AnularVentaModal
+        venta={anulacion.venta}
+        enviando={anulacion.enviando}
+        error={anulacion.error}
+        onConfirmar={anulacion.confirmar}
+        onCerrar={anulacion.cerrar}
+        onEscribir={anulacion.limpiarError}
       />
     </div>
   );
