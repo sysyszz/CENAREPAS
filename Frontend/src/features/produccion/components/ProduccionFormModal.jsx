@@ -4,6 +4,7 @@ import { getFichasTecnicas, getFichaTecnicaInsumos } from '../../fichas-tecnicas
 import { getInsumos } from '../../insumos/services/insumosService';
 import { getUsuarios } from '../../usuarios/services/usuariosService';
 import { Combobox } from '../../../shared/ui/Combobox';
+import { formatDate } from '../../../shared/utils/formatDate';
 
 export function ProduccionFormModal({ open, onClose, lote = null, onSave, isLoading = false }) {
   const [idFicha, setIdFicha] = useState('1');
@@ -37,7 +38,7 @@ export function ProduccionFormModal({ open, onClose, lote = null, onSave, isLoad
       setIdFicha(lote.id_ficha ? String(lote.id_ficha) : '1');
       setCantidadProducida(lote.cantidad_producida != null ? String(lote.cantidad_producida) : '');
       setIdUsuarioResponsable(lote.id_usuario_responsable ? String(lote.id_usuario_responsable) : '1');
-      setFechaProduccion(lote.fecha_produccion || '');
+      setFechaProduccion(formatDate(lote.fecha_produccion, { forInput: true }));
       setEstado(lote.estado || 'en_proceso');
       setObservaciones(lote.observaciones || '');
       if (Array.isArray(lote.insumos)) {
@@ -47,7 +48,7 @@ export function ProduccionFormModal({ open, onClose, lote = null, onSave, isLoad
       setIdFicha(fichas[0]?.id_ficha ? String(fichas[0].id_ficha) : '1');
       setCantidadProducida('');
       setIdUsuarioResponsable(usuarios[0]?.id_usuario ? String(usuarios[0].id_usuario) : '1');
-      setFechaProduccion(new Date().toISOString().split('T')[0]);
+      setFechaProduccion(formatDate(new Date(), { forInput: true }));
       setEstado('en_proceso');
       setObservaciones('');
     }
@@ -113,7 +114,7 @@ export function ProduccionFormModal({ open, onClose, lote = null, onSave, isLoad
           id_ficha: Number(idFicha) || 1,
           cantidad_producida: Number(cantidadProducida) || 0,
           id_usuario_responsable: Number(idUsuarioResponsable) || 1,
-          fecha_produccion: fechaProduccion || new Date().toISOString().split('T')[0],
+          fecha_produccion: formatDate(fechaProduccion || new Date(), { forInput: true }),
           insumos: insumosList,
           estado,
           observaciones: observaciones.trim() || null,
@@ -122,7 +123,7 @@ export function ProduccionFormModal({ open, onClose, lote = null, onSave, isLoad
           id_ficha: Number(idFicha) || 1,
           cantidad_producida: Number(cantidadProducida) || 0,
           id_usuario_responsable: Number(idUsuarioResponsable) || 1,
-          fecha_produccion: fechaProduccion || new Date().toISOString().split('T')[0],
+          fecha_produccion: formatDate(fechaProduccion || new Date(), { forInput: true }),
           insumos: insumosList,
           estado: estado || 'en_proceso',
           observaciones: observaciones.trim() || null,

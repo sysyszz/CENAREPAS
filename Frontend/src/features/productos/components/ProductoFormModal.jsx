@@ -4,6 +4,7 @@ import { getCategorias } from '../../categorias/services/categoriasService';
 import { getFichasTecnicas } from '../../fichas-tecnicas/services/fichasTecnicasService';
 import { getProveedores } from '../../proveedores/services/proveedoresService';
 import { Combobox } from '../../../shared/ui/Combobox';
+import { formatDate } from '../../../shared/utils/formatDate';
 
 export function ProductoFormModal({ open, onClose, producto = null, onSave, isLoading = false }) {
   const [nombre, setNombre] = useState('');
@@ -48,7 +49,7 @@ export function ProductoFormModal({ open, onClose, producto = null, onSave, isLo
       setImagenUrl(producto.imagen_url || '');
       setUrlInput('');
       setStockMinimo(producto.stock_minimo != null ? String(producto.stock_minimo) : '0');
-      setFechaVencimiento(producto.fecha_vencimiento || '');
+      setFechaVencimiento(formatDate(producto.fecha_vencimiento, { forInput: true }));
       setEstado(producto.estado || 'activo');
     } else {
       setNombre('');

@@ -14,6 +14,7 @@ import { MetricCard } from '../../../shared/components/MetricCard';
 import { usePermissions } from '../../../shared/contexts/PermissionContext';
 import StatusSwitch from '../../../shared/components/StatusSwitch';
 import { CustomSelect } from '../../../shared/components/CustomSelect';
+import { formatDate } from '../../../shared/utils/formatDate';
 
 export default function ProduccionPage() {
   const { can } = usePermissions();
@@ -131,7 +132,7 @@ export default function ProduccionPage() {
       {
         key: 'fecha_produccion',
         label: 'Fecha',
-        render: (value) => <span className="text-muted-foreground text-sm">{value}</span>,
+        render: (value) => <span className="text-muted-foreground text-sm">{formatDate(value)}</span>,
       },
       {
         key: 'estado',
@@ -231,7 +232,7 @@ export default function ProduccionPage() {
           { label: 'ID', value: `#${detailModal.data.id_lote}` },
           { label: 'Ficha / Receta', value: fichasNames[detailModal.data.id_ficha] || `Receta #${detailModal.data.id_ficha}` },
           { label: 'Responsable', value: usuariosNames[detailModal.data.id_usuario_responsable] || `Usuario #${detailModal.data.id_usuario_responsable}` },
-          { label: 'Fecha de Producción', value: detailModal.data.fecha_produccion },
+          { label: 'Fecha de Producción', value: formatDate(detailModal.data.fecha_produccion) },
           { label: 'Cantidad Producida', value: `${Number(detailModal.data.cantidad_producida || 0).toLocaleString('es-CO')} und` },
           {
             label: 'Insumos Utilizados',

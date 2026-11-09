@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo, useEffect, useCallback } from 'react';
 import { motion } from 'framer-motion';
 import { Box, CheckCircle, AlertTriangle, DollarSign, Calendar } from 'lucide-react';
 import { useProductos } from '../hooks/useProductos';
@@ -13,6 +13,7 @@ import PageHeader from '../../../shared/components/PageHeader';
 import { usePermissions } from '../../../shared/contexts/PermissionContext';
 import StatusSwitch from '../../../shared/components/StatusSwitch';
 import { CustomSelect } from '../../../shared/components/CustomSelect';
+import { formatDate } from '../../../shared/utils/formatDate';
 
 export default function ProductosPage() {
   const { can } = usePermissions();
@@ -82,29 +83,19 @@ export default function ProductosPage() {
     0
   );
 
-  const formatVencimiento = (dateStr) => {
-    if (!dateStr) {
-      return <span className="text-muted-foreground/80 text-xs font-medium select-none">N/A</span>;
+  const formatVencimiento = useCallback((dateStr) => {
+    const targetDate = formatDate(dateStr, { forInput: true });
+    if (!targetDate) {
+      return <span className="text-muted-foreground text-xs">—</span>;
     }
 
-    const expDate = new Date(dateStr);
-    if (isNaN(expDate.getTime())) {
-      return <span className="text-muted-foreground text-xs">{dateStr}</span>;
-    }
-
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    const target = new Date(expDate);
-    target.setHours(0, 0, 0, 0);
-
-    const diffTime = target.getTime() - today.getTime();
-    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-
-    const formattedDate = target.toLocaleDateString('es-CO', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric',
-    });
+    const todayDate = formatDate(new Date(), { forInput: true });
+    const toUtcDay = (value) => {
+      const [year, month, day] = value.split('-').map(Number);
+      return Date.UTC(year, month - 1, day);
+    };
+    const diffDays = Math.round((toUtcDay(targetDate) - toUtcDay(todayDate)) / (1000 * 60 * 60 * 24));
+    const formattedDate = formatDate(dateStr);
 
     if (diffDays < 0) {
       return (
@@ -140,7 +131,7 @@ export default function ProductosPage() {
         </div>
       );
     }
-  };
+  }, []);
 
   const columns = useMemo(
     () => [
@@ -239,7 +230,7 @@ export default function ProductosPage() {
         render: (value) => <StatusSwitch value={value} />,
       },
     ],
-    [categoryNames]
+    [categoryNames, formatVencimiento]
   );
 
   const kpiCards = [
@@ -386,7 +377,7 @@ export default function ProductosPage() {
                 { label: 'Stock Mínimo', value: detailModal.data.stock_minimo },
                 {
                   label: 'Fecha de Vencimiento',
-                  value: detailModal.data.fecha_vencimiento || 'N/A',
+                  value: formatDate(detailModal.data.fecha_vencimiento),
                 },
                 {
                   label: 'Ficha Técnica / Receta',
