@@ -47,7 +47,7 @@ export function FichaTecnicaFormModal({ open, onClose, ficha = null, onSave, isL
               id_insumo: item.id_insumo,
               nombre: item.insumo_nombre || insumoData?.nombre || '—',
               cantidad: item.cantidad,
-              unidad_medida: item.unidad_medida || insumoData?.unidad_medida || 'kg',
+              unidad_medida: item.unidad_medida || insumoData?.unidad_medida || '—',
             };
           })
         );
@@ -88,7 +88,7 @@ export function FichaTecnicaFormModal({ open, onClose, ficha = null, onSave, isL
           id_insumo: insumoObj.id_insumo,
           nombre: insumoObj.nombre,
           cantidad: Number(cantidadInsumo),
-          unidad_medida: insumoObj.unidad_medida || 'kg',
+          unidad_medida: insumoObj.unidad_medida || '—',
         },
       ]);
     }

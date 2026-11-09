@@ -42,11 +42,15 @@ export function ProduccionFormModal({ open, onClose, lote = null, onSave, isLoad
       setEstado(lote.estado || 'en_proceso');
       setObservaciones(lote.observaciones || '');
       const loteInsumos = Array.isArray(lote.insumos) ? lote.insumos : lote.insumos_consumidos;
-      setInsumosList(Array.isArray(loteInsumos) ? loteInsumos.map((item) => ({
-        ...item,
-        nombre: item.insumo_nombre || item.nombre || '—',
-        cantidad: item.cantidad ?? item.cantidad_consumida,
-      })) : []);
+      setInsumosList(Array.isArray(loteInsumos) ? loteInsumos.map((item) => {
+        const ins = availableInsumos.find((availableItem) => availableItem.id_insumo === item.id_insumo);
+        return {
+          ...item,
+          nombre: item.insumo_nombre || item.nombre || ins?.nombre || '—',
+          cantidad: item.cantidad ?? item.cantidad_consumida,
+          unidad_medida: item.unidad_medida || ins?.unidad_medida || '—',
+        };
+      }) : []);
     } else {
       setIdFicha(fichas[0]?.id_ficha ? String(fichas[0].id_ficha) : '');
       setCantidadProducida('');
@@ -55,7 +59,7 @@ export function ProduccionFormModal({ open, onClose, lote = null, onSave, isLoad
       setEstado('en_proceso');
       setObservaciones('');
     }
-  }, [lote, open, fichas, usuarios]);
+  }, [lote, open, fichas, usuarios, availableInsumos]);
 
   // Actualizar insumos requeridos cuando cambia la ficha seleccionada
   useEffect(() => {
@@ -69,7 +73,7 @@ export function ProduccionFormModal({ open, onClose, lote = null, onSave, isLoad
               id_insumo: item.id_insumo,
               nombre: ins?.nombre || item.insumo_nombre || `Insumo #${item.id_insumo}`,
               cantidad: item.cantidad,
-              unidad_medida: item.unidad_medida || ins?.unidad_medida || 'kg',
+              unidad_medida: item.unidad_medida || ins?.unidad_medida || '—',
             };
           })
         );
@@ -97,7 +101,7 @@ export function ProduccionFormModal({ open, onClose, lote = null, onSave, isLoad
           id_insumo: ins.id_insumo,
           nombre: ins.nombre,
           cantidad: Number(cantidadInsumo),
-          unidad_medida: ins.unidad_medida || 'kg',
+          unidad_medida: ins.unidad_medida || '—',
         },
       ]);
     }

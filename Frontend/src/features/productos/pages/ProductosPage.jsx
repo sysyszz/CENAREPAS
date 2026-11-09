@@ -15,6 +15,9 @@ import StatusSwitch from '../../../shared/components/StatusSwitch';
 import { CustomSelect } from '../../../shared/components/CustomSelect';
 import { formatDate } from '../../../shared/utils/formatDate';
 
+const hasNumericValue = (value) =>
+  value !== null && value !== undefined && value !== '' && Number.isFinite(Number(value));
+
 export default function ProductosPage() {
   const { can } = usePermissions();
   const {
@@ -78,12 +81,16 @@ export default function ProductosPage() {
     (p) => String(p.estado).toLowerCase() === 'disponible' || String(p.estado).toLowerCase() === 'activo'
   ).length;
   const bajoStock = productos.filter(
-    (p) => String(p.estado).toLowerCase() === 'bajo stock' || Number(p.stock_actual) <= Number(p.stock_minimo)
+    (p) => String(p.estado).toLowerCase() === 'bajo stock' ||
+      (hasNumericValue(p.stock_actual) && hasNumericValue(p.stock_minimo) &&
+        Number(p.stock_actual) <= Number(p.stock_minimo))
   ).length;
-  const valorInventario = productos.reduce(
-    (acc, p) => acc + Number(p.precio_venta || 0) * Number(p.stock_actual || 0),
-    0
+  const hasCompleteInventoryValues = productos.every(
+    (p) => hasNumericValue(p.precio_venta) && hasNumericValue(p.stock_actual)
   );
+  const valorInventario = hasCompleteInventoryValues
+    ? productos.reduce((acc, p) => acc + Number(p.precio_venta) * Number(p.stock_actual), 0)
+    : null;
 
   const formatVencimiento = useCallback((dateStr) => {
     const targetDate = formatDate(dateStr, { forInput: true });
@@ -198,7 +205,7 @@ export default function ProductosPage() {
         label: 'Precio',
         render: (value) => (
           <span className="font-medium text-sm">
-            ${Number(value || 0).toLocaleString('es-CO')}
+            {hasNumericValue(value) ? `$${Number(value).toLocaleString('es-CO')}` : '—'}
           </span>
         ),
       },
@@ -206,11 +213,12 @@ export default function ProductosPage() {
         key: 'stock_actual',
         label: 'Stock',
         render: (value, prod) => {
-          const isLow = Number(value) <= Number(prod.stock_minimo || 0);
+          const isLow = hasNumericValue(value) && hasNumericValue(prod.stock_minimo) &&
+            Number(value) <= Number(prod.stock_minimo);
           return (
             <div className="flex items-center gap-1.5">
               <span className={`font-semibold text-sm ${isLow ? 'text-amber-600 dark:text-amber-400 font-bold' : ''}`}>
-                {value}
+                {hasNumericValue(value) ? value : '—'}
               </span>
               {isLow && (
                 <span className="px-1.5 py-0.5 bg-amber-500/10 text-amber-600 dark:text-amber-400 text-[10px] rounded font-semibold">
@@ -241,7 +249,9 @@ export default function ProductosPage() {
     { title: 'Bajo Stock', value: isLoading || hasLoadError ? '—' : bajoStock, icon: AlertTriangle, iconStyle: 'bg-warning/10 text-warning' },
     {
       title: 'Valor Inventario',
-      value: isLoading || hasLoadError ? '—' : `$${valorInventario.toLocaleString('es-CO')}`,
+      value: isLoading || hasLoadError || valorInventario === null
+        ? '—'
+        : `$${valorInventario.toLocaleString('es-CO')}`,
       icon: DollarSign,
       iconStyle: 'bg-accent/10 text-primary',
     },
@@ -373,10 +383,18 @@ export default function ProductosPage() {
                 { label: 'Descripción', value: detailModal.data.descripcion || 'N/A' },
                 {
                   label: 'Precio de Venta',
-                  value: `$${Number(detailModal.data.precio_venta || 0).toLocaleString('es-CO')}`,
+                  value: hasNumericValue(detailModal.data.precio_venta)
+                    ? `$${Number(detailModal.data.precio_venta).toLocaleString('es-CO')}`
+                    : '—',
                 },
-                { label: 'Stock Actual', value: detailModal.data.stock_actual },
-                { label: 'Stock Mínimo', value: detailModal.data.stock_minimo },
+                {
+                  label: 'Stock Actual',
+                  value: hasNumericValue(detailModal.data.stock_actual) ? detailModal.data.stock_actual : '—',
+                },
+                {
+                  label: 'Stock Mínimo',
+                  value: hasNumericValue(detailModal.data.stock_minimo) ? detailModal.data.stock_minimo : '—',
+                },
                 {
                   label: 'Fecha de Vencimiento',
                   value: formatDate(detailModal.data.fecha_vencimiento),

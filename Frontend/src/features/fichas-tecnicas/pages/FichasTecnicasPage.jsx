@@ -145,7 +145,7 @@ export default function FichasTecnicasPage() {
         <MetricCard index={0} title="Total Recetas" value={isLoading || hasLoadError ? '—' : totalFichas} icon={BookOpen} variant="primary" />
         <MetricCard index={1} title="Fichas Vigentes" value={isLoading || hasLoadError ? '—' : vigentes} icon={CheckCircle} variant="success" />
         <MetricCard index={2} title="Insumos en recetas" value={isLoading || hasLoadError ? '—' : totalInsumos} icon={FileText} variant="accent" />
-        <MetricCard index={3} title="Última Revisión" value="Hace 15 días" icon={Clock} variant="warning" />
+        <MetricCard index={3} title="Última Revisión" value="—" icon={Clock} variant="warning" />
       </div>
 
       {/* Tabla con DataTable */}
