@@ -7,9 +7,9 @@ import { Combobox } from '../../../shared/ui/Combobox';
 import { formatDate } from '../../../shared/utils/formatDate';
 
 export function ProduccionFormModal({ open, onClose, lote = null, onSave, isLoading = false }) {
-  const [idFicha, setIdFicha] = useState('1');
+  const [idFicha, setIdFicha] = useState('');
   const [cantidadProducida, setCantidadProducida] = useState('');
-  const [idUsuarioResponsable, setIdUsuarioResponsable] = useState('1');
+  const [idUsuarioResponsable, setIdUsuarioResponsable] = useState('');
   const [fechaProduccion, setFechaProduccion] = useState('');
   const [estado, setEstado] = useState('en_proceso');
   const [observaciones, setObservaciones] = useState('');
@@ -35,19 +35,22 @@ export function ProduccionFormModal({ open, onClose, lote = null, onSave, isLoad
 
   useEffect(() => {
     if (lote) {
-      setIdFicha(lote.id_ficha ? String(lote.id_ficha) : '1');
+      setIdFicha(lote.id_ficha ? String(lote.id_ficha) : '');
       setCantidadProducida(lote.cantidad_producida != null ? String(lote.cantidad_producida) : '');
-      setIdUsuarioResponsable(lote.id_usuario_responsable ? String(lote.id_usuario_responsable) : '1');
+      setIdUsuarioResponsable(lote.id_usuario_responsable ? String(lote.id_usuario_responsable) : '');
       setFechaProduccion(formatDate(lote.fecha_produccion, { forInput: true }));
       setEstado(lote.estado || 'en_proceso');
       setObservaciones(lote.observaciones || '');
-      if (Array.isArray(lote.insumos)) {
-        setInsumosList(lote.insumos);
-      }
+      const loteInsumos = Array.isArray(lote.insumos) ? lote.insumos : lote.insumos_consumidos;
+      setInsumosList(Array.isArray(loteInsumos) ? loteInsumos.map((item) => ({
+        ...item,
+        nombre: item.insumo_nombre || item.nombre || '—',
+        cantidad: item.cantidad ?? item.cantidad_consumida,
+      })) : []);
     } else {
-      setIdFicha(fichas[0]?.id_ficha ? String(fichas[0].id_ficha) : '1');
+      setIdFicha(fichas[0]?.id_ficha ? String(fichas[0].id_ficha) : '');
       setCantidadProducida('');
-      setIdUsuarioResponsable(usuarios[0]?.id_usuario ? String(usuarios[0].id_usuario) : '1');
+      setIdUsuarioResponsable(usuarios[0]?.id_usuario ? String(usuarios[0].id_usuario) : '');
       setFechaProduccion(formatDate(new Date(), { forInput: true }));
       setEstado('en_proceso');
       setObservaciones('');
@@ -111,18 +114,18 @@ export function ProduccionFormModal({ open, onClose, lote = null, onSave, isLoad
     const payload = lote
       ? {
           ...lote,
-          id_ficha: Number(idFicha) || 1,
+          id_ficha: idFicha ? Number(idFicha) : null,
           cantidad_producida: Number(cantidadProducida) || 0,
-          id_usuario_responsable: Number(idUsuarioResponsable) || 1,
+          id_usuario_responsable: idUsuarioResponsable ? Number(idUsuarioResponsable) : null,
           fecha_produccion: formatDate(fechaProduccion || new Date(), { forInput: true }),
           insumos: insumosList,
           estado,
           observaciones: observaciones.trim() || null,
         }
       : {
-          id_ficha: Number(idFicha) || 1,
+          id_ficha: idFicha ? Number(idFicha) : null,
           cantidad_producida: Number(cantidadProducida) || 0,
-          id_usuario_responsable: Number(idUsuarioResponsable) || 1,
+          id_usuario_responsable: idUsuarioResponsable ? Number(idUsuarioResponsable) : null,
           fecha_produccion: formatDate(fechaProduccion || new Date(), { forInput: true }),
           insumos: insumosList,
           estado: estado || 'en_proceso',
@@ -166,6 +169,7 @@ export function ProduccionFormModal({ open, onClose, lote = null, onSave, isLoad
               value={idFicha}
               onValueChange={setIdFicha}
               onChange={(e) => setIdFicha(e.target.value)}
+              required
               options={fichas.map((f) => ({
                 value: String(f.id_ficha),
                 label: f.nombre,
@@ -212,7 +216,8 @@ export function ProduccionFormModal({ open, onClose, lote = null, onSave, isLoad
                 value={idUsuarioResponsable}
                 onValueChange={setIdUsuarioResponsable}
                 onChange={(e) => setIdUsuarioResponsable(e.target.value)}
-                options={mockUsuarios.map((u) => ({
+                required
+                options={usuarios.map((u) => ({
                   value: String(u.id_usuario),
                   label: u.nombre,
                 }))}

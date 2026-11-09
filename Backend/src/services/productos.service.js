@@ -1,25 +1,20 @@
-import { query } from '../config/db.js';
+import { pool } from '../config/db.js';
 
 export class ProductosService {
   static async getAll() {
-    try {
-      const res = await query(`
-        SELECT p.*, c.nombre AS categoria_nombre, f.nombre AS ficha_nombre, pr.nombre AS proveedor_nombre
-        FROM producto p
-        LEFT JOIN categoria_producto c ON p.id_categoria = c.id_categoria
-        LEFT JOIN ficha_tecnica f ON p.id_ficha = f.id_ficha
-        LEFT JOIN proveedor pr ON p.id_proveedor = pr.id_proveedor
-        ORDER BY p.id_producto ASC
-      `);
-      return res.rows || [];
-    } catch (error) {
-      console.warn('[ProductosService.getAll] Fallback:', error.message);
-      return [];
-    }
+    const res = await pool.query(`
+      SELECT p.*, c.nombre AS categoria_nombre, f.nombre AS ficha_nombre, pr.nombre AS proveedor_nombre
+      FROM producto p
+      LEFT JOIN categoria_producto c ON p.id_categoria = c.id_categoria
+      LEFT JOIN ficha_tecnica f ON p.id_ficha = f.id_ficha
+      LEFT JOIN proveedor pr ON p.id_proveedor = pr.id_proveedor
+      ORDER BY p.id_producto ASC
+    `);
+    return res.rows || [];
   }
 
   static async getById(id) {
-    const res = await query('SELECT * FROM producto WHERE id_producto = $1', [id]);
+    const res = await pool.query('SELECT * FROM producto WHERE id_producto = $1', [id]);
     return res.rows[0] || null;
   }
 
@@ -29,13 +24,19 @@ export class ProductosService {
       precio_venta, imagen_url, stock_actual = 0, stock_minimo = 0,
       fecha_vencimiento, estado = 'activo'
     } = data;
+    const stockActual = Number(stock_actual);
+    if (stock_actual === null || !Number.isSafeInteger(stockActual) || stockActual < 0) {
+      const error = new Error('El stock actual debe ser un número entero mayor o igual a 0');
+      error.statusCode = 400;
+      throw error;
+    }
 
-    const res = await query(
+    const res = await pool.query(
       `INSERT INTO producto 
        (nombre, descripcion, id_categoria, id_ficha, id_proveedor, precio_venta, imagen_url, stock_actual, stock_minimo, fecha_vencimiento, estado)
        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
        RETURNING *`,
-      [nombre, descripcion, id_categoria, id_ficha, id_proveedor, precio_venta, imagen_url, stock_actual, stock_minimo, fecha_vencimiento, estado]
+      [nombre, descripcion, id_categoria, id_ficha, id_proveedor, precio_venta, imagen_url, stockActual, stock_minimo, fecha_vencimiento, estado]
     );
     return res.rows[0];
   }
@@ -46,8 +47,14 @@ export class ProductosService {
       precio_venta, imagen_url, stock_actual, stock_minimo,
       fecha_vencimiento, estado
     } = data;
+    const stockActual = stock_actual == null ? stock_actual : Number(stock_actual);
+    if (stockActual != null && (!Number.isSafeInteger(stockActual) || stockActual < 0)) {
+      const error = new Error('El stock actual debe ser un número entero mayor o igual a 0');
+      error.statusCode = 400;
+      throw error;
+    }
 
-    const res = await query(
+    const res = await pool.query(
       `UPDATE producto 
        SET nombre = COALESCE($1, nombre),
            descripcion = COALESCE($2, descripcion),
@@ -62,13 +69,13 @@ export class ProductosService {
            estado = COALESCE($11, estado)
        WHERE id_producto = $12
        RETURNING *`,
-      [nombre, descripcion, id_categoria, id_ficha, id_proveedor, precio_venta, imagen_url, stock_actual, stock_minimo, fecha_vencimiento, estado, id]
+      [nombre, descripcion, id_categoria, id_ficha, id_proveedor, precio_venta, imagen_url, stockActual, stock_minimo, fecha_vencimiento, estado, id]
     );
-    return res.rows[0] || { id_producto: id, ...data };
+    return res.rows[0] || null;
   }
 
   static async delete(id) {
-    await query('DELETE FROM producto WHERE id_producto = $1', [id]);
-    return true;
+    const res = await pool.query('DELETE FROM producto WHERE id_producto = $1 RETURNING id_producto', [id]);
+    return res.rowCount > 0;
   }
 }

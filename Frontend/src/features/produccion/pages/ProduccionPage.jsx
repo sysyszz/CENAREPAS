@@ -43,10 +43,13 @@ export default function ProduccionPage() {
 
   const getLoteInsumosList = (lote) => {
     if (!lote) return [];
-    if (Array.isArray(lote.insumos) && lote.insumos.length > 0) {
-      return lote.insumos;
-    }
-    return [];
+    const insumos = Array.isArray(lote.insumos) ? lote.insumos : lote.insumos_consumidos;
+    if (!Array.isArray(insumos)) return [];
+    return insumos.map((item) => ({
+      ...item,
+      nombre: item.insumo_nombre || item.nombre || '—',
+      cantidad: item.cantidad ?? item.cantidad_consumida,
+    }));
   };
 
   useEffect(() => {
