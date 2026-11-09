@@ -354,19 +354,6 @@ export function ProductoFormModal({ open, onClose, producto = null, onSave, isLo
                 className="w-full px-4 py-2 border border-input bg-input-background rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-ring"
               />
             </div>
-            <div>
-              <label htmlFor="producto_estado" className="block mb-1.5 text-sm font-medium">Estado</label>
-              <Combobox
-                id="producto_estado"
-                name="estado"
-                value={estado}
-                onChange={(e) => setEstado(e.target.value)}
-                options={[
-                  { value: 'activo', label: 'Activo' },
-                  { value: 'inactivo', label: 'Inactivo' },
-                ]}
-              />
-            </div>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -404,6 +391,20 @@ export function ProductoFormModal({ open, onClose, producto = null, onSave, isLo
                 ]}
               />
             </div>
+          </div>
+
+          <div className="modal-field-wide">
+            <label htmlFor="producto_estado" className="block mb-1.5 text-sm font-medium">Estado</label>
+            <Combobox
+              id="producto_estado"
+              name="estado"
+              value={estado}
+              onChange={(e) => setEstado(e.target.value)}
+              options={[
+                { value: 'activo', label: 'Activo' },
+                { value: 'inactivo', label: 'Inactivo' },
+              ]}
+            />
           </div>
 
           <div className="flex gap-2 pt-4 border-t border-border">
