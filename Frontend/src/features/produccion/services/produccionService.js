@@ -1,9 +1,6 @@
 // produccionService.js - Servicio para la gestión de órdenes y lotes de producción en Masarepas
 import { api } from '../../../shared/services/api.js';
 
-export let mockLotesProduccion = [];
-export const mockLotesProduccionInsumos = [];
-
 export const getLotes = async () => {
   return api.get('/produccion');
 };

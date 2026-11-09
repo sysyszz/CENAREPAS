@@ -32,6 +32,8 @@ export default function ProductosPage() {
     setDeleteDialog,
     isDeleting,
     isSaving,
+    isLoading,
+    hasLoadError,
     productos,
     filteredProductos,
     handleSave,
@@ -234,12 +236,12 @@ export default function ProductosPage() {
   );
 
   const kpiCards = [
-    { title: 'Total Productos', value: totalProductos, icon: Box, iconStyle: 'bg-primary/10 text-primary' },
-    { title: 'Disponibles', value: disponibles, icon: CheckCircle, iconStyle: 'bg-success/10 text-success' },
-    { title: 'Bajo Stock', value: bajoStock, icon: AlertTriangle, iconStyle: 'bg-warning/10 text-warning' },
+    { title: 'Total Productos', value: isLoading || hasLoadError ? '—' : totalProductos, icon: Box, iconStyle: 'bg-primary/10 text-primary' },
+    { title: 'Disponibles', value: isLoading || hasLoadError ? '—' : disponibles, icon: CheckCircle, iconStyle: 'bg-success/10 text-success' },
+    { title: 'Bajo Stock', value: isLoading || hasLoadError ? '—' : bajoStock, icon: AlertTriangle, iconStyle: 'bg-warning/10 text-warning' },
     {
       title: 'Valor Inventario',
-      value: `$${valorInventario.toLocaleString('es-CO')}`,
+      value: isLoading || hasLoadError ? '—' : `$${valorInventario.toLocaleString('es-CO')}`,
       icon: DollarSign,
       iconStyle: 'bg-accent/10 text-primary',
     },

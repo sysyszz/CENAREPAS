@@ -32,6 +32,8 @@ export default function ProduccionPage() {
     setDeleteDialog,
     isDeleting,
     isSaving,
+    isLoading,
+    hasLoadError,
     handleSave,
     handleAnular,
   } = useProduccion();
@@ -190,10 +192,10 @@ export default function ProduccionPage() {
 
       {/* Tarjetas de Consolidado */}
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
-        <MetricCard index={0} title="Total Lotes" value={totalLotes} icon={Factory} variant="primary" />
-        <MetricCard index={1} title="Finalizados" value={finalizados} icon={CheckCircle} variant="success" />
-        <MetricCard index={2} title="En Proceso" value={enProceso} icon={Clock} variant="warning" />
-        <MetricCard index={3} title="Programados" value={programados} icon={Calendar} variant="accent" />
+        <MetricCard index={0} title="Total Lotes" value={isLoading || hasLoadError ? '—' : totalLotes} icon={Factory} variant="primary" />
+        <MetricCard index={1} title="Finalizados" value={isLoading || hasLoadError ? '—' : finalizados} icon={CheckCircle} variant="success" />
+        <MetricCard index={2} title="En Proceso" value={isLoading || hasLoadError ? '—' : enProceso} icon={Clock} variant="warning" />
+        <MetricCard index={3} title="Programados" value={isLoading || hasLoadError ? '—' : programados} icon={Calendar} variant="accent" />
       </div>
 
       {/* Tabla con DataTable y RowActions */}

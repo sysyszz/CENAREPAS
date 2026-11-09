@@ -12,11 +12,20 @@ export function useProductos() {
   const [isDeleting, setIsDeleting] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [productos, setProductos] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [hasLoadError, setHasLoadError] = useState(false);
 
   useEffect(() => {
     getProductos()
-      .then((data) => setProductos(Array.isArray(data) ? data : []))
-      .catch(() => setProductos([]));
+      .then((data) => {
+        if (!Array.isArray(data)) throw new Error('La respuesta de productos no es válida');
+        setProductos(data);
+      })
+      .catch(() => {
+        setHasLoadError(true);
+        toast.error('No se pudieron cargar los productos');
+      })
+      .finally(() => setIsLoading(false));
   }, []);
 
   const filteredProductos = useMemo(() => {
@@ -91,11 +100,12 @@ export function useProductos() {
     setDeleteDialog,
     isDeleting,
     isSaving,
+    isLoading,
+    hasLoadError,
     productos,
     filteredProductos,
     handleSave,
     handleDelete,
   };
 }
-
 

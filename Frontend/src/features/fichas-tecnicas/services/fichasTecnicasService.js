@@ -1,9 +1,6 @@
 // fichasTecnicasService.js - Servicio para la gestión de fichas técnicas en Masarepas
 import { api } from '../../../shared/services/api.js';
 
-export let mockFichasTecnicas = [];
-export const mockFichaTecnicaInsumos = [];
-
 export const getFichasTecnicas = async () => {
   return api.get('/fichas-tecnicas');
 };

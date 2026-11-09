@@ -1,8 +1,6 @@
 import { useState, useMemo } from 'react';
 import { BookOpen, CheckCircle, FileText, Clock } from 'lucide-react';
 import { useFichasTecnicas } from '../hooks/useFichasTecnicas';
-import { mockFichaTecnicaInsumos } from '../services/fichasTecnicasService';
-import { mockInsumos } from '../../insumos/services/insumosService';
 import { DataTable } from '../../../shared/components/DataTable';
 import { RowActions } from '../../../shared/components/RowActions';
 import { FichaTecnicaFormModal } from '../components/FichaTecnicaFormModal';
@@ -30,6 +28,8 @@ export default function FichasTecnicasPage() {
     setDeleteDialog,
     isDeleting,
     isSaving,
+    isLoading,
+    hasLoadError,
     handleSave,
     handleDelete,
   } = useFichasTecnicas();
@@ -38,25 +38,18 @@ export default function FichasTecnicasPage() {
 
   const getFichaInsumosList = (ficha) => {
     if (!ficha) return [];
-    if (Array.isArray(ficha.insumos) && ficha.insumos.length > 0) {
-      return ficha.insumos;
-    }
-    const fromMock = mockFichaTecnicaInsumos.filter((fi) => fi.id_ficha === ficha.id_ficha);
-    if (fromMock.length > 0) {
-      return fromMock.map((fi) => {
-        const ins = mockInsumos.find((i) => i.id_insumo === fi.id_insumo);
-        return {
-          id_insumo: fi.id_insumo,
-          nombre: ins?.nombre || `Insumo #${fi.id_insumo}`,
-          cantidad: fi.cantidad,
-          unidad_medida: fi.unidad_medida || ins?.unidad_medida || 'kg',
-        };
-      });
-    }
-    return [];
+    if (!Array.isArray(ficha.insumos)) return [];
+    return ficha.insumos.map((item) => ({
+      ...item,
+      nombre: item.insumo_nombre || '—',
+    }));
   };
 
   const totalFichas = rawFichas.length;
+  const totalInsumos = rawFichas.reduce(
+    (total, ficha) => total + (Array.isArray(ficha.insumos) ? ficha.insumos.length : 0),
+    0
+  );
   const vigentes = rawFichas.filter(
     (f) => String(f.estado).toLowerCase() === 'vigente' || String(f.estado).toLowerCase() === 'activo'
   ).length;
@@ -149,9 +142,9 @@ export default function FichasTecnicasPage() {
 
       {/* Tarjetas de Consolidado */}
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
-        <MetricCard index={0} title="Total Recetas" value={totalFichas} icon={BookOpen} variant="primary" />
-        <MetricCard index={1} title="Fichas Vigentes" value={vigentes} icon={CheckCircle} variant="success" />
-        <MetricCard index={2} title="Versión Actual" value="v3.0 Max" icon={FileText} variant="accent" />
+        <MetricCard index={0} title="Total Recetas" value={isLoading || hasLoadError ? '—' : totalFichas} icon={BookOpen} variant="primary" />
+        <MetricCard index={1} title="Fichas Vigentes" value={isLoading || hasLoadError ? '—' : vigentes} icon={CheckCircle} variant="success" />
+        <MetricCard index={2} title="Insumos en recetas" value={isLoading || hasLoadError ? '—' : totalInsumos} icon={FileText} variant="accent" />
         <MetricCard index={3} title="Última Revisión" value="Hace 15 días" icon={Clock} variant="warning" />
       </div>
 
