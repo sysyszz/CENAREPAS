@@ -1,7 +1,6 @@
 import { useState, useMemo, useEffect } from 'react';
 import { Factory, CheckCircle, Clock, XCircle } from 'lucide-react';
 import { useProduccion } from '../hooks/useProduccion';
-import { getInsumos } from '../../insumos/services/insumosService';
 import { getFichasTecnicas } from '../../fichas-tecnicas/services/fichasTecnicasService';
 import { getUsuarios } from '../../usuarios/services/usuariosService';
 import { DataTable } from '../../../shared/components/DataTable';
@@ -17,6 +16,8 @@ import { CustomSelect } from '../../../shared/components/CustomSelect';
 import ErrorBanner from '../../../shared/components/ErrorBanner';
 import { exportToPdf } from '../../../shared/utils/exportToPdf';
 import { exportToExcel } from '../../../shared/utils/exportToExcel';
+
+const normalizeEstado = (estado) => String(estado || '').toLowerCase().replace(/_/g, ' ');
 
 export default function ProduccionPage() {
   const { can } = usePermissions();
@@ -44,8 +45,6 @@ export default function ProduccionPage() {
   const [selectedLote, setSelectedLote] = useState(null);
   const [fichas, setFichas] = useState([]);
   const [usuarios, setUsuarios] = useState([]);
-  const [insumosList, setInsumosList] = useState([]);
-
   const getLoteInsumosList = (lote) => {
     if (!lote) return [];
     if (Array.isArray(lote.insumos_consumidos) && lote.insumos_consumidos.length > 0) {
@@ -61,9 +60,6 @@ export default function ProduccionPage() {
     getUsuarios().then((data) => {
       if (Array.isArray(data)) setUsuarios(data);
     }).catch(() => {});
-    getInsumos().then((data) => {
-      if (Array.isArray(data)) setInsumosList(data);
-    }).catch(() => {});
   }, []);
 
   const fichasNames = useMemo(
@@ -78,9 +74,9 @@ export default function ProduccionPage() {
 
 
   const totalLotes = rawLotes.length;
-  const finalizados = rawLotes.filter((l) => String(l.estado).toLowerCase() === 'terminado').length;
-  const enProceso = rawLotes.filter((l) => String(l.estado).toLowerCase() === 'en proceso').length;
-  const anulados = rawLotes.filter((l) => String(l.estado).toLowerCase() === 'anulado').length;
+  const finalizados = rawLotes.filter((l) => normalizeEstado(l.estado) === 'terminado').length;
+  const enProceso = rawLotes.filter((l) => normalizeEstado(l.estado) === 'en proceso').length;
+  const anulados = rawLotes.filter((l) => normalizeEstado(l.estado) === 'anulado').length;
 
   const filteredData = useMemo(() => {
     return rawLotes.filter((l) => {
@@ -98,7 +94,7 @@ export default function ProduccionPage() {
 
       const isTodosEstado = estadoFilter === 'Todos' || estadoFilter === 'Todos los estados';
       const matchesEstado =
-        isTodosEstado || String(l.estado).toLowerCase() === estadoFilter.toLowerCase();
+        isTodosEstado || normalizeEstado(l.estado) === normalizeEstado(estadoFilter);
 
       return matchesSearch && matchesEstado;
     });
@@ -157,7 +153,7 @@ export default function ProduccionPage() {
         key: 'acciones',
         label: 'Acciones',
         render: (_, lote) => {
-          const isAnulado = String(lote.estado).toLowerCase() === 'anulado';
+          const isAnulado = normalizeEstado(lote.estado) === 'anulado';
           return (
             <RowActions
               onView={() => setDetailModal({ isOpen: true, data: lote })}
@@ -165,7 +161,7 @@ export default function ProduccionPage() {
                 setSelectedLote(lote);
                 setShowModal(true);
               }}
-              editDisabled={!can('produccion', 'editar')}
+              editDisabled={!can('produccion', 'editar') || isAnulado}
               onDelete={
                 !isAnulado
                   ? () =>
@@ -176,7 +172,7 @@ export default function ProduccionPage() {
                       })
                   : undefined
               }
-              deleteDisabled={!can('produccion', 'eliminar') || isAnulado}
+              deleteDisabled={!can('produccion', 'anular') || isAnulado}
               deleteTitle="Anular Lote"
             />
           );

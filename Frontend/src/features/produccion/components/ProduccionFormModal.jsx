@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo, useCallback } from 'react';
-import { Factory, Plus, Trash2, Package, Calendar, UserCheck } from 'lucide-react';
+import { Factory, Plus, Trash2, Package, Calendar } from 'lucide-react';
 import { getFichaTecnicaInsumos } from '../../fichas-tecnicas/services/fichasTecnicasService';
 import { Combobox } from '../../../shared/ui/Combobox';
 import { StepperModal } from '../../../shared/components/StepperModal';
@@ -148,8 +148,8 @@ export function ProduccionFormModal({ open, onClose, lote = null, onSave, isLoad
     if (!idFicha) {
       return 'Debes seleccionar una receta o ficha técnica.';
     }
-    if (!cantidadProducida || isNaN(Number(cantidadProducida)) || Number(cantidadProducida) <= 0) {
-      return 'La cantidad producida debe ser un número mayor a 0.';
+    if (!Number.isSafeInteger(Number(cantidadProducida)) || Number(cantidadProducida) <= 0) {
+      return 'La cantidad producida debe ser un número entero mayor a 0.';
     }
     if (!fechaProduccion) {
       return 'La fecha de producción es obligatoria.';
@@ -406,7 +406,6 @@ export function ProduccionFormModal({ open, onClose, lote = null, onSave, isLoad
               options={[
                 { value: 'En proceso', label: 'En proceso (En línea de horneo/amasado)' },
                 { value: 'Terminado', label: 'Terminado (Listo para empaque/CEDIS)' },
-                { value: 'Anulado', label: 'Anulado (Descartado por calidad)' },
               ]}
             />
           </div>

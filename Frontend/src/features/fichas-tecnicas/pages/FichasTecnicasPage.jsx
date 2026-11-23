@@ -1,8 +1,6 @@
 import { useState, useMemo } from 'react';
 import { BookOpen, CheckCircle, FileText, Clock } from 'lucide-react';
 import { useFichasTecnicas } from '../hooks/useFichasTecnicas';
-import { mockFichaTecnicaInsumos } from '../services/fichasTecnicasService';
-import { mockInsumos } from '../../insumos/services/insumosService';
 import { DataTable } from '../../../shared/components/DataTable';
 import { RowActions } from '../../../shared/components/RowActions';
 import { FichaTecnicaFormModal } from '../components/FichaTecnicaFormModal';
@@ -48,23 +46,7 @@ export default function FichasTecnicasPage() {
   const [selectedFicha, setSelectedFicha] = useState(null);
 
   const getFichaInsumosList = (ficha) => {
-    if (!ficha) return [];
-    if (Array.isArray(ficha.insumos) && ficha.insumos.length > 0) {
-      return ficha.insumos;
-    }
-    const fromMock = mockFichaTecnicaInsumos.filter((fi) => fi.id_ficha === ficha.id_ficha);
-    if (fromMock.length > 0) {
-      return fromMock.map((fi) => {
-        const ins = mockInsumos.find((i) => i.id_insumo === fi.id_insumo);
-        return {
-          id_insumo: fi.id_insumo,
-          nombre: ins?.nombre || `Insumo #${fi.id_insumo}`,
-          cantidad: fi.cantidad,
-          unidad_medida: fi.unidad_medida || ins?.unidad_medida || 'kg',
-        };
-      });
-    }
-    return [];
+    return Array.isArray(ficha?.insumos) ? ficha.insumos : [];
   };
 
   const totalFichas = rawFichas.length;
@@ -143,7 +125,7 @@ export default function FichasTecnicasPage() {
                 nombre: ficha.nombre,
               })
             }
-            deleteDisabled={!can('fichas-tecnicas', 'eliminar')}
+            deleteDisabled={!can('fichas-tecnicas', 'cambiar_estado')}
           />
         ),
       },
@@ -299,9 +281,9 @@ export default function FichasTecnicasPage() {
 
       <ConfirmDialog
         isOpen={deleteDialog.isOpen}
-        title="Eliminar Ficha Técnica"
-        message={`¿Estás seguro de que deseas eliminar la ficha técnica "${deleteDialog.nombre}"? Esta acción no se puede deshacer.`}
-        confirmText="Eliminar"
+        title="Inactivar Ficha Técnica"
+        message={`¿Estás seguro de que deseas inactivar la ficha técnica "${deleteDialog.nombre}"? Podrás activarla de nuevo después.`}
+        confirmText="Inactivar"
         onConfirm={handleDelete}
         onCancel={() => setDeleteDialog({ isOpen: false, id: null, nombre: '' })}
         isLoading={isDeleting}

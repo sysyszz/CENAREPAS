@@ -72,9 +72,11 @@ export function useFichasTecnicas() {
     setIsDeleting(true);
     try {
       await deleteFichaTecnica(deleteDialog.id);
-      setFichas((prev) => prev.filter((f) => f.id_ficha !== deleteDialog.id));
-      toast.success('Ficha técnica eliminada');
-    } catch (error) {
+      setFichas((prev) =>
+        prev.map((f) => (f.id_ficha === deleteDialog.id ? { ...f, estado: 'Inactivo' } : f))
+      );
+      toast.success('Ficha técnica inactivada');
+    } catch {
       toast.error('No se pudo eliminar la ficha técnica');
     } finally {
       setIsDeleting(false);

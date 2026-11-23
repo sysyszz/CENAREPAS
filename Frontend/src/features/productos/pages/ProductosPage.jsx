@@ -1,5 +1,4 @@
 import { useState, useMemo, useEffect } from 'react';
-import { motion } from 'framer-motion';
 import { Box, CheckCircle, AlertTriangle, DollarSign, Calendar } from 'lucide-react';
 import { useProductos } from '../hooks/useProductos';
 import { getCategorias } from '../../categorias/services/categoriasService';
@@ -362,7 +361,7 @@ export default function ProductosPage() {
             nombre: producto.nombre,
           })
         }
-        deleteDisabled={!can('productos', 'eliminar')}
+        deleteDisabled={!can('productos', 'cambiar_estado')}
         isFiltered={Boolean(searchTerm || filterCategoria !== 'Todas las categorías' || filterEstado !== 'Todos los estados')}
         searchPlaceholder="Buscar por código o producto..."
         searchValue={searchTerm}
@@ -465,9 +464,9 @@ export default function ProductosPage() {
 
       <ConfirmDialog
         isOpen={deleteDialog.isOpen}
-        title="Eliminar Producto"
-        message={`¿Estás seguro de que deseas eliminar el producto "${deleteDialog.nombre}"? Esta acción no se puede deshacer.`}
-        confirmText="Eliminar"
+        title="Inactivar Producto"
+        message={`¿Estás seguro de que deseas inactivar el producto "${deleteDialog.nombre}"? Podrás activarlo de nuevo después.`}
+        confirmText="Inactivar"
         onConfirm={handleDelete}
         onCancel={() => setDeleteDialog({ isOpen: false, id: null, nombre: '' })}
         isLoading={isDeleting}

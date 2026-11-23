@@ -24,6 +24,16 @@ async function cambioDeImagen(id, data) {
 
 
 export class ProductosService {
+  static validarStockActual(stockActual) {
+    const stock = Number(stockActual);
+    if (!Number.isSafeInteger(stock) || stock < 0) {
+      const error = new Error('El stock actual debe ser un número entero mayor o igual a 0');
+      error.statusCode = 400;
+      throw error;
+    }
+    return stock;
+  }
+
   /** soloActivos: el catálogo público solo ve productos activos de categorías activas. */
   static async getAll({ soloActivos = false } = {}) {
     const res = await query(
@@ -56,6 +66,7 @@ export class ProductosService {
       precio_venta, imagen_url, stock_actual = 0, stock_minimo = 0,
       fecha_vencimiento, estado = 'Activo'
     } = data;
+    const stockActual = ProductosService.validarStockActual(stock_actual);
     const imagenPublicId = imagen_url ? data.imagen_public_id || publicIdDeUrlLocal(imagen_url) : null;
 
     const res = await query(
@@ -63,7 +74,7 @@ export class ProductosService {
        (nombre, descripcion, id_categoria, id_ficha, id_proveedor, precio_venta, imagen_url, stock_actual, stock_minimo, fecha_vencimiento, estado, imagen_public_id)
        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
        RETURNING *`,
-      [nombre, descripcion, id_categoria, id_ficha, id_proveedor, precio_venta, imagen_url, stock_actual, stock_minimo, fecha_vencimiento, estado, imagenPublicId]
+      [nombre, descripcion, id_categoria, id_ficha, id_proveedor, precio_venta, imagen_url, stockActual, stock_minimo, fecha_vencimiento, estado, imagenPublicId]
     );
     return res.rows[0];
   }
@@ -74,6 +85,9 @@ export class ProductosService {
       precio_venta, stock_actual, stock_minimo,
       fecha_vencimiento, estado
     } = data;
+    const stockActual = stock_actual == null
+      ? stock_actual
+      : ProductosService.validarStockActual(stock_actual);
     const imagen = await cambioDeImagen(id, data);
 
     const res = await query(
@@ -92,7 +106,7 @@ export class ProductosService {
            estado = COALESCE($11, estado)
        WHERE id_producto = $12
        RETURNING *`,
-      [nombre, descripcion, id_categoria, id_ficha, id_proveedor, precio_venta, imagen?.url ?? null, stock_actual, stock_minimo, fecha_vencimiento, estado, id,
+      [nombre, descripcion, id_categoria, id_ficha, id_proveedor, precio_venta, imagen?.url ?? null, stockActual, stock_minimo, fecha_vencimiento, estado, id,
         imagen !== null, imagen?.publicId ?? null]
     );
     // La imagen anterior se borra solo si el cambio se guardó.

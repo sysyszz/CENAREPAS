@@ -1,8 +1,6 @@
 // productosService.js - Servicio para la gestión de productos en Masarepas
 import { api } from '../../../shared/services/api.js';
 
-export let mockProductos = [];
-
 export const getProductos = async () => {
   return api.get('/productos');
 };

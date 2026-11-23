@@ -70,10 +70,16 @@ export function useProduccion() {
     if (!deleteDialog.id) return;
     setIsDeleting(true);
     try {
-      await anularLote(deleteDialog.id);
-      setLotes((prev) => prev.map((l) => (l.id_lote === deleteDialog.id ? { ...l, estado: 'Anulado' } : l)));
+      const anulada = await anularLote(deleteDialog.id);
+      setLotes((prev) =>
+        prev.map((l) =>
+          l.id_lote === deleteDialog.id
+            ? { ...l, ...anulada, estado: anulada?.estado || 'Anulado' }
+            : l
+        )
+      );
       toast.success('Lote anulado correctamente');
-    } catch (error) {
+    } catch {
       toast.error('No se pudo anular el lote de producción');
     } finally {
       setIsDeleting(false);
@@ -103,5 +109,3 @@ export function useProduccion() {
     handleAnular,
   };
 }
-
-

@@ -80,9 +80,11 @@ export function useProductos() {
     setIsDeleting(true);
     try {
       await deleteProducto(deleteDialog.id);
-      setProductos((prev) => prev.filter((p) => p.id_producto !== deleteDialog.id));
-      toast.success('Producto eliminado');
-    } catch (error) {
+      setProductos((prev) =>
+        prev.map((p) => (p.id_producto === deleteDialog.id ? { ...p, estado: 'Inactivo' } : p))
+      );
+      toast.success('Producto inactivado');
+    } catch {
       toast.error('No se pudo eliminar el producto');
     } finally {
       setIsDeleting(false);
@@ -152,5 +154,3 @@ export function useProductos() {
     handleConfirmStatusChange,
   };
 }
-
-
