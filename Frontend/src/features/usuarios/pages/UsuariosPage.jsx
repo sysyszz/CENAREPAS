@@ -1,5 +1,5 @@
 import { useState, useMemo, useEffect } from 'react';
-import { Lock, Users, UserCheck, ShieldCheck, KeyRound } from 'lucide-react';
+import { Lock, Users, UserCheck, UserX, ShieldCheck } from 'lucide-react';
 import { useUsuarios } from '../hooks/useUsuarios';
 import { getRoles } from '../../roles/services/rolesService';
 import { DataTable } from '../../../shared/components/DataTable';
@@ -15,12 +15,16 @@ import { CustomSelect } from '../../../shared/components/CustomSelect';
 import ErrorBanner from '../../../shared/components/ErrorBanner';
 import { exportToPdf } from '../../../shared/utils/exportToPdf';
 import { exportToExcel } from '../../../shared/utils/exportToExcel';
+import { DateCell, formatBogotaDateTimeText } from '../../../shared/utils/formatDate';
 
 export default function UsuariosPage() {
   const { can } = usePermissions();
   const {
     usuarios,
     rawUsuarios,
+    estadisticas,
+    isLoadingEstadisticas,
+    estadisticasError,
     searchTerm,
     setSearchTerm,
     filterRol,
@@ -45,10 +49,20 @@ export default function UsuariosPage() {
     handleDelete,
     handleRequestStatusChange,
     handleConfirmStatusChange,
+    isUsuarioAdmin,
+    isSameUser,
   } = useUsuarios();
 
   const [selectedUsuario, setSelectedUsuario] = useState(null);
   const [rolesList, setRolesList] = useState([]);
+
+  const currentUser = useMemo(() => {
+    try {
+      return JSON.parse(localStorage.getItem('user') || '{}');
+    } catch {
+      return {};
+    }
+  }, []);
 
   useEffect(() => {
     getRoles().then((data) => setRolesList(Array.isArray(data) ? data : [])).catch(() => {});
@@ -56,8 +70,8 @@ export default function UsuariosPage() {
 
   const totalUsuarios = rawUsuarios.length;
   const usuariosActivos = rawUsuarios.filter((u) => String(u.estado).toLowerCase() === 'activo').length;
-  const rolesAsignados = new Set(rawUsuarios.map((usuario) => usuario.id_rol)).size;
-  const credencialesConfiguradas = rawUsuarios.filter((usuario) => Boolean(usuario.contrasena_hash)).length;
+  const usuariosInactivos = rawUsuarios.filter((u) => String(u.estado).toLowerCase() === 'inactivo').length;
+  const rolesAsignados = new Set(rawUsuarios.map((usuario) => usuario.id_rol).filter(Boolean)).size;
   const roleNames = useMemo(
     () => Object.fromEntries(rolesList.map((role) => [role.id_rol, role.nombre])),
     [rolesList]
@@ -93,7 +107,7 @@ export default function UsuariosPage() {
       {
         key: 'fecha_creacion',
         label: 'Fecha de Creación',
-        render: (value) => <span className="text-muted-foreground">{value}</span>,
+        render: (value) => <DateCell date={value} />,
       },
       {
         key: 'estado',
@@ -109,50 +123,59 @@ export default function UsuariosPage() {
       {
         key: 'acciones',
         label: 'Acciones',
-        render: (_, usuario) => (
-          <RowActions
-            onView={() => setDetailModal({ isOpen: true, data: usuario })}
-            onEdit={() => {
-              setSelectedUsuario(usuario);
-              setShowModal(true);
-            }}
-            editDisabled={!can('usuarios', 'editar')}
-            onDelete={() =>
-              setDeleteDialog({
-                isOpen: true,
-                id: usuario.id_usuario,
-                nombre: usuario.nombre,
-              })
-            }
-            deleteDisabled={!can('usuarios', 'eliminar')}
-            extra={
-              <button
-                className="p-1.5 rounded-full text-muted-foreground hover:text-foreground hover:bg-black/5 dark:hover:bg-white/10 transition-all duration-150"
-                title="Cambiar contraseña"
-                onClick={() => {
-                  setSelectedUsuario(usuario);
-                  setShowModal(true);
-                }}
-              >
-                <Lock className="w-4 h-4" />
-              </button>
-            }
-          />
-        ),
+        render: (_, usuario) => {
+          const isAdmin = isUsuarioAdmin ? isUsuarioAdmin(usuario, roleNames) : false;
+          const isSelf = isSameUser ? isSameUser(usuario, currentUser) : false;
+          const canDeleteUser = !isAdmin && !isSelf && can('usuarios', 'eliminar');
+
+          return (
+            <RowActions
+              onView={() => setDetailModal({ isOpen: true, data: usuario })}
+              onEdit={() => {
+                setSelectedUsuario(usuario);
+                setShowModal(true);
+              }}
+              editDisabled={!can('usuarios', 'editar')}
+              showDelete={canDeleteUser}
+              reserveDeleteSpace={true}
+              onDelete={() => {
+                if (!canDeleteUser) return;
+                setDeleteDialog({
+                  isOpen: true,
+                  id: usuario.id_usuario,
+                  nombre: usuario.nombre,
+                });
+              }}
+              extra={
+                <button
+                  type="button"
+                  className="p-1.5 rounded-full text-muted-foreground hover:text-foreground hover:bg-black/5 dark:hover:bg-white/10 transition-all duration-150"
+                  title="Cambiar contraseña"
+                  onClick={() => {
+                    setSelectedUsuario(usuario);
+                    setShowModal(true);
+                  }}
+                >
+                  <Lock className="w-4 h-4 shrink-0" />
+                </button>
+              }
+            />
+          );
+        },
       },
     ],
-    [can, roleNames, setDetailModal, setShowModal, setDeleteDialog, handleRequestStatusChange]
+    [can, roleNames, setDetailModal, setShowModal, setDeleteDialog, handleRequestStatusChange, isUsuarioAdmin, isSameUser, currentUser]
   );
 
   const handleExportPdf = () => {
     exportToPdf({
-      data: filteredData,
+      data: usuarios,
       columns: [
         { header: 'ID', key: 'id_usuario' },
         { header: 'Nombre', key: 'nombre' },
         { header: 'Correo Electrónico', key: 'correo' },
         { header: 'Rol', accessor: (u) => roleNames[u.id_rol] || 'Sin rol' },
-        { header: 'Fecha de Creación', key: 'fecha_creacion' },
+        { header: 'Fecha de Creación', accessor: (u) => formatBogotaDateTimeText(u.fecha_creacion) },
         { header: 'Estado', key: 'estado' },
       ],
       title: 'Reporte de Usuarios',
@@ -162,13 +185,13 @@ export default function UsuariosPage() {
 
   const handleExportExcel = () => {
     exportToExcel({
-      data: filteredData,
+      data: usuarios,
       columns: [
         { header: 'ID', key: 'id_usuario', align: 'center' },
         { header: 'Nombre Completo', key: 'nombre' },
         { header: 'Correo Electrónico', key: 'correo' },
         { header: 'Rol Asignado', accessor: (u) => roleNames[u.id_rol] || 'Sin rol' },
-        { header: 'Fecha de Creación', key: 'fecha_creacion', align: 'center' },
+        { header: 'Fecha de Creación', accessor: (u) => formatBogotaDateTimeText(u.fecha_creacion), align: 'center' },
         { header: 'Estado', key: 'estado', align: 'center' },
       ],
       title: 'Reporte de Usuarios',
@@ -194,10 +217,42 @@ export default function UsuariosPage() {
 
       {/* Tarjetas de Consolidado */}
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 items-stretch">
-        <MetricCard index={0} title="Total Usuarios" value={totalUsuarios} icon={Users} variant="primary" />
-        <MetricCard index={1} title="Roles Asignados" value={rolesAsignados} icon={ShieldCheck} variant="accent" />
-        <MetricCard index={2} title="Credenciales Configuradas" value={credencialesConfiguradas} icon={KeyRound} variant="warning" />
-        <MetricCard index={3} title="Usuarios Activos" value={usuariosActivos} icon={UserCheck} variant="success" />
+        <MetricCard
+          index={0}
+          title="Total Usuarios"
+          value={estadisticas?.total_usuarios ?? totalUsuarios}
+          icon={Users}
+          variant="primary"
+          isLoading={isLoadingEstadisticas}
+          error={estadisticasError}
+        />
+        <MetricCard
+          index={1}
+          title="Usuarios Activos"
+          value={estadisticas?.usuarios_activos ?? usuariosActivos}
+          icon={UserCheck}
+          variant="success"
+          isLoading={isLoadingEstadisticas}
+          error={estadisticasError}
+        />
+        <MetricCard
+          index={2}
+          title="Usuarios Inactivos"
+          value={estadisticas?.usuarios_inactivos ?? usuariosInactivos}
+          icon={UserX}
+          variant="warning"
+          isLoading={isLoadingEstadisticas}
+          error={estadisticasError}
+        />
+        <MetricCard
+          index={3}
+          title="Roles Asignados"
+          value={estadisticas?.roles_asignados ?? rolesAsignados}
+          icon={ShieldCheck}
+          variant="accent"
+          isLoading={isLoadingEstadisticas}
+          error={estadisticasError}
+        />
       </div>
 
       <ErrorBanner message={loadError} onRetry={refetch} />
@@ -227,11 +282,11 @@ export default function UsuariosPage() {
               className="w-full sm:w-56"
             >
               <option value="Todos los roles">Todos los roles</option>
-              <option value="1">Administrador de Planta</option>
-              <option value="2">Supervisor de Producción</option>
-              <option value="3">Gestor de Compras y Proveedores</option>
-              <option value="4">Vendedor y Distribución</option>
-              <option value="5">Auditor de Calidad</option>
+              {rolesList.map((r) => (
+                <option key={r.id_rol} value={String(r.id_rol)}>
+                  {r.nombre}
+                </option>
+              ))}
             </CustomSelect>
             <CustomSelect
               value={filterEstado}

@@ -1,9 +1,52 @@
 import { useState, useEffect, useMemo } from 'react';
-import { getUsuarios, createUsuario, updateUsuario, deleteUsuario, cambiarEstadoUsuario } from '../services/usuariosService';
+import {
+  getUsuarios,
+  getUsuariosEstadisticas,
+  createUsuario,
+  updateUsuario,
+  deleteUsuario,
+  cambiarEstadoUsuario,
+} from '../services/usuariosService';
 import { toast } from '../../../shared/utils/toast';
+
+export const isUsuarioAdmin = (usuario, roleNames = {}) => {
+  if (!usuario) return false;
+  const idRol = Number(usuario.id_rol);
+  const rolName = String(usuario.rol_nombre || roleNames[usuario.id_rol] || '').toLowerCase().trim();
+  const correo = String(usuario.correo || '').toLowerCase().trim();
+  return (
+    idRol === 1 ||
+    rolName === 'administrador' ||
+    rolName === 'admin' ||
+    correo === 'admin@sistema.com'
+  );
+};
+
+export const isSameUser = (usuario, currentUser) => {
+  if (!usuario || !currentUser) return false;
+  if (
+    usuario.id_usuario &&
+    currentUser.id_usuario &&
+    Number(usuario.id_usuario) === Number(currentUser.id_usuario)
+  ) {
+    return true;
+  }
+  if (
+    usuario.correo &&
+    currentUser.correo &&
+    usuario.correo.toLowerCase().trim() === currentUser.correo.toLowerCase().trim()
+  ) {
+    return true;
+  }
+  return false;
+};
 
 export function useUsuarios() {
   const [usuarios, setUsuarios] = useState([]);
+  const [estadisticas, setEstadisticas] = useState(null);
+  const [isLoadingEstadisticas, setIsLoadingEstadisticas] = useState(true);
+  const [estadisticasError, setEstadisticasError] = useState(null);
+
   const [searchTerm, setSearchTerm] = useState('');
   const [filterRol, setFilterRol] = useState('Todos los roles');
   const [filterEstado, setFilterEstado] = useState('Todos los estados');
@@ -29,8 +72,21 @@ export function useUsuarios() {
       .finally(() => setIsLoading(false));
   };
 
+  const fetchEstadisticas = () => {
+    setIsLoadingEstadisticas(true);
+    setEstadisticasError(null);
+    return getUsuariosEstadisticas()
+      .then((data) => setEstadisticas(data))
+      .catch((err) => {
+        setEstadisticas(null);
+        setEstadisticasError(err?.message || 'No se pudieron cargar las estadísticas');
+      })
+      .finally(() => setIsLoadingEstadisticas(false));
+  };
+
   useEffect(() => {
     fetchUsuarios();
+    fetchEstadisticas();
   }, []);
 
   const filteredUsuarios = useMemo(() => {
@@ -63,9 +119,8 @@ export function useUsuarios() {
         toast.success('Usuario creado');
       }
       setShowModal(false);
+      fetchEstadisticas();
     } catch (error) {
-      // El mensaje del backend (p. ej. el mínimo de la contraseña o el correo repetido);
-      // si no hubo respuesta del servidor, el mensaje genérico.
       toast.error(error?.data?.message || 'No se pudo guardar el usuario');
     } finally {
       setIsSaving(false);
@@ -74,13 +129,27 @@ export function useUsuarios() {
 
   const handleDelete = async () => {
     if (!deleteDialog.id) return;
+    const targetUser = usuarios.find((u) => u.id_usuario === deleteDialog.id);
+    let currentUser = null;
+    try {
+      currentUser = JSON.parse(localStorage.getItem('user') || '{}');
+    } catch {
+      currentUser = null;
+    }
+    if (isUsuarioAdmin(targetUser) || isSameUser(targetUser, currentUser)) {
+      toast.error('No se puede eliminar un usuario administrador o a ti mismo');
+      setDeleteDialog({ isOpen: false, id: null, nombre: '' });
+      return;
+    }
+
     setIsDeleting(true);
     try {
       await deleteUsuario(deleteDialog.id);
       setUsuarios((prev) => prev.filter((u) => u.id_usuario !== deleteDialog.id));
       toast.success('Usuario eliminado');
+      fetchEstadisticas();
     } catch (error) {
-      toast.error('No se pudo eliminar el usuario');
+      toast.error(error?.data?.message || 'No se pudo eliminar el usuario');
     } finally {
       setIsDeleting(false);
       setDeleteDialog({ isOpen: false, id: null, nombre: '' });
@@ -113,6 +182,7 @@ export function useUsuarios() {
 
       toast.success(`Estado del usuario "${nombre}" cambiado a ${statusDialog.nextEstado}`);
       setStatusDialog({ isOpen: false, usuario: null, nextEstado: 'Activo' });
+      fetchEstadisticas();
     } catch (error) {
       toast.error(error?.data?.message || 'No se pudo actualizar el estado del usuario');
     } finally {
@@ -123,6 +193,9 @@ export function useUsuarios() {
   return {
     usuarios: filteredUsuarios,
     rawUsuarios: usuarios,
+    estadisticas,
+    isLoadingEstadisticas,
+    estadisticasError,
     searchTerm,
     setSearchTerm,
     filterRol,
@@ -142,11 +215,16 @@ export function useUsuarios() {
     isUpdatingStatus,
     isLoading,
     loadError,
-    refetch: fetchUsuarios,
+    refetch: () => {
+      fetchUsuarios();
+      fetchEstadisticas();
+    },
+    refetchEstadisticas: fetchEstadisticas,
     handleSave,
     handleDelete,
     handleRequestStatusChange,
     handleConfirmStatusChange,
+    isUsuarioAdmin,
+    isSameUser,
   };
 }
-

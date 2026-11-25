@@ -18,6 +18,7 @@ router.patch(
 router.use(protegerModulo('roles', 'eliminar'));
 
 router.get('/', RolesController.getAll);
+router.get('/estadisticas', RolesController.getEstadisticas);
 router.get('/:id', RolesController.getById);
 router.post('/', RolesController.create);
 router.put('/:id', RolesController.update);

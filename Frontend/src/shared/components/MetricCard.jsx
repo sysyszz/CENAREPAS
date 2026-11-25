@@ -1,6 +1,14 @@
 import { motion } from 'framer-motion';
 
-export function MetricCard({ title, value, icon: Icon, variant = 'primary', index = 0 }) {
+export function MetricCard({
+  title,
+  value,
+  icon: Icon,
+  variant = 'primary',
+  index = 0,
+  isLoading = false,
+  error = null,
+}) {
   const variantStyles = {
     primary: 'bg-primary/10 text-primary',
     success: 'bg-success/10 text-success',
@@ -25,7 +33,17 @@ export function MetricCard({ title, value, icon: Icon, variant = 'primary', inde
       )}
       <div className="min-w-0 flex-1 flex flex-col justify-center">
         <p className="text-xs sm:text-sm text-muted-foreground truncate leading-tight">{title}</p>
-        <h3 className="text-lg sm:text-xl font-bold text-foreground truncate mt-0.5 leading-tight">{value}</h3>
+        <h3 className="text-lg sm:text-xl font-bold text-foreground truncate mt-0.5 leading-tight">
+          {isLoading ? (
+            <span className="inline-block w-12 h-5 bg-muted animate-pulse rounded my-0.5" />
+          ) : error ? (
+            <span className="text-xs text-destructive font-normal" title={error}>
+              Error al cargar
+            </span>
+          ) : (
+            value ?? 0
+          )}
+        </h3>
       </div>
     </motion.div>
   );
