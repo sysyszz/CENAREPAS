@@ -1,6 +1,7 @@
 import { useMemo } from 'react';
 import { X, Check, Shield, Calendar, Hash, Info, Layers } from 'lucide-react';
 import { mockPermisos, usePermissions } from '../../../shared/contexts/PermissionContext';
+import { formatBogotaDateTimeText } from '../../../shared/utils/formatDate';
 
 // Permisos por defecto para roles predefinidos si aún no se han personalizado
 const DEFAULT_ROLE_PERMISSIONS = {
@@ -56,21 +57,6 @@ export default function RoleDetailModal({ isOpen, onClose, role }) {
   const totalSystemPermissions = mockPermisos.length;
   const activeCount = activePermissionIds.length;
 
-  const formatDate = (dateStr) => {
-    if (!dateStr) return 'N/A';
-    try {
-      const d = new Date(dateStr);
-      if (isNaN(d.getTime())) return dateStr;
-      return d.toLocaleDateString('es-CO', {
-        year: 'numeric',
-        month: 'short',
-        day: 'numeric',
-      });
-    } catch {
-      return dateStr;
-    }
-  };
-
   return (
     <div className="fixed inset-0 bg-black/50 backdrop-blur-xs flex items-center justify-center z-50 p-4">
       <div className="bg-card text-card-foreground p-6 rounded-xl max-w-3xl w-full border border-border shadow-2xl space-y-6 max-h-[90vh] flex flex-col animate-in fade-in-50 zoom-in-95 duration-200">
@@ -119,7 +105,7 @@ export default function RoleDetailModal({ isOpen, onClose, role }) {
                 <span>Fecha de Creación</span>
               </div>
               <p className="text-sm font-semibold text-foreground mt-auto">
-                {formatDate(role.fecha_creacion)}
+                {role.fecha_creacion ? formatBogotaDateTimeText(role.fecha_creacion) : 'N/A'}
               </p>
             </div>
 

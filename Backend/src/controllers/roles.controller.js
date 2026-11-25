@@ -9,6 +9,13 @@ export class RolesController {
     } catch (e) { next(e); }
   }
 
+  static async getEstadisticas(req, res, next) {
+    try {
+      const data = await RolesService.getEstadisticas();
+      return successResponse(res, data, 'Estadísticas de roles obtenidas');
+    } catch (e) { next(e); }
+  }
+
   static async getById(req, res, next) {
     try {
       const data = await RolesService.getById(req.params.id);

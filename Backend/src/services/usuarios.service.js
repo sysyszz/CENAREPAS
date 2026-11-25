@@ -1,7 +1,7 @@
 import bcrypt from 'bcryptjs';
 import { query } from '../config/db.js';
 import { CONTRASENA_MIN, TIPOS_DOCUMENTO } from '../config/negocio.js';
-import { badRequest, conflict } from '../utils/httpError.js';
+import { badRequest, conflict, forbidden } from '../utils/httpError.js';
 import { eliminarSinAsociados } from '../utils/eliminacion.js';
 
 const SALT_ROUNDS = 10;
@@ -42,6 +42,23 @@ export class UsuariosService {
     return res.rows.map(({ id_usuario, nombre, id_rol, rol_nombre, estado }) => ({
       id_usuario, nombre, id_rol, rol_nombre, estado,
     }));
+  }
+
+  static async getEstadisticas() {
+    const res = await query(`
+      SELECT 
+        (SELECT COUNT(*)::int FROM usuario) AS total_usuarios,
+        (SELECT COUNT(*)::int FROM usuario WHERE LOWER(estado) = 'activo') AS usuarios_activos,
+        (SELECT COUNT(*)::int FROM usuario WHERE LOWER(estado) = 'inactivo') AS usuarios_inactivos,
+        (SELECT COUNT(DISTINCT id_rol)::int FROM usuario WHERE id_rol IS NOT NULL) AS roles_asignados
+    `);
+    const row = res.rows[0] || {};
+    return {
+      total_usuarios: Number(row.total_usuarios || 0),
+      usuarios_activos: Number(row.usuarios_activos || 0),
+      usuarios_inactivos: Number(row.usuarios_inactivos || 0),
+      roles_asignados: Number(row.roles_asignados || 0),
+    };
   }
 
   static async getById(id) {
@@ -114,7 +131,15 @@ export class UsuariosService {
       id,
       noEncontrado: 'Usuario no encontrado',
       validar: async (db, usuario) => {
-        if (usuario.id_usuario === Number(idUsuarioSesion)) throw conflict('No puedes eliminar tu propio usuario.');
+        if (usuario.id_usuario === Number(idUsuarioSesion)) {
+          throw forbidden('No puedes eliminar tu propio usuario.');
+        }
+        const rolRes = await db.query('SELECT nombre FROM rol WHERE id_rol = $1', [usuario.id_rol]);
+        const rolNombre = String(rolRes.rows[0]?.nombre || '').toLowerCase();
+        const correo = String(usuario.correo || '').toLowerCase().trim();
+        if (Number(usuario.id_rol) === 1 || rolNombre === 'administrador' || rolNombre === 'admin' || correo === 'admin@sistema.com') {
+          throw forbidden('No se puede eliminar un usuario con rol de administrador.');
+        }
         const otros = await db.query(
           `SELECT r.nombre = 'Administrador' AS es_admin,
                   (SELECT COUNT(*) FROM usuario u JOIN rol ra ON ra.id_rol = u.id_rol

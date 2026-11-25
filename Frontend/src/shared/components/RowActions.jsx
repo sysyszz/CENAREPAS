@@ -24,6 +24,7 @@ export function RowActions({
   showView = true,
   showEdit,
   showDelete,
+  reserveDeleteSpace = false,
   deleteIcon = 'trash',
   extra,
   variant = 'muted',
@@ -81,7 +82,11 @@ export function RowActions({
       {showView ? wrapNode(wrapView, viewButton) : null}
       {shouldShowEdit ? wrapNode(wrapEdit, editButton) : null}
       {extra}
-      {shouldShowDelete ? wrapNode(wrapDelete, deleteButton) : null}
+      {shouldShowDelete ? (
+        wrapNode(wrapDelete, deleteButton)
+      ) : reserveDeleteSpace ? (
+        <span className="w-7 h-7 shrink-0 inline-block pointer-events-none" aria-hidden="true" />
+      ) : null}
     </div>
   );
 }

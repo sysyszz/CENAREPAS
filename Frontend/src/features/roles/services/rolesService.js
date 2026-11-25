@@ -7,6 +7,10 @@ export const getRoles = async () => {
   return api.get('/roles');
 };
 
+export const getRolesEstadisticas = async () => {
+  return api.get('/roles/estadisticas');
+};
+
 export const createRol = async (rol) => {
   return api.post('/roles', rol);
 };

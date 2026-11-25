@@ -1,5 +1,12 @@
 import { useState, useEffect, useMemo } from 'react';
-import { getRoles, createRol, updateRol, deleteRol, cambiarEstadoRol } from '../services/rolesService';
+import {
+  getRoles,
+  getRolesEstadisticas,
+  createRol,
+  updateRol,
+  deleteRol,
+  cambiarEstadoRol,
+} from '../services/rolesService';
 import { toast } from '../../../shared/utils/toast';
 
 export const isAdminRole = (rol) => {
@@ -9,8 +16,14 @@ export const isAdminRole = (rol) => {
   return id === 1 || name === 'admin' || name === 'administrador';
 };
 
+export const isProtectedRole = (rol) => isAdminRole(rol);
+
 export function useRoles() {
   const [roles, setRoles] = useState([]);
+  const [estadisticas, setEstadisticas] = useState(null);
+  const [isLoadingEstadisticas, setIsLoadingEstadisticas] = useState(true);
+  const [estadisticasError, setEstadisticasError] = useState(null);
+
   const [searchQuery, setSearchQuery] = useState('');
   const [estadoFilter, setEstadoFilter] = useState('Todos');
   const [showModal, setShowModal] = useState(false);
@@ -36,8 +49,21 @@ export function useRoles() {
       .finally(() => setIsLoading(false));
   };
 
+  const fetchEstadisticas = () => {
+    setIsLoadingEstadisticas(true);
+    setEstadisticasError(null);
+    return getRolesEstadisticas()
+      .then((data) => setEstadisticas(data))
+      .catch((err) => {
+        setEstadisticas(null);
+        setEstadisticasError(err?.message || 'No se pudieron cargar las estadísticas');
+      })
+      .finally(() => setIsLoadingEstadisticas(false));
+  };
+
   useEffect(() => {
     fetchRoles();
+    fetchEstadisticas();
   }, []);
 
   const filteredRoles = useMemo(() => {
@@ -74,6 +100,7 @@ export function useRoles() {
         toast.success('Rol creado');
       }
       setShowModal(false);
+      fetchEstadisticas();
     } catch (error) {
       toast.error(error?.data?.message || 'No se pudo guardar el rol');
     } finally {
@@ -85,7 +112,7 @@ export function useRoles() {
     if (!deleteDialog.id) return;
     const targetRole = roles.find((r) => r.id_rol === deleteDialog.id);
     if (isAdminRole(targetRole)) {
-      toast.error('El rol Administrador es principal del sistema y no puede ser eliminado');
+      toast.error('El rol Administrador no puede ser eliminado');
       setDeleteDialog({ isOpen: false, id: null, nombre: '' });
       return;
     }
@@ -95,8 +122,9 @@ export function useRoles() {
       await deleteRol(deleteDialog.id);
       setRoles((prev) => prev.filter((r) => r.id_rol !== deleteDialog.id));
       toast.success('Rol eliminado');
+      fetchEstadisticas();
     } catch (error) {
-      toast.error('No se pudo eliminar el rol');
+      toast.error(error?.data?.message || 'No se pudo eliminar el rol');
     } finally {
       setIsDeleting(false);
       setDeleteDialog({ isOpen: false, id: null, nombre: '' });
@@ -139,6 +167,7 @@ export function useRoles() {
 
       toast.success(`Estado del rol "${nombre}" cambiado a ${statusDialog.nextEstado}`);
       setStatusDialog({ isOpen: false, rol: null, nextEstado: 'Activo' });
+      fetchEstadisticas();
     } catch (error) {
       toast.error(error?.data?.message || 'No se pudo actualizar el estado del rol');
     } finally {
@@ -149,6 +178,9 @@ export function useRoles() {
   return {
     roles: filteredRoles,
     rawRoles: roles,
+    estadisticas,
+    isLoadingEstadisticas,
+    estadisticasError,
     searchQuery,
     setSearchQuery,
     estadoFilter,
@@ -168,13 +200,16 @@ export function useRoles() {
     isUpdatingStatus,
     isLoading,
     loadError,
-    refetch: fetchRoles,
+    refetch: () => {
+      fetchRoles();
+      fetchEstadisticas();
+    },
+    refetchEstadisticas: fetchEstadisticas,
     handleSave,
     handleDelete,
     handleRequestStatusChange,
     handleConfirmStatusChange,
     isAdminRole,
+    isProtectedRole,
   };
 }
-
-

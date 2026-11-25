@@ -7,6 +7,10 @@ export const getUsuarios = async () => {
   return api.get('/usuarios');
 };
 
+export const getUsuariosEstadisticas = async () => {
+  return api.get('/usuarios/estadisticas');
+};
+
 export const createUsuario = async (usuario) => {
   return api.post('/usuarios', usuario);
 };

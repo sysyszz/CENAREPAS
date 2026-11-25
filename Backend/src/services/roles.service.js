@@ -1,5 +1,5 @@
 import { pool, query } from '../config/db.js';
-import { conflict, notFound } from '../utils/httpError.js';
+import { conflict, notFound, forbidden } from '../utils/httpError.js';
 
 const ROLES_SISTEMA = ['Administrador', 'Secretaria', 'Vendedor', 'Cliente'];
 
@@ -16,6 +16,23 @@ export class RolesService {
     `);
     if (res.rows && res.rows.length > 0) return res.rows;
     return [];
+  }
+
+  static async getEstadisticas() {
+    const res = await query(`
+      SELECT 
+        (SELECT COUNT(*)::int FROM rol) AS total_roles,
+        (SELECT COUNT(*)::int FROM permiso WHERE LOWER(estado) = 'activo') AS permisos_disponibles,
+        (SELECT COUNT(DISTINCT r.id_rol)::int FROM rol r JOIN rol_permiso rp ON r.id_rol = rp.id_rol) AS roles_configurados,
+        (SELECT COUNT(*)::int FROM rol WHERE LOWER(estado) = 'activo') AS roles_activos
+    `);
+    const row = res.rows[0] || {};
+    return {
+      total_roles: Number(row.total_roles || 0),
+      permisos_disponibles: Number(row.permisos_disponibles || 0),
+      roles_configurados: Number(row.roles_configurados || 0),
+      roles_activos: Number(row.roles_activos || 0),
+    };
   }
 
   static async getById(id) {
@@ -127,8 +144,10 @@ export class RolesService {
       // HU-010: solo se elimina un rol sin usuarios; los roles del sistema no se eliminan.
       const rol = await client.query('SELECT nombre FROM rol WHERE id_rol = $1', [id]);
       if (rol.rows.length === 0) throw notFound('Rol no encontrado');
-      if (ROLES_SISTEMA.includes(rol.rows[0].nombre)) {
-        throw conflict(`El rol ${rol.rows[0].nombre} es del sistema y no se puede eliminar`);
+      const nombreRol = String(rol.rows[0].nombre || '').trim();
+      const nombreLower = nombreRol.toLowerCase();
+      if (Number(id) === 1 || nombreLower === 'administrador' || nombreLower === 'admin') {
+        throw forbidden('El rol Administrador no se puede eliminar');
       }
       const usuarios = await client.query('SELECT COUNT(*)::int AS total FROM usuario WHERE id_rol = $1', [id]);
       if (usuarios.rows[0].total > 0) {

@@ -1,5 +1,6 @@
 import { X, Mail, Shield, Calendar, Hash, UserCheck, UserX, IdCard } from 'lucide-react';
 import { NOMBRES_DOCUMENTO } from '../../../shared/config/negocio';
+import { formatBogotaDateTimeText } from '../../../shared/utils/formatDate';
 
 export default function UsuarioDetailModal({ isOpen, onClose, usuario, roleNames = {} }) {
   if (!isOpen || !usuario) return null;
@@ -15,21 +16,6 @@ export default function UsuarioDetailModal({ isOpen, onClose, usuario, roleNames
       return (parts[0][0] + parts[1][0]).toUpperCase();
     }
     return name.slice(0, 2).toUpperCase();
-  };
-
-  const formatDate = (dateStr) => {
-    if (!dateStr) return 'N/A';
-    try {
-      const d = new Date(dateStr);
-      if (isNaN(d.getTime())) return dateStr;
-      return d.toLocaleDateString('es-CO', {
-        year: 'numeric',
-        month: 'short',
-        day: 'numeric',
-      });
-    } catch {
-      return dateStr;
-    }
   };
 
   return (
@@ -107,7 +93,7 @@ export default function UsuarioDetailModal({ isOpen, onClose, usuario, roleNames
               Fecha de Creación
             </span>
             <span className="text-xs font-medium text-foreground">
-              {formatDate(usuario.fecha_creacion)}
+              {usuario.fecha_creacion ? formatBogotaDateTimeText(usuario.fecha_creacion) : 'N/A'}
             </span>
           </div>
 

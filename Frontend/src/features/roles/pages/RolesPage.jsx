@@ -14,11 +14,15 @@ import { CustomSelect } from '../../../shared/components/CustomSelect';
 import ErrorBanner from '../../../shared/components/ErrorBanner';
 import { exportToPdf } from '../../../shared/utils/exportToPdf';
 import { exportToExcel } from '../../../shared/utils/exportToExcel';
+import { DateCell, formatBogotaDateTimeText } from '../../../shared/utils/formatDate';
 
 export default function RolesPage() {
   const { can } = usePermissions();
   const {
     rawRoles,
+    estadisticas,
+    isLoadingEstadisticas,
+    estadisticasError,
     searchQuery,
     setSearchQuery,
     estadoFilter,
@@ -41,6 +45,7 @@ export default function RolesPage() {
     handleDelete,
     handleRequestStatusChange,
     handleConfirmStatusChange,
+    isProtectedRole,
   } = useRoles();
 
   const [selectedRole, setSelectedRole] = useState(null);
@@ -48,7 +53,7 @@ export default function RolesPage() {
   const totalRoles = rawRoles.length;
   const rolesActivos = rawRoles.filter((r) => String(r.estado).toLowerCase() === 'activo').length;
   const permisosDisponibles = mockPermisos.length;
-  const rolesConfigurados = rawRoles.filter((role) => String(role.estado).toLowerCase() === 'activo').length;
+  const rolesConfigurados = rawRoles.filter((role) => Array.isArray(role?.permisos) && role.permisos.length > 0).length;
 
   const filteredData = useMemo(() => {
     return rawRoles.filter((r) => {
@@ -102,7 +107,7 @@ export default function RolesPage() {
       {
         key: 'fecha_creacion',
         label: 'Fecha de Creación',
-        render: (value) => <span className="text-muted-foreground">{value}</span>,
+        render: (value) => <DateCell date={value} />,
       },
       {
         key: 'estado',
@@ -133,6 +138,7 @@ export default function RolesPage() {
         label: 'Acciones',
         render: (_, rol) => {
           const isRolAdmin = Number(rol?.id_rol) === 1 || ['administrador', 'admin'].includes(String(rol?.nombre || '').toLowerCase().trim());
+          const canDeleteRole = !isRolAdmin && can('roles', 'eliminar');
           return (
             <RowActions
               onView={() => setDetailModal({ isOpen: true, data: rol })}
@@ -141,8 +147,10 @@ export default function RolesPage() {
                 setShowModal(true);
               }}
               editDisabled={!can('roles', 'editar')}
+              showDelete={canDeleteRole}
+              reserveDeleteSpace={true}
               onDelete={() => {
-                if (isRolAdmin) {
+                if (!canDeleteRole) {
                   return;
                 }
                 setDeleteDialog({
@@ -151,13 +159,12 @@ export default function RolesPage() {
                   nombre: rol.nombre,
                 });
               }}
-              deleteDisabled={isRolAdmin || !can('roles', 'eliminar')}
             />
           );
         },
       },
     ],
-    [can, setDetailModal, setShowModal, setDeleteDialog, handleRequestStatusChange]
+    [can, setDetailModal, setShowModal, setDeleteDialog, handleRequestStatusChange, isProtectedRole]
   );
 
   const handleExportPdf = () => {
@@ -167,7 +174,7 @@ export default function RolesPage() {
         { header: 'ID', key: 'id_rol' },
         { header: 'Nombre del Rol', key: 'nombre' },
         { header: 'Descripción', key: 'descripcion' },
-        { header: 'Fecha Creación', key: 'fecha_creacion' },
+        { header: 'Fecha Creación', accessor: (r) => formatBogotaDateTimeText(r.fecha_creacion) },
         { header: 'Estado', key: 'estado' },
       ],
       title: 'Reporte de Roles y Permisos',
@@ -182,7 +189,7 @@ export default function RolesPage() {
         { header: 'ID', key: 'id_rol', align: 'center' },
         { header: 'Nombre del Rol', key: 'nombre' },
         { header: 'Descripción', key: 'descripcion' },
-        { header: 'Fecha de Creación', key: 'fecha_creacion', align: 'center' },
+        { header: 'Fecha de Creación', accessor: (r) => formatBogotaDateTimeText(r.fecha_creacion), align: 'center' },
         { header: 'Estado', key: 'estado', align: 'center' },
       ],
       title: 'Reporte de Roles y Permisos',
@@ -208,10 +215,42 @@ export default function RolesPage() {
 
       {/* Tarjetas de consolidado / métricas */}
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 items-stretch">
-        <MetricCard index={0} title="Total Roles" value={totalRoles} icon={Shield} variant="primary" />
-        <MetricCard index={1} title="Permisos Disponibles" value={permisosDisponibles} icon={KeyRound} variant="accent" />
-        <MetricCard index={2} title="Roles Configurados" value={rolesConfigurados} icon={ListChecks} variant="warning" />
-        <MetricCard index={3} title="Roles Activos" value={rolesActivos} icon={ShieldCheck} variant="success" />
+        <MetricCard
+          index={0}
+          title="Total Roles"
+          value={estadisticas?.total_roles ?? totalRoles}
+          icon={Shield}
+          variant="primary"
+          isLoading={isLoadingEstadisticas}
+          error={estadisticasError}
+        />
+        <MetricCard
+          index={1}
+          title="Permisos Disponibles"
+          value={estadisticas?.permisos_disponibles ?? permisosDisponibles}
+          icon={KeyRound}
+          variant="accent"
+          isLoading={isLoadingEstadisticas}
+          error={estadisticasError}
+        />
+        <MetricCard
+          index={2}
+          title="Roles Configurados"
+          value={estadisticas?.roles_configurados ?? rolesConfigurados}
+          icon={ListChecks}
+          variant="warning"
+          isLoading={isLoadingEstadisticas}
+          error={estadisticasError}
+        />
+        <MetricCard
+          index={3}
+          title="Roles Activos"
+          value={estadisticas?.roles_activos ?? rolesActivos}
+          icon={ShieldCheck}
+          variant="success"
+          isLoading={isLoadingEstadisticas}
+          error={estadisticasError}
+        />
       </div>
 
       <ErrorBanner message={loadError} onRetry={refetch} />

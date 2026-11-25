@@ -19,6 +19,7 @@ router.use(authenticate);
 // El listado también lo usan Pedidos y Ventas de la web para mostrar nombres:
 // quien no tiene usuarios:ver recibe solo id, nombre y rol (ver el controlador).
 router.get('/', authorize(['usuarios', 'ver'], ['pedidos', 'ver'], ['ventas', 'ver']), UsuariosController.getAll);
+router.get('/estadisticas', authorize('usuarios', 'ver'), UsuariosController.getEstadisticas);
 router.get('/:id', authorize('usuarios', 'ver'), UsuariosController.getById);
 router.post('/', authorize('usuarios', 'crear'), UsuariosController.create);
 router.put('/:id', authorize('usuarios', 'editar'), UsuariosController.update);
