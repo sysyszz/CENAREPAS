@@ -1,6 +1,6 @@
 import { X, Mail, Shield, Calendar, Hash, UserCheck, UserX, IdCard } from 'lucide-react';
 import { NOMBRES_DOCUMENTO } from '../../../shared/config/negocio';
-import { formatBogotaDateTimeText } from '../../../shared/utils/formatDate';
+import { formatBogotaDateTimeText } from '../../../shared/utils/formatDateTime';
 
 export default function UsuarioDetailModal({ isOpen, onClose, usuario, roleNames = {} }) {
   if (!isOpen || !usuario) return null;
