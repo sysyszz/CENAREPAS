@@ -13,6 +13,13 @@ export class PedidosController {
     } catch (e) { next(e); }
   }
 
+  static async getResumen(req, res, next) {
+    try {
+      const data = await PedidosService.getResumen();
+      return successResponse(res, data, 'Resumen de pedidos recuperado correctamente');
+    } catch (e) { next(e); }
+  }
+
   static async getById(req, res, next) {
     try {
       const data = await PedidosService.getById(req.params.id);

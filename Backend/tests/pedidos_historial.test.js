@@ -35,6 +35,25 @@ async function api(token, metodo, ruta, cuerpo) {
 const historial = async (id) => (await api(token, 'GET', `/pedidos/${id}/historial`)).body.data;
 const pasos = (filas) => filas.map((h) => [h.estado_anterior, h.estado_nuevo]);
 
+async function assertResumenConsistente() {
+  const [resumenRespuesta, pedidosRespuesta] = await Promise.all([
+    api(token, 'GET', '/pedidos/resumen'),
+    api(token, 'GET', '/pedidos'),
+  ]);
+  assert.equal(resumenRespuesta.status, 200);
+  assert.equal(pedidosRespuesta.status, 200);
+
+  const pedidos = pedidosRespuesta.body.data;
+  const entregados = pedidos.filter((p) => p.estado === 'Entregado');
+  const enCamino = pedidos.filter((p) => ['Pendiente', 'En proceso'].includes(p.estado));
+  const valorFacturado = entregados.reduce((total, p) => total + Number(p.valor_total), 0);
+
+  assert.equal(resumenRespuesta.body.data.total_pedidos, pedidos.length);
+  assert.equal(resumenRespuesta.body.data.entregados, entregados.length);
+  assert.equal(resumenRespuesta.body.data.en_camino, enCamino.length);
+  assert.equal(Number(resumenRespuesta.body.data.valor_facturado), valorFacturado);
+}
+
 let token;
 let idUsuario;
 let pedido;
@@ -71,6 +90,10 @@ test('1. al crear el pedido queda la fila Pendiente', async () => {
   assert.equal(filas[0].reconstruido, false);
 });
 
+test('1.1 el resumen coincide con todos los pedidos y suma solo los entregados', async () => {
+  await assertResumenConsistente();
+});
+
 test('2. del usuario solo trae nombre y rol: nada de correo', async () => {
   const filas = await historial(pedido.id_pedido);
   const texto = JSON.stringify(filas);
@@ -87,6 +110,7 @@ test('2. del usuario solo trae nombre y rol: nada de correo', async () => {
 test('3. pasar a En proceso agrega su fila', async () => {
   assert.equal((await api(token, 'PATCH', `/pedidos/${pedido.id_pedido}/estado`, { estado: 'En proceso' })).status, 200);
   assert.deepEqual(pasos(await historial(pedido.id_pedido)), [[null, 'Pendiente'], ['Pendiente', 'En proceso']]);
+  await assertResumenConsistente();
 });
 
 test('4. un cambio rechazado (409) no deja fila', async () => {
@@ -108,6 +132,7 @@ test('5. la anulación (al final) guarda el motivo, quién y cuándo', async () 
   assert.equal(anulacion.motivo, 'PRUEBA - anulación de la prueba de historial');
   assert.equal(anulacion.usuario_nombre, 'Vendedor Staging');
   assert.ok(new Date(anulacion.fecha_cambio) >= new Date(filas[1].fecha_cambio));
+  await assertResumenConsistente();
 });
 
 test('6. los pedidos anteriores a la migración tienen su historial reconstruido', async () => {

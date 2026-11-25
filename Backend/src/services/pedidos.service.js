@@ -69,6 +69,17 @@ export class PedidosService {
     return res.rows;
   }
 
+  static async getResumen() {
+    const res = await query(
+      `SELECT COUNT(*)::int AS total_pedidos,
+              COUNT(*) FILTER (WHERE estado = 'Entregado')::int AS entregados,
+              COUNT(*) FILTER (WHERE estado IN ('Pendiente', 'En proceso'))::int AS en_camino,
+              COALESCE(SUM(valor_total) FILTER (WHERE estado = 'Entregado'), 0) AS valor_facturado
+       FROM pedido`
+    );
+    return res.rows[0];
+  }
+
   static async getById(id, { idCliente } = {}) {
     const res = await query(
       `${SELECT_PEDIDO}

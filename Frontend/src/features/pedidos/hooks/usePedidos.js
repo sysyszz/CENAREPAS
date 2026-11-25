@@ -1,20 +1,31 @@
 import { useState, useEffect, useMemo } from 'react';
-import { getPedidos, createPedido, updatePedido, deletePedido } from '../services/pedidosService';
+import {
+  getPedidos,
+  getResumenPedidos,
+  createPedido,
+  updatePedido,
+  updatePedidoEstado,
+  deletePedido,
+  getEstadosDestino,
+} from '../services/pedidosService';
 import { toast } from '../../../shared/utils/toast';
 
 export function usePedidos() {
   const [pedidos, setPedidos] = useState([]);
+  const [resumen, setResumen] = useState(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [estadoFilter, setEstadoFilter] = useState('Todos');
   const [showModal, setShowModal] = useState(false);
   const [detailModal, setDetailModal] = useState({ isOpen: false, data: null });
   const [deleteDialog, setDeleteDialog] = useState({ isOpen: false, id: null, nombre: '' });
-  const [statusDialog, setStatusDialog] = useState({ isOpen: false, pedido: null, nextEstado: 'Activo' });
+  const [statusDialog, setStatusDialog] = useState({ isOpen: false, pedido: null, nextEstado: '' });
   const [isDeleting, setIsDeleting] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [isUpdatingStatus, setIsUpdatingStatus] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [loadError, setLoadError] = useState(null);
+  const [isLoadingResumen, setIsLoadingResumen] = useState(true);
+  const [resumenError, setResumenError] = useState(null);
 
   const fetchPedidos = () => {
     setIsLoading(true);
@@ -28,8 +39,23 @@ export function usePedidos() {
       .finally(() => setIsLoading(false));
   };
 
+  const fetchResumen = async () => {
+    setIsLoadingResumen(true);
+    setResumenError(null);
+    try {
+      const data = await getResumenPedidos();
+      setResumen(data);
+    } catch (error) {
+      setResumen(null);
+      setResumenError(error?.message || 'No se pudo cargar el resumen de pedidos');
+    } finally {
+      setIsLoadingResumen(false);
+    }
+  };
+
   useEffect(() => {
     fetchPedidos();
+    fetchResumen();
   }, []);
 
   const filteredPedidos = useMemo(() => {
@@ -60,9 +86,10 @@ export function usePedidos() {
         setPedidos((prev) => [created, ...prev]);
         toast.success('Pedido creado');
       }
+      await fetchResumen();
       setShowModal(false);
     } catch (error) {
-      toast.error('No se pudo guardar el pedido');
+      toast.error(error?.message || 'No se pudo guardar el pedido');
     } finally {
       setIsSaving(false);
     }
@@ -74,19 +101,21 @@ export function usePedidos() {
     try {
       await deletePedido(deleteDialog.id);
       setPedidos((prev) => prev.filter((p) => p.id_pedido !== deleteDialog.id));
-      toast.success('Pedido eliminado');
+      await fetchResumen();
+      toast.success('Pedido anulado');
     } catch (error) {
-      toast.error('No se pudo eliminar el pedido');
+      toast.error(error?.message || 'No se pudo anular el pedido');
     } finally {
       setIsDeleting(false);
       setDeleteDialog({ isOpen: false, id: null, nombre: '' });
     }
   };
 
-  const handleRequestStatusChange = (pedido) => {
-    if (!pedido) return;
-    const isCurrentlyActive = !['anulado', 'inactivo', 'cancelado'].includes(String(pedido.estado || '').toLowerCase());
-    const nextEstado = isCurrentlyActive ? 'Inactivo' : 'Activo';
+  const handleRequestStatusChange = (pedido, nextEstado) => {
+    if (!pedido || !getEstadosDestino(pedido.estado).includes(nextEstado)) {
+      toast.error(`Un pedido ${pedido?.estado || ''} no puede pasar a ${nextEstado || 'ese estado'}`.trim());
+      return;
+    }
     setStatusDialog({
       isOpen: true,
       pedido,
@@ -95,25 +124,23 @@ export function usePedidos() {
   };
 
   const handleConfirmStatusChange = async () => {
-    if (!statusDialog.pedido) return;
+    if (!statusDialog.pedido || !statusDialog.nextEstado) return;
     setIsUpdatingStatus(true);
     try {
       const { id_pedido } = statusDialog.pedido;
-      await updatePedido(id_pedido, {
-        ...statusDialog.pedido,
-        estado: statusDialog.nextEstado,
-      });
+      const updated = await updatePedidoEstado(id_pedido, statusDialog.nextEstado);
 
       setPedidos((prev) =>
         prev.map((p) =>
-          p.id_pedido === id_pedido ? { ...p, estado: statusDialog.nextEstado } : p
+          p.id_pedido === id_pedido ? { ...p, ...updated } : p
         )
       );
 
+      await fetchResumen();
       toast.success(`Estado del pedido #${id_pedido} cambiado a ${statusDialog.nextEstado}`);
-      setStatusDialog({ isOpen: false, pedido: null, nextEstado: 'Activo' });
+      setStatusDialog({ isOpen: false, pedido: null, nextEstado: '' });
     } catch (error) {
-      toast.error('No se pudo actualizar el estado del pedido');
+      toast.error(error?.message || 'No se pudo actualizar el estado del pedido');
     } finally {
       setIsUpdatingStatus(false);
     }
@@ -122,6 +149,7 @@ export function usePedidos() {
   return {
     pedidos: filteredPedidos,
     rawPedidos: pedidos,
+    resumen,
     searchQuery,
     setSearchQuery,
     estadoFilter,
@@ -139,12 +167,13 @@ export function usePedidos() {
     isUpdatingStatus,
     isLoading,
     loadError,
+    isLoadingResumen,
+    resumenError,
     refetch: fetchPedidos,
+    refetchResumen: fetchResumen,
     handleSave,
     handleDelete,
     handleRequestStatusChange,
     handleConfirmStatusChange,
   };
 }
-
-

@@ -3,10 +3,19 @@ import { Plus, Trash2, ShoppingBag } from 'lucide-react';
 import { getClientes } from '../../clientes/services/clientesService';
 import { getProductos } from '../../productos/services/productosService';
 import { getSedes } from '../../sedes/services/sedesService';
+import { getEstadosDestino } from '../services/pedidosService';
 import { Combobox } from '../../../shared/ui/Combobox';
 import { StepperModal } from '../../../shared/components/StepperModal';
 
-export function PedidoFormModal({ open, onClose, pedido = null, onSave, isLoading = false }) {
+export function PedidoFormModal({
+  open,
+  onClose,
+  pedido = null,
+  onSave,
+  isLoading = false,
+  canChangeStatus = false,
+  canCancel = false,
+}) {
   const [idCliente, setIdCliente] = useState('1');
   const [idSede, setIdSede] = useState('1');
   const [fechaEntrega, setFechaEntrega] = useState('');
@@ -100,6 +109,10 @@ export function PedidoFormModal({ open, onClose, pedido = null, onSave, isLoadin
   const valorTotalCalculado = useMemo(() => {
     return detalles.reduce((acc, item) => acc + (Number(item.subtotal) || 0), 0);
   }, [detalles]);
+
+  const estadosDisponibles = pedido && canChangeStatus
+    ? [pedido.estado, ...getEstadosDestino(pedido.estado, { incluirAnulado: canCancel })]
+    : [pedido?.estado || 'Pendiente'];
 
   const handleAddDetalle = () => {
     if (!selectedProductoId || !cantidadProducto || Number(cantidadProducto) <= 0 || !precioUnitario || Number(precioUnitario) <= 0) {
@@ -283,13 +296,8 @@ export function PedidoFormModal({ open, onClose, pedido = null, onSave, isLoadin
                 name="estado"
                 value={estado}
                 onChange={(e) => setEstado(e.target.value)}
-                options={[
-                  { value: 'Pendiente', label: 'Pendiente' },
-                  { value: 'En preparacion', label: 'En Preparación' },
-                  { value: 'Listo para entregar', label: 'Listo para Entregar' },
-                  { value: 'Entregado', label: 'Entregado' },
-                  { value: 'Anulado', label: 'Anulado' },
-                ]}
+                disabled={!pedido || !canChangeStatus}
+                options={[...new Set(estadosDisponibles)].map((value) => ({ value, label: value }))}
               />
             </div>
 
@@ -471,4 +479,3 @@ export function PedidoFormModal({ open, onClose, pedido = null, onSave, isLoadin
 }
 
 export default PedidoFormModal;
-

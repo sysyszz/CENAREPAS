@@ -146,6 +146,7 @@ Tipos de notificación: `pedido_creado`, `pedido_estado`, `abono_aprobado` y `ab
 | POST | `/abonos` | abonos:crear | **Modificado (e):** acepta `fecha_abono` opcional (AAAA-MM-DD; sin ella, hoy). No puede ser futura, ni anterior a la fecha del pedido, ni de hace más de `ABONO_DIAS_ATRAS_MAX` = 7 días (`src/config/negocio.js`): 400 con `errors.fecha_abono` y el límite en el mensaje. `fecha_registro` sigue siendo el momento real del registro. Los abonos del cliente (`/mi/*`) siguen con la fecha de hoy. |
 | PUT | `/abonos/:id` `{ valor_abonado?, medio_pago?, fecha_abono?, comprobante_url? }` | abonos:editar | **Nuevo:** corrige un abono **En revisión**; lo que no se envía se conserva. Mismas reglas que `POST /abonos`: valor entero mayor a 0 y no mayor que el saldo menos los otros abonos en revisión (`errors.valor_abonado`), transferencia con comprobante (`errors.comprobante_url`) y la regla de fecha de 7 días (`errors.fecha_abono`). `comprobante_url: null` lo quita. Aprobado, Rechazado o Anulado → **409** con un mensaje por estado ("El abono ya fue aprobado; anúlalo y registra uno nuevo.", "El abono fue rechazado y no se puede editar; registra uno nuevo.", "El abono está anulado y no se puede editar; registra uno nuevo."). El crédito debe estar Activo (409). |
 | POST/PUT | `/abonos`, `/abonos/:id` | abonos:crear / editar | **Modificado:** `comprobante_url` debe ser exactamente la URL que devuelve `POST /comprobantes` (`/api/v1/comprobantes/u<id>_<marca>_<24 hex>.jpg\|png\|pdf`) y el archivo debe existir. Una URL externa u otra ruta → 400 con `errors.comprobante_url`. Aún no se valida quién subió el archivo. |
+| GET | `/pedidos/resumen` | pedidos:ver | **Nuevo:** resumen agregado desde PostgreSQL, independiente de filtros y paginación: `total_pedidos`, `entregados`, `en_camino` (Pendiente + En proceso) y `valor_facturado` (suma de Entregados). |
 | GET | `/pedidos/:id/historial` | pedidos:ver | **Nuevo:** historial de estados (migración 010), del más antiguo al más reciente: `estado_anterior` (null al crear), `estado_nuevo`, `id_usuario`, `usuario_nombre`, `rol_nombre` (del usuario, solo nombre y rol: sin correo), `motivo`, `fecha_cambio` y `reconstruido` (true en las filas reconstruidas de pedidos anteriores a la migración). 404 si el pedido no existe. Se escribe al crear el pedido y en cada cambio de estado (`PATCH /pedidos/:id/estado`, `DELETE /pedidos/:id`, `POST /mi/pedidos/:id/anular`). |
 | GET | `/fichas-tecnicas/:id` | ver | **Modificado:** trae `insumos` igual que el listado (`insumo_nombre`, `cantidad`, `unidad_medida`). Vendedor y Secretaria tienen `ver` (migración 007). |
 | POST/PUT | `/clientes`, `/clientes/:id` | crear / editar | **Modificado:** guardan `tipo_documento` (CC, CE, NIT, PP o TI; en mayúsculas; `CC` si no llega al crear), `municipio` (Área Metropolitana, `MUNICIPIOS_ENTREGA`) y `barrio`. Solo se valida lo que llega (400 con error por campo); en `PUT`, lo que no llega se conserva. |
@@ -165,6 +166,9 @@ Tipos de notificación: `pedido_creado`, `pedido_estado`, `abono_aprobado` y `ab
 - **Anulado** repone el stock si ya se había descontado, anula el crédito y rechaza los abonos En revisión.
 
 ```http
+GET /pedidos/resumen
+200 → { "data": { "total_pedidos": 20, "entregados": 8, "en_camino": 5, "valor_facturado": "420000.00" } }
+
 PATCH /pedidos/14/estado   { "estado": "En proceso" }
 200 → { "message": "Pedido actualizado a En proceso", "data": { "id_pedido": 14, "estado": "En proceso", … } }
 409 → { "message": "Un pedido Pendiente no puede pasar a Entregado" }

@@ -36,6 +36,7 @@ const permisoDeEstado = async (req, res, next) => {
 router.use(authenticate);
 
 router.get('/', authorize('pedidos', 'ver'), PedidosController.getAll);
+router.get('/resumen', authorize('pedidos', 'ver'), PedidosController.getResumen);
 router.get('/:id/historial', authorize('pedidos', 'ver'), PedidosController.historial);
 router.get('/:id', authorize('pedidos', 'ver'), PedidosController.getById);
 router.post('/', authorize('pedidos', 'crear'), PedidosController.create);

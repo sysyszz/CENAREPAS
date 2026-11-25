@@ -1,5 +1,5 @@
 import { useState, useMemo, useEffect } from 'react';
-import { ClipboardList, CheckCircle, Truck, DollarSign } from 'lucide-react';
+import { ClipboardList, CheckCircle, Truck, DollarSign, ChevronDown } from 'lucide-react';
 import { usePedidos } from '../hooks/usePedidos';
 import { getClientes } from '../../clientes/services/clientesService';
 import { getUsuarios } from '../../usuarios/services/usuariosService';
@@ -12,16 +12,17 @@ import DetailModal from '../../../shared/components/DetailModal';
 import PageHeader from '../../../shared/components/PageHeader';
 import { MetricCard } from '../../../shared/components/MetricCard';
 import { usePermissions } from '../../../shared/contexts/PermissionContext';
-import StatusSwitch from '../../../shared/components/StatusSwitch';
 import { CustomSelect } from '../../../shared/components/CustomSelect';
 import ErrorBanner from '../../../shared/components/ErrorBanner';
 import { exportToPdf } from '../../../shared/utils/exportToPdf';
 import { exportToExcel } from '../../../shared/utils/exportToExcel';
+import { getEstadosDestino } from '../services/pedidosService';
 
 export default function PedidosPage() {
   const { can } = usePermissions();
   const {
     rawPedidos,
+    resumen,
     searchQuery,
     setSearchQuery,
     estadoFilter,
@@ -39,7 +40,10 @@ export default function PedidosPage() {
     isUpdatingStatus,
     isLoading,
     loadError,
+    isLoadingResumen,
+    resumenError,
     refetch,
+    refetchResumen,
     handleSave,
     handleDelete,
     handleRequestStatusChange,
@@ -79,12 +83,11 @@ export default function PedidosPage() {
   );
 
 
-  const totalPedidos = rawPedidos.length;
-  const entregados = rawPedidos.filter((p) => String(p.estado).toLowerCase() === 'entregado').length;
-  const enCamino = rawPedidos.filter((p) =>
-    ['pendiente', 'en preparacion', 'listo para entregar'].includes(String(p.estado).toLowerCase())
-  ).length;
-  const totalFacturado = rawPedidos.reduce((acc, p) => acc + (p.totalNum || p.valor_total || 0), 0);
+  const valorTarjeta = (valor) => {
+    if (isLoadingResumen) return 'Cargando…';
+    if (resumenError) return '—';
+    return Number(valor || 0).toLocaleString('es-CO');
+  };
 
   const filteredData = useMemo(() => {
     return rawPedidos.filter((p) => {
@@ -155,12 +158,26 @@ export default function PedidosPage() {
       {
         key: 'estado',
         label: 'Estado',
+        width: '180px',
         render: (value, pedido) => (
-          <StatusSwitch
-            value={value}
-            disabled={!can('pedidos', 'cambiar_estado')}
-            onToggle={() => handleRequestStatusChange(pedido)}
-          />
+          <div className="relative">
+            <select
+              aria-label={`Estado del pedido ${pedido.id_pedido}`}
+              value={value}
+              disabled={!can('pedidos', 'cambiar_estado')}
+              onChange={(event) => {
+                const nextEstado = event.target.value;
+                if (nextEstado !== value) handleRequestStatusChange(pedido, nextEstado);
+              }}
+              className="h-10 w-full appearance-none rounded-lg border border-input bg-input-background px-3.5 pr-9 text-sm font-medium text-foreground shadow-xs transition-colors hover:border-[#C1502D]/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#C1502D]/20 disabled:cursor-not-allowed disabled:opacity-50 dark:hover:border-[#E8B23D]/40"
+            >
+              <option value={value}>{value}</option>
+              {getEstadosDestino(value, { incluirAnulado: can('pedidos', 'anular') }).map((estado) => (
+                <option key={estado} value={estado}>{estado}</option>
+              ))}
+            </select>
+            <ChevronDown className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+          </div>
         ),
       },
       {
@@ -181,7 +198,7 @@ export default function PedidosPage() {
                 nombre: `Pedido #${pedido.id_pedido}`,
               })
             }
-            deleteDisabled={!can('pedidos', 'eliminar')}
+            deleteDisabled={!can('pedidos', 'anular')}
           />
         ),
       },
@@ -259,12 +276,13 @@ export default function PedidosPage() {
 
       {/* Tarjetas de Consolidado */}
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 items-stretch">
-        <MetricCard index={0} title="Total Pedidos" value={totalPedidos} icon={ClipboardList} variant="primary" />
-        <MetricCard index={1} title="Entregados" value={entregados} icon={CheckCircle} variant="success" />
-        <MetricCard index={2} title="En Camino" value={enCamino} icon={Truck} variant="warning" />
-        <MetricCard index={3} title="Valor Facturado" value={`$${totalFacturado.toLocaleString('es-CO')}`} icon={DollarSign} variant="accent" />
+        <MetricCard index={0} title="Total Pedidos" value={valorTarjeta(resumen?.total_pedidos)} icon={ClipboardList} variant="primary" />
+        <MetricCard index={1} title="Entregados" value={valorTarjeta(resumen?.entregados)} icon={CheckCircle} variant="success" />
+        <MetricCard index={2} title="En Camino" value={valorTarjeta(resumen?.en_camino)} icon={Truck} variant="warning" />
+        <MetricCard index={3} title="Valor Facturado" value={`$${valorTarjeta(resumen?.valor_facturado)}`} icon={DollarSign} variant="accent" />
       </div>
 
+      <ErrorBanner message={resumenError} onRetry={refetchResumen} />
       <ErrorBanner message={loadError} onRetry={refetch} />
 
       {/* Tabla con DataTable */}
@@ -292,8 +310,7 @@ export default function PedidosPage() {
           >
             <option value="Todos">Todos los estados</option>
             <option value="Pendiente">Pendiente</option>
-            <option value="En preparacion">En Preparación</option>
-            <option value="Listo para entregar">Listo para Entregar</option>
+            <option value="En proceso">En proceso</option>
             <option value="Entregado">Entregado</option>
             <option value="Anulado">Anulado</option>
           </CustomSelect>
@@ -336,6 +353,8 @@ export default function PedidosPage() {
         pedido={selectedPedido}
         onSave={handleSave}
         isLoading={isSaving}
+        canChangeStatus={can('pedidos', 'cambiar_estado')}
+        canCancel={can('pedidos', 'anular')}
         onClose={() => {
           setShowModal(false);
           setSelectedPedido(null);
@@ -344,9 +363,9 @@ export default function PedidosPage() {
 
       <ConfirmDialog
         isOpen={deleteDialog.isOpen}
-        title="Eliminar Pedido"
-        message={`¿Estás seguro de que deseas eliminar el pedido "${deleteDialog.nombre}"? Esta acción no se puede deshacer.`}
-        confirmText="Eliminar"
+        title="Anular Pedido"
+        message={`¿Estás seguro de que deseas anular el pedido "${deleteDialog.nombre}"?`}
+        confirmText="Anular"
         onConfirm={handleDelete}
         onCancel={() => setDeleteDialog({ isOpen: false, id: null, nombre: '' })}
         isLoading={isDeleting}
@@ -358,14 +377,12 @@ export default function PedidosPage() {
         title={`Cambiar Estado a ${statusDialog.nextEstado}`}
         message={`¿Estás seguro de que deseas cambiar el estado del pedido #${statusDialog.pedido?.id_pedido} de ${statusDialog.pedido?.estado || 'Pendiente'} a ${statusDialog.nextEstado}?`}
         confirmText={`Cambiar a ${statusDialog.nextEstado}`}
-        confirmVariant={statusDialog.nextEstado === 'Activo' ? 'success' : 'warning'}
+        confirmVariant={statusDialog.nextEstado === 'Entregado' ? 'success' : 'warning'}
         onConfirm={handleConfirmStatusChange}
-        onCancel={() => setStatusDialog({ isOpen: false, pedido: null, nextEstado: 'Activo' })}
+        onCancel={() => setStatusDialog({ isOpen: false, pedido: null, nextEstado: '' })}
         isLoading={isUpdatingStatus}
         loadingText="Cambiando estado…"
       />
     </div>
   );
 }
-
-
