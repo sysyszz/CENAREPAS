@@ -15,6 +15,7 @@ import ErrorBanner from '../../../shared/components/ErrorBanner';
 import { exportToPdf } from '../../../shared/utils/exportToPdf';
 import { exportToExcel } from '../../../shared/utils/exportToExcel';
 import { documentoTexto } from '../../../shared/utils/persona';
+import { formatDate } from '../../../shared/utils/formatDate';
 
 export default function ProveedoresPage() {
   const { can } = usePermissions();
@@ -46,18 +47,23 @@ export default function ProveedoresPage() {
   } = useProveedores();
 
   const [selectedProveedor, setSelectedProveedor] = useState(null);
-  const [insumosCount, setInsumosCount] = useState(0);
+  const [insumosList, setInsumosList] = useState([]);
 
   useEffect(() => {
     getInsumos().then((data) => {
-      if (Array.isArray(data)) setInsumosCount(data.length);
+      if (Array.isArray(data)) setInsumosList(data);
     }).catch(() => {});
   }, []);
-
 
   const totalProveedores = rawProveedores.length;
   const activos = rawProveedores.filter((p) => String(p.estado).toLowerCase() === 'activo').length;
   const inactivos = totalProveedores - activos;
+  const insumosCount = useMemo(() => {
+    const proveedorIds = new Set(rawProveedores.map((p) => Number(p.id_proveedor)));
+    return insumosList.filter(
+      (i) => i.id_proveedor != null && proveedorIds.has(Number(i.id_proveedor))
+    ).length;
+  }, [insumosList, rawProveedores]);
 
   const columns = useMemo(
     () => [
@@ -131,7 +137,7 @@ export default function ProveedoresPage() {
         { header: 'Teléfono', key: 'telefono' },
         { header: 'Correo', key: 'correo' },
         { header: 'Dirección', key: 'direccion' },
-        { header: 'Fecha de Creación', key: 'fecha_creacion' },
+        { header: 'Fecha de Creación', accessor: (p) => formatDate(p.fecha_creacion) },
         { header: 'Estado', key: 'estado' },
       ],
       title: 'Reporte de Proveedores',
@@ -150,7 +156,7 @@ export default function ProveedoresPage() {
         { header: 'Teléfono', key: 'telefono' },
         { header: 'Correo Electrónico', key: 'correo' },
         { header: 'Dirección', key: 'direccion' },
-        { header: 'Fecha de Creación', key: 'fecha_creacion', align: 'center' },
+        { header: 'Fecha de Creación', accessor: (p) => formatDate(p.fecha_creacion), align: 'center' },
         { header: 'Estado', key: 'estado', align: 'center' },
       ],
       title: 'Reporte de Proveedores',

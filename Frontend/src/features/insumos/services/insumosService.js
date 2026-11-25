@@ -1,8 +1,6 @@
 // insumosService.js - Servicio para la gestión de insumos en Masarepas
 import { api } from '../../../shared/services/api.js';
 
-export let mockInsumos = [];
-
 export const getInsumos = async () => {
   return api.get('/insumos');
 };

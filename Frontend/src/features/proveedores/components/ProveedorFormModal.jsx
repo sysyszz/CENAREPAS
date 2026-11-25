@@ -4,6 +4,7 @@ import { Combobox } from '../../../shared/ui/Combobox';
 import { StepperModal } from '../../../shared/components/StepperModal';
 import { PersonaFields } from '../../../shared/components/PersonaFields';
 import { personaDe, validarPersona, personaPayload, personaCambio } from '../../../shared/utils/persona';
+import { formatDate } from '../../../shared/utils/formatDate';
 
 const PERSONA_NUEVA = { tipoPorDefecto: 'Jurídica' };
 
@@ -169,7 +170,7 @@ export function ProveedorFormModal({ open, onClose, proveedor = null, onSave, is
           {soloLectura && proveedor?.fecha_creacion && (
             <div className="sm:col-span-1">
               <span className={etiqueta}>Fecha de creación</span>
-              <p className="h-10 flex items-center text-sm text-foreground">{proveedor.fecha_creacion}</p>
+              <p className="h-10 flex items-center text-sm text-foreground">{formatDate(proveedor.fecha_creacion)}</p>
             </div>
           )}
         </div>

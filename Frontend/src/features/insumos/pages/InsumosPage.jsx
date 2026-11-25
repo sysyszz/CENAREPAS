@@ -15,6 +15,7 @@ import { CustomSelect } from '../../../shared/components/CustomSelect';
 import ErrorBanner from '../../../shared/components/ErrorBanner';
 import { exportToPdf } from '../../../shared/utils/exportToPdf';
 import { exportToExcel } from '../../../shared/utils/exportToExcel';
+import { formatDate } from '../../../shared/utils/formatDate';
 
 export default function InsumosPage() {
   const { can } = usePermissions();
@@ -55,7 +56,6 @@ export default function InsumosPage() {
     }).catch(() => {});
   }, []);
 
-
   const proveedorNames = useMemo(
     () => Object.fromEntries(proveedores.map((p) => [p.id_proveedor, p.nombre])),
     [proveedores]
@@ -66,14 +66,29 @@ export default function InsumosPage() {
     (i) => String(i.estado).toLowerCase() === 'disponible' || String(i.estado).toLowerCase() === 'activo'
   ).length;
   const bajoStock = rawInsumos.filter(
-    (i) => String(i.estado).toLowerCase() === 'bajo stock' || Number(i.stock_actual) <= Number(i.stock_minimo)
+    (i) =>
+      String(i.estado).toLowerCase() !== 'inactivo' &&
+      (String(i.estado).toLowerCase() === 'bajo stock' || Number(i.stock_actual) <= Number(i.stock_minimo))
   ).length;
-  const proveedoresCount = new Set(rawInsumos.map((i) => i.id_proveedor).filter(Boolean)).size;
+  const proveedoresActivosIds = useMemo(
+    () =>
+      new Set(
+        proveedores
+          .filter((p) => String(p.estado).toLowerCase() === 'activo')
+          .map((p) => Number(p.id_proveedor))
+      ),
+    [proveedores]
+  );
+  const proveedoresCount = useMemo(() => {
+    const enInsumos = new Set(rawInsumos.map((i) => Number(i.id_proveedor)).filter(Boolean));
+    if (proveedores.length === 0) return enInsumos.size;
+    return [...enInsumos].filter((id) => proveedoresActivosIds.has(id)).length;
+  }, [rawInsumos, proveedores, proveedoresActivosIds]);
 
   const filteredData = useMemo(() => {
     return rawInsumos.filter((i) => {
       const q = searchQuery.toLowerCase().trim();
-      const proveedorNombre = (proveedorNames[i.id_proveedor] || '').toLowerCase();
+      const proveedorNombre = (i.proveedor_nombre || proveedorNames[i.id_proveedor] || '').toLowerCase();
       const matchesSearch =
         !q ||
         i.nombre.toLowerCase().includes(q) ||
@@ -81,14 +96,18 @@ export default function InsumosPage() {
         String(i.id_proveedor).toLowerCase().includes(q) ||
         proveedorNombre.includes(q);
 
-      const isTodosCat = categoriaFilter === 'Todas' || categoriaFilter === 'Todas las categorías';
-      const matchesCat = isTodosCat || String(i.id_proveedor) === categoriaFilter;
+      const isTodosProv = categoriaFilter === 'Todas' || categoriaFilter === 'Todos';
+      const matchesProv = isTodosProv || String(i.id_proveedor) === String(categoriaFilter);
 
       const isTodosEstado = estadoFilter === 'Todos' || estadoFilter === 'Todos los estados';
+      const estadoNorm = String(i.estado || '').toLowerCase();
       const matchesEstado =
-        isTodosEstado || String(i.estado).toLowerCase() === estadoFilter.toLowerCase();
+        isTodosEstado ||
+        (estadoFilter === 'Bajo Stock'
+          ? estadoNorm !== 'inactivo' && (estadoNorm === 'bajo stock' || Number(i.stock_actual) <= Number(i.stock_minimo))
+          : estadoNorm === estadoFilter.toLowerCase());
 
-      return matchesSearch && matchesCat && matchesEstado;
+      return matchesSearch && matchesProv && matchesEstado;
     });
   }, [rawInsumos, searchQuery, categoriaFilter, estadoFilter, proveedorNames]);
 
@@ -131,9 +150,9 @@ export default function InsumosPage() {
       {
         key: 'id_proveedor',
         label: 'Proveedor',
-        render: (value) => (
+        render: (value, insumo) => (
           <span className="font-medium text-foreground">
-            {proveedorNames[value] || (typeof value === 'string' && isNaN(Number(value)) ? value : `Proveedor #${value}`)}
+            {insumo.proveedor_nombre || proveedorNames[value] || '—'}
           </span>
         ),
       },
@@ -185,15 +204,9 @@ export default function InsumosPage() {
         { header: 'Stock Mínimo', key: 'stock_minimo' },
         {
           header: 'Proveedor',
-          accessor: (i) =>
-            proveedorNames[i.id_proveedor] ||
-            (typeof i.id_proveedor === 'string' && isNaN(Number(i.id_proveedor))
-              ? i.id_proveedor
-              : i.id_proveedor
-              ? `Proveedor #${i.id_proveedor}`
-              : 'N/A'),
+          accessor: (i) => i.proveedor_nombre || proveedorNames[i.id_proveedor] || '—',
         },
-        { header: 'Vencimiento', key: 'fecha_vencimiento' },
+        { header: 'Vencimiento', accessor: (i) => formatDate(i.fecha_vencimiento) },
         { header: 'Estado', key: 'estado' },
       ],
       title: 'Reporte de Insumos y Materias Primas',
@@ -212,15 +225,9 @@ export default function InsumosPage() {
         { header: 'Stock Mínimo', key: 'stock_minimo', align: 'right' },
         {
           header: 'Proveedor Asignado',
-          accessor: (i) =>
-            proveedorNames[i.id_proveedor] ||
-            (typeof i.id_proveedor === 'string' && isNaN(Number(i.id_proveedor))
-              ? i.id_proveedor
-              : i.id_proveedor
-              ? `Proveedor #${i.id_proveedor}`
-              : 'N/A'),
+          accessor: (i) => i.proveedor_nombre || proveedorNames[i.id_proveedor] || '—',
         },
-        { header: 'Fecha de Vencimiento', key: 'fecha_vencimiento', align: 'center' },
+        { header: 'Fecha de Vencimiento', accessor: (i) => formatDate(i.fecha_vencimiento), align: 'center' },
         { header: 'Estado', key: 'estado', align: 'center' },
       ],
       title: 'Reporte de Insumos y Materias Primas',
@@ -278,11 +285,12 @@ export default function InsumosPage() {
               onChange={(e) => setCategoriaFilter(e.target.value)}
               className="w-full sm:w-52"
             >
-              <option value="Todas">Todas las categorías</option>
-              <option value="Granos y Cereales">Granos y Cereales</option>
-              <option value="Lácteos y Quesos">Lácteos y Quesos</option>
-              <option value="Lácteos y Grasas">Lácteos y Grasas</option>
-              <option value="Empaques y Embalajes">Empaques y Embalajes</option>
+              <option value="Todas">Todos los proveedores</option>
+              {proveedores.map((p) => (
+                <option key={p.id_proveedor} value={String(p.id_proveedor)}>
+                  {p.nombre}
+                </option>
+              ))}
             </CustomSelect>
             <CustomSelect
               value={estadoFilter}
@@ -290,8 +298,9 @@ export default function InsumosPage() {
               className="w-full sm:w-48"
             >
               <option value="Todos">Todos los estados</option>
-              <option value="Disponible">Disponible / Activo</option>
-              <option value="Bajo Stock">Bajo Stock / Inactivo</option>
+              <option value="Activo">Activo</option>
+              <option value="Inactivo">Inactivo</option>
+              <option value="Bajo Stock">Bajo Stock</option>
             </CustomSelect>
           </>
         }
@@ -310,15 +319,15 @@ export default function InsumosPage() {
                 {
                   label: 'Proveedor',
                   value:
+                    detailModal.data.proveedor_nombre ||
                     proveedorNames[detailModal.data.id_proveedor] ||
-                    detailModal.data.id_proveedor ||
-                    'N/A',
+                    '—',
                 },
                 { label: 'Stock Actual', value: detailModal.data.stock_actual },
                 { label: 'Stock Mínimo', value: detailModal.data.stock_minimo },
                 {
                   label: 'Fecha de Vencimiento',
-                  value: detailModal.data.fecha_vencimiento || 'N/A',
+                  value: formatDate(detailModal.data.fecha_vencimiento),
                 },
                 { label: 'Estado', value: detailModal.data.estado },
               ]
@@ -339,9 +348,9 @@ export default function InsumosPage() {
 
       <ConfirmDialog
         isOpen={deleteDialog.isOpen}
-        title="Eliminar Insumo"
-        message={`¿Estás seguro de que deseas eliminar el insumo "${deleteDialog.nombre}"? Esta acción no se puede deshacer.`}
-        confirmText="Eliminar"
+        title="Inactivar Insumo"
+        message={`¿Estás seguro de que deseas inactivar el insumo "${deleteDialog.nombre}"? Podrás activarlo de nuevo después.`}
+        confirmText="Inactivar"
         onConfirm={handleDelete}
         onCancel={() => setDeleteDialog({ isOpen: false, id: null, nombre: '' })}
         isLoading={isDeleting}
@@ -351,7 +360,7 @@ export default function InsumosPage() {
       <ConfirmDialog
         isOpen={statusDialog.isOpen}
         title={`Cambiar Estado a ${statusDialog.nextEstado}`}
-        message={`¿Estás seguro de que deseas cambiar el estado del insumo "${statusDialog.insumo?.nombre}" de ${statusDialog.insumo?.estado || 'Disponible'} a ${statusDialog.nextEstado}?`}
+        message={`¿Estás seguro de que deseas cambiar el estado del insumo "${statusDialog.insumo?.nombre}" de ${statusDialog.insumo?.estado || 'Activo'} a ${statusDialog.nextEstado}?`}
         confirmText={`Cambiar a ${statusDialog.nextEstado}`}
         confirmVariant={statusDialog.nextEstado === 'Activo' ? 'success' : 'warning'}
         onConfirm={handleConfirmStatusChange}

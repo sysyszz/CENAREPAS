@@ -75,10 +75,12 @@ export function useInsumos() {
     setIsDeleting(true);
     try {
       await deleteInsumo(deleteDialog.id);
-      setInsumos((prev) => prev.filter((i) => i.id_insumo !== deleteDialog.id));
-      toast.success('Insumo eliminado');
+      setInsumos((prev) =>
+        prev.map((i) => (i.id_insumo === deleteDialog.id ? { ...i, estado: 'Inactivo' } : i))
+      );
+      toast.success('Insumo inactivado');
     } catch (error) {
-      toast.error('No se pudo eliminar el insumo');
+      toast.error(error?.data?.message || error?.message || 'No se pudo inactivar el insumo');
     } finally {
       setIsDeleting(false);
       setDeleteDialog({ isOpen: false, id: null, nombre: '' });

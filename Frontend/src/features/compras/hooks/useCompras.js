@@ -9,10 +9,8 @@ export function useCompras() {
   const [showModal, setShowModal] = useState(false);
   const [detailModal, setDetailModal] = useState({ isOpen: false, data: null });
   const [deleteDialog, setDeleteDialog] = useState({ isOpen: false, id: null, nombre: '' });
-  const [statusDialog, setStatusDialog] = useState({ isOpen: false, compra: null, nextEstado: 'Registrada' });
   const [isDeleting, setIsDeleting] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
-  const [isUpdatingStatus, setIsUpdatingStatus] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [loadError, setLoadError] = useState(null);
 
@@ -33,10 +31,13 @@ export function useCompras() {
   }, []);
 
   const filteredCompras = compras.filter((c) => {
+    const q = searchQuery.toLowerCase();
     const matchesSearch =
-      String(c.id_compra).includes(searchQuery.toLowerCase()) ||
-      String(c.id_proveedor).includes(searchQuery.toLowerCase()) ||
-      String(c.id_usuario).includes(searchQuery.toLowerCase());
+      String(c.id_compra).includes(q) ||
+      String(c.id_proveedor).includes(q) ||
+      String(c.id_usuario).includes(q) ||
+      String(c.proveedor_nombre || '').toLowerCase().includes(q) ||
+      String(c.usuario_nombre || '').toLowerCase().includes(q);
     const matchesEstado = estadoFilter === 'Todos' || String(c.estado).toLowerCase() === String(estadoFilter).toLowerCase();
     return matchesSearch && matchesEstado;
   });
@@ -53,11 +54,11 @@ export function useCompras() {
       } else {
         const created = await createCompra(formData);
         setCompras((prev) => [created, ...prev]);
-        toast.success('Orden de compra creada');
+        toast.success('Orden de compra registrada');
       }
       setShowModal(false);
     } catch (error) {
-      toast.error(error?.data?.message || 'No se pudo guardar la compra');
+      toast.error(error?.data?.message || error?.message || 'No se pudo guardar la compra');
     } finally {
       setIsSaving(false);
     }
@@ -73,46 +74,10 @@ export function useCompras() {
       );
       toast.success('Orden de compra anulada');
     } catch (error) {
-      toast.error('No se pudo anular la compra');
+      toast.error(error?.data?.message || error?.message || 'No se pudo anular la compra');
     } finally {
       setIsDeleting(false);
       setDeleteDialog({ isOpen: false, id: null, nombre: '' });
-    }
-  };
-
-  const handleRequestStatusChange = (compra) => {
-    if (!compra) return;
-    const isCurrentlyActive = !['anulada', 'anulado', 'inactivo'].includes(String(compra.estado || '').toLowerCase());
-    const nextEstado = isCurrentlyActive ? 'Anulada' : 'Registrada';
-    setStatusDialog({
-      isOpen: true,
-      compra,
-      nextEstado,
-    });
-  };
-
-  const handleConfirmStatusChange = async () => {
-    if (!statusDialog.compra) return;
-    setIsUpdatingStatus(true);
-    try {
-      const { id_compra } = statusDialog.compra;
-      await updateCompra(id_compra, {
-        ...statusDialog.compra,
-        estado: statusDialog.nextEstado,
-      });
-
-      setCompras((prev) =>
-        prev.map((c) =>
-          c.id_compra === id_compra ? { ...c, estado: statusDialog.nextEstado } : c
-        )
-      );
-
-      toast.success(`Estado de la compra #${id_compra} cambiado a ${statusDialog.nextEstado}`);
-      setStatusDialog({ isOpen: false, compra: null, nextEstado: 'Registrada' });
-    } catch (error) {
-      toast.error('No se pudo actualizar el estado de la compra');
-    } finally {
-      setIsUpdatingStatus(false);
     }
   };
 
@@ -129,17 +94,12 @@ export function useCompras() {
     setDetailModal,
     deleteDialog,
     setDeleteDialog,
-    statusDialog,
-    setStatusDialog,
     isDeleting,
     isSaving,
-    isUpdatingStatus,
     isLoading,
     loadError,
     refetch: fetchCompras,
     handleSave,
     handleAnular,
-    handleRequestStatusChange,
-    handleConfirmStatusChange,
   };
 }

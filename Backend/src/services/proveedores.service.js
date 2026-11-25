@@ -1,8 +1,10 @@
 import { query } from '../config/db.js';
-import { badRequest, notFound } from '../utils/httpError.js';
+import { badRequest, conflict, notFound } from '../utils/httpError.js';
 import { TIPOS_DOCUMENTO } from '../config/negocio.js';
 import { texto } from '../utils/normalizar.js';
 import { armarPersona, tocaPersona } from '../utils/persona.js';
+
+const MENSAJE_CON_COMPRAS = 'Este proveedor tiene compras asociadas; no se puede eliminar, puedes inactivarlo.';
 
 /** Tipo de documento enviado (en mayúsculas) o undefined; 400 si no es válido. */
 const tipoDocumentoDe = (data) => {
@@ -85,8 +87,15 @@ export class ProveedoresService {
     return res.rows[0];
   }
 
-  /** Inactiva el registro (sin borrado físico: conserva el historial). */
+  /**
+   * Inactiva el registro (sin borrado físico: conserva el historial).
+   * Si el proveedor tiene compras asociadas no se permite eliminar: 409.
+   */
   static async delete(id) {
+    const existe = await query('SELECT 1 FROM proveedor WHERE id_proveedor = $1', [id]);
+    if (existe.rows.length === 0) return false;
+    const conCompras = await query('SELECT 1 FROM compra WHERE id_proveedor = $1 LIMIT 1', [id]);
+    if (conCompras.rows.length > 0) throw conflict(MENSAJE_CON_COMPRAS);
     const res = await query(
       `UPDATE proveedor SET estado = 'Inactivo' WHERE id_proveedor = $1 RETURNING id_proveedor`,
       [id]

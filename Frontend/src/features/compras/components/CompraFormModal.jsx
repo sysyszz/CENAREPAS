@@ -4,10 +4,11 @@ import { Combobox } from '../../../shared/ui/Combobox';
 import { StepperModal } from '../../../shared/components/StepperModal';
 import { getOpcionesComo, conValorActual } from '../../../shared/services/opciones';
 import { subirArchivo, validarArchivo, FORMATOS_ARCHIVO } from '../../../shared/services/uploadService';
+import { formatDate } from '../../../shared/utils/formatDate';
 
 export function CompraFormModal({ open, onClose, compra = null, onSave, isLoading = false }) {
   const [fechaCompra, setFechaCompra] = useState('');
-  const [idProveedor, setIdProveedor] = useState('1');
+  const [idProveedor, setIdProveedor] = useState('');
   const [medioPago, setMedioPago] = useState('Transferencia');
   // Soporte (factura): el que ya tiene la compra, o un archivo nuevo por subir.
   const [tieneSoporte, setTieneSoporte] = useState(false);
@@ -44,11 +45,11 @@ export function CompraFormModal({ open, onClose, compra = null, onSave, isLoadin
     if (open) {
       setCurrentStep(0);
       if (compra) {
-        setFechaCompra(compra.fecha_compra || '');
-        setIdProveedor(compra.id_proveedor ? String(compra.id_proveedor) : '1');
+        setFechaCompra(formatDate(compra.fecha_compra, { forInput: true }));
+        setIdProveedor(compra.id_proveedor ? String(compra.id_proveedor) : '');
         setMedioPago(compra.medio_pago || 'Transferencia');
         setTieneSoporte(Boolean(compra.comprobante_public_id || compra.comprobante_url));
-        setEstado(compra.estado || 'Registrada');
+        setEstado(compra.estado === 'Anulada' ? 'Anulada' : 'Registrada');
 
         if (Array.isArray(compra.detalles) && compra.detalles.length > 0) {
           setDetalles(
@@ -56,8 +57,8 @@ export function CompraFormModal({ open, onClose, compra = null, onSave, isLoadin
               const ins = availableInsumos.find((i) => i.id_insumo === d.id_insumo);
               return {
                 id_insumo: d.id_insumo,
-                nombre_insumo: ins?.nombre || d.nombre_insumo || `Insumo #${d.id_insumo}`,
-                unidad_medida: ins?.unidad_medida || d.unidad_medida || 'kg',
+                nombre_insumo: d.insumo_nombre || ins?.nombre || d.nombre_insumo || `Insumo #${d.id_insumo}`,
+                unidad_medida: d.unidad_medida || ins?.unidad_medida || '',
                 cantidad: Number(d.cantidad) || 0,
                 valor_unitario: Number(d.valor_unitario) || 0,
                 subtotal: Number(d.subtotal) || Number(d.cantidad) * Number(d.valor_unitario),
@@ -68,8 +69,8 @@ export function CompraFormModal({ open, onClose, compra = null, onSave, isLoadin
           setDetalles([]);
         }
       } else {
-        setFechaCompra(new Date().toISOString().split('T')[0]);
-        setIdProveedor(proveedores[0]?.id_proveedor ? String(proveedores[0].id_proveedor) : '1');
+        setFechaCompra(formatDate(new Date(), { forInput: true }));
+        setIdProveedor(proveedores[0]?.id_proveedor ? String(proveedores[0].id_proveedor) : '');
         setMedioPago('Transferencia');
         setTieneSoporte(false);
         setEstado('Registrada');
@@ -212,7 +213,7 @@ export function CompraFormModal({ open, onClose, compra = null, onSave, isLoadin
       ? {
           ...compraSinSoporte,
           fecha_compra: fechaCompra,
-          id_proveedor: Number(idProveedor) || 1,
+          id_proveedor: Number(idProveedor),
           id_usuario: compra.id_usuario,
           valor_total: valorTotalCalculado,
           medio_pago: medioPago,
@@ -222,11 +223,11 @@ export function CompraFormModal({ open, onClose, compra = null, onSave, isLoadin
         }
       : {
           fecha_compra: fechaCompra,
-          id_proveedor: Number(idProveedor) || 1,
+          id_proveedor: Number(idProveedor),
           valor_total: valorTotalCalculado,
           medio_pago: medioPago,
           ...soporte,
-          estado: estado || 'Registrada',
+          estado: 'Registrada',
           detalles,
         };
 
@@ -497,12 +498,17 @@ export function CompraFormModal({ open, onClose, compra = null, onSave, isLoadin
             <Combobox
               id="compra_estado"
               name="estado"
-              value={estado}
+              value={compra ? estado : 'Registrada'}
+              disabled={!compra}
               onChange={(e) => setEstado(e.target.value)}
-              options={[
-                { value: 'Registrada', label: 'Registrada' },
-                { value: 'Anulada', label: 'Anulada' },
-              ]}
+              options={
+                compra
+                  ? [
+                      { value: 'Registrada', label: 'Registrada' },
+                      { value: 'Anulada', label: 'Anulada' },
+                    ]
+                  : [{ value: 'Registrada', label: 'Registrada' }]
+              }
             />
           </div>
         </div>

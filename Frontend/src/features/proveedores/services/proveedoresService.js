@@ -1,8 +1,6 @@
 // proveedoresService.js - Servicio para la gestión de proveedores en Masarepas
 import { api } from '../../../shared/services/api.js';
 
-export let mockProveedores = [];
-
 export const getProveedores = async () => {
   return api.get('/proveedores');
 };

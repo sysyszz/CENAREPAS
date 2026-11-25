@@ -3,6 +3,7 @@ import { Package, Calendar, Truck } from 'lucide-react';
 import { Combobox } from '../../../shared/ui/Combobox';
 import { StepperModal } from '../../../shared/components/StepperModal';
 import { getOpcionesComo, conValorActual } from '../../../shared/services/opciones';
+import { formatDate } from '../../../shared/utils/formatDate';
 
 export function InsumoFormModal({ open, onClose, insumo = null, onSave, isLoading = false }) {
   const [nombre, setNombre] = useState('');
@@ -10,7 +11,7 @@ export function InsumoFormModal({ open, onClose, insumo = null, onSave, isLoadin
   const [unidadMedida, setUnidadMedida] = useState('kg');
   const [fechaVencimiento, setFechaVencimiento] = useState('');
   const [stockMinimo, setStockMinimo] = useState('');
-  const [idProveedor, setIdProveedor] = useState('1');
+  const [idProveedor, setIdProveedor] = useState('');
   const [estado, setEstado] = useState('Activo');
   const [proveedores, setProveedores] = useState([]);
   const [currentStep, setCurrentStep] = useState(0);
@@ -30,9 +31,9 @@ export function InsumoFormModal({ open, onClose, insumo = null, onSave, isLoadin
         setNombre(insumo.nombre || '');
         setStockActual(insumo.stock_actual != null ? String(insumo.stock_actual) : '');
         setUnidadMedida(insumo.unidad_medida || 'kg');
-        setFechaVencimiento(insumo.fecha_vencimiento || '');
+        setFechaVencimiento(formatDate(insumo.fecha_vencimiento, { forInput: true }));
         setStockMinimo(insumo.stock_minimo != null ? String(insumo.stock_minimo) : '');
-        setIdProveedor(insumo.id_proveedor ? String(insumo.id_proveedor) : '1');
+        setIdProveedor(insumo.id_proveedor ? String(insumo.id_proveedor) : '');
         const isInactive = String(insumo.estado ?? '').toLowerCase() === 'inactivo';
         setEstado(isInactive ? 'Inactivo' : 'Activo');
       } else {
@@ -41,13 +42,13 @@ export function InsumoFormModal({ open, onClose, insumo = null, onSave, isLoadin
         setUnidadMedida('kg');
         setFechaVencimiento('');
         setStockMinimo('');
-        setIdProveedor('1');
+        setIdProveedor(proveedores[0]?.id_proveedor ? String(proveedores[0].id_proveedor) : '');
         setEstado('Activo');
       }
     } else {
       setCurrentStep(0);
     }
-  }, [insumo, open]);
+  }, [insumo, open, proveedores]);
 
   const isDirty = useMemo(() => {
     if (!open) return false;
@@ -58,9 +59,9 @@ export function InsumoFormModal({ open, onClose, insumo = null, onSave, isLoadin
       nombre !== (insumo.nombre || '') ||
       stockActual !== String(insumo.stock_actual ?? '') ||
       unidadMedida !== (insumo.unidad_medida || 'kg') ||
-      fechaVencimiento !== (insumo.fecha_vencimiento || '') ||
+      fechaVencimiento !== formatDate(insumo.fecha_vencimiento, { forInput: true }) ||
       stockMinimo !== String(insumo.stock_minimo ?? '') ||
-      idProveedor !== String(insumo.id_proveedor || '1') ||
+      idProveedor !== String(insumo.id_proveedor || '') ||
       estado !== (insumo.estado || 'Activo')
     );
   }, [open, insumo, nombre, stockActual, unidadMedida, fechaVencimiento, stockMinimo, idProveedor, estado]);
@@ -117,7 +118,7 @@ export function InsumoFormModal({ open, onClose, insumo = null, onSave, isLoadin
           unidad_medida: unidadMedida,
           fecha_vencimiento: fechaVencimiento || null,
           stock_minimo: Number(stockMinimo) || 0,
-          id_proveedor: Number(idProveedor) || 1,
+          id_proveedor: Number(idProveedor),
           estado,
         };
 
@@ -294,7 +295,7 @@ export function InsumoFormModal({ open, onClose, insumo = null, onSave, isLoadin
         </div>
       ),
     },
-  ], [nombre, idProveedor, estado, stockActual, unidadMedida, stockMinimo, fechaVencimiento, proveedores, validateStep1, validateStep2]);
+  ], [nombre, idProveedor, estado, stockActual, unidadMedida, stockMinimo, fechaVencimiento, proveedores, insumo?.id_proveedor, insumo?.proveedor_nombre, validateStep1, validateStep2]);
 
   return (
     <StepperModal

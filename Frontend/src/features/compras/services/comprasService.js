@@ -1,9 +1,6 @@
 // comprasService.js - Servicio para la gestión de compras en Masarepas
 import { api, apiBlob } from '../../../shared/services/api.js';
 
-export let mockCompras = [];
-export const mockDetallesCompra = [];
-
 export const getCompras = async () => {
   return api.get('/compras');
 };

@@ -73,10 +73,12 @@ export function useProveedores() {
     setIsDeleting(true);
     try {
       await deleteProveedor(deleteDialog.id);
-      setProveedores((prev) => prev.filter((p) => p.id_proveedor !== deleteDialog.id));
-      toast.success('Proveedor eliminado');
+      setProveedores((prev) =>
+        prev.map((p) => (p.id_proveedor === deleteDialog.id ? { ...p, estado: 'Inactivo' } : p))
+      );
+      toast.success('Proveedor inactivado');
     } catch (error) {
-      toast.error('No se pudo eliminar el proveedor');
+      toast.error(error?.data?.message || error?.message || 'No se pudo eliminar el proveedor');
     } finally {
       setIsDeleting(false);
       setDeleteDialog({ isOpen: false, id: null, nombre: '' });

@@ -12,11 +12,17 @@ import DetailModal from '../../../shared/components/DetailModal';
 import PageHeader from '../../../shared/components/PageHeader';
 import { MetricCard } from '../../../shared/components/MetricCard';
 import { usePermissions } from '../../../shared/contexts/PermissionContext';
-import StatusSwitch from '../../../shared/components/StatusSwitch';
+import { EstadoBadge } from '../../../shared/ui/EstadoBadge';
 import { CustomSelect } from '../../../shared/components/CustomSelect';
 import ErrorBanner from '../../../shared/components/ErrorBanner';
 import { exportToPdf } from '../../../shared/utils/exportToPdf';
 import { exportToExcel } from '../../../shared/utils/exportToExcel';
+import { formatDate } from '../../../shared/utils/formatDate';
+
+const COMPRA_STATUS_MAP = {
+  registrada: { color: 'success', label: 'Registrada' },
+  anulada: { color: 'destructive', label: 'Anulada' },
+};
 
 /**
  * Abre o descarga el soporte de una compra. El enlace se pide al hacer clic:
@@ -89,18 +95,13 @@ export default function ComprasPage() {
     setDetailModal,
     deleteDialog,
     setDeleteDialog,
-    statusDialog,
-    setStatusDialog,
     isDeleting,
     isSaving,
-    isUpdatingStatus,
     isLoading,
     loadError,
     refetch,
     handleSave,
     handleAnular,
-    handleRequestStatusChange,
-    handleConfirmStatusChange,
   } = useCompras();
 
   const [selectedCompra, setSelectedCompra] = useState(null);
@@ -126,24 +127,25 @@ export default function ComprasPage() {
     [usuarios]
   );
 
-
   const totalCompras = rawCompras.length;
-  const recibidas = rawCompras.filter(
+  const registradas = rawCompras.filter(
     (c) => String(c.estado).toLowerCase() === 'registrada'
   ).length;
   const anuladas = rawCompras.filter(
     (c) => String(c.estado).toLowerCase() === 'anulada'
   ).length;
-  const totalInvertido = rawCompras.reduce(
-    (acc, c) => acc + (c.totalNum || c.valor_total || 0),
-    0
-  );
+  const totalInvertido = rawCompras
+    .filter((c) => String(c.estado).toLowerCase() === 'registrada')
+    .reduce((acc, c) => acc + (Number(c.valor_total) || 0), 0);
 
   const filteredData = useMemo(() => {
     return rawCompras.filter((c) => {
       const q = (searchQuery || '').toLowerCase().trim();
-      const proveedorNombre = (proveedoresNames[c.id_proveedor] || '').toLowerCase();
-      const usuarioNombre = (usuariosNames[c.id_usuario] || '').toLowerCase();
+      const proveedorNombre = (c.proveedor_nombre || proveedoresNames[c.id_proveedor] || '').toLowerCase();
+      const usuarioNombre = (c.usuario_nombre || usuariosNames[c.id_usuario] || '').toLowerCase();
+      const insumoMatch = (c.detalles || []).some((d) =>
+        String(d.insumo_nombre || '').toLowerCase().includes(q)
+      );
       const matchesSearch =
         !q ||
         String(c.id_compra).toLowerCase().includes(q) ||
@@ -151,6 +153,7 @@ export default function ComprasPage() {
         String(c.id_usuario).toLowerCase().includes(q) ||
         proveedorNombre.includes(q) ||
         usuarioNombre.includes(q) ||
+        insumoMatch ||
         String(c.medio_pago || '').toLowerCase().includes(q);
 
       const isTodos = estadoFilter === 'Todos' || estadoFilter === 'Todos los estados';
@@ -169,53 +172,45 @@ export default function ComprasPage() {
       {
         key: 'id_proveedor',
         label: 'Proveedor',
-        render: (value) => (
+        render: (value, compra) => (
           <span className="font-semibold text-foreground">
-            {proveedoresNames[value] || (typeof value === 'string' && isNaN(Number(value)) ? value : `Proveedor #${value}`)}
+            {compra.proveedor_nombre || proveedoresNames[value] || '—'}
           </span>
         ),
       },
       {
         key: 'id_usuario',
         label: 'Registrado por',
-        render: (value) => (
+        render: (value, compra) => (
           <span className="text-muted-foreground text-sm">
-            {usuariosNames[value] || `Usuario #${value}`}
+            {compra.usuario_nombre || usuariosNames[value] || '—'}
           </span>
         ),
       },
       {
         key: 'fecha_compra',
         label: 'Fecha Compra',
-        render: (value) => <span className="text-muted-foreground text-sm">{value}</span>,
+        render: (value) => <span className="text-muted-foreground text-sm whitespace-nowrap">{formatDate(value)}</span>,
       },
       {
         key: 'valor_total',
         label: 'Valor Total',
-        render: (value, c) => (
+        render: (value) => (
           <span className="font-semibold text-primary">
-            ${Number(c.totalNum || value || 0).toLocaleString('es-CO')}
+            ${Number(value || 0).toLocaleString('es-CO')}
           </span>
         ),
       },
       {
         key: 'estado',
         label: 'Estado',
-        render: (value, compra) => (
-          <StatusSwitch
-            value={value}
-            disabled={!can('compras', 'cambiar_estado')}
-            onToggle={() => handleRequestStatusChange(compra)}
-          />
-        ),
+        render: (value) => <EstadoBadge value={value} statusMap={COMPRA_STATUS_MAP} />,
       },
       {
         key: 'acciones',
         label: 'Acciones',
         render: (_, compra) => {
-          const isAnulada =
-            String(compra.estado).toLowerCase() === 'anulada' ||
-            String(compra.estado).toLowerCase() === 'anulado';
+          const isAnulada = String(compra.estado).toLowerCase() === 'anulada';
           return (
             <RowActions
               onView={() => setDetailModal({ isOpen: true, data: compra })}
@@ -223,18 +218,18 @@ export default function ComprasPage() {
                 setSelectedCompra(compra);
                 setShowModal(true);
               }}
-              editDisabled={!can('compras', 'editar')}
+              editDisabled={!can('compras', 'editar') || isAnulada}
               onDelete={
                 !isAnulada
                   ? () =>
                       setDeleteDialog({
                         isOpen: true,
                         id: compra.id_compra,
-                        nombre: compra.id_compra,
+                        nombre: `#${compra.id_compra}`,
                       })
                   : undefined
               }
-              deleteDisabled={!can('compras', 'eliminar')}
+              deleteDisabled={!can('compras', 'anular') || isAnulada}
               deleteIcon="x"
               deleteTitle="Anular compra"
             />
@@ -242,7 +237,7 @@ export default function ComprasPage() {
         },
       },
     ],
-    [can, setDetailModal, setShowModal, setDeleteDialog, handleRequestStatusChange]
+    [can, proveedoresNames, usuariosNames, setDetailModal, setShowModal, setDeleteDialog]
   );
 
   const handleExportPdf = () => {
@@ -250,10 +245,10 @@ export default function ComprasPage() {
       data: filteredData,
       columns: [
         { header: 'ID', key: 'id_compra' },
-        { header: 'Fecha Compra', key: 'fecha_compra' },
+        { header: 'Fecha Compra', accessor: (c) => formatDate(c.fecha_compra) },
         {
           header: 'Proveedor',
-          accessor: (c) => proveedoresNames[c.id_proveedor] || `Proveedor #${c.id_proveedor}`,
+          accessor: (c) => c.proveedor_nombre || proveedoresNames[c.id_proveedor] || '—',
         },
         {
           header: 'Valor Total',
@@ -272,10 +267,10 @@ export default function ComprasPage() {
       data: filteredData,
       columns: [
         { header: 'ID Compra', key: 'id_compra', align: 'center' },
-        { header: 'Fecha de Compra', key: 'fecha_compra', align: 'center' },
+        { header: 'Fecha de Compra', accessor: (c) => formatDate(c.fecha_compra), align: 'center' },
         {
           header: 'Proveedor',
-          accessor: (c) => proveedoresNames[c.id_proveedor] || `Proveedor #${c.id_proveedor}`,
+          accessor: (c) => c.proveedor_nombre || proveedoresNames[c.id_proveedor] || '—',
         },
         {
           header: 'Valor Total ($)',
@@ -310,7 +305,7 @@ export default function ComprasPage() {
       {/* Tarjetas de Consolidado */}
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 items-stretch">
         <MetricCard index={0} title="Total Compras" value={totalCompras} icon={ShoppingCart} variant="primary" />
-        <MetricCard index={1} title="Registradas" value={recibidas} icon={CheckCircle} variant="success" />
+        <MetricCard index={1} title="Registradas" value={registradas} icon={CheckCircle} variant="success" />
         <MetricCard index={2} title="Anuladas" value={anuladas} icon={XCircle} variant="destructive" />
         <MetricCard index={3} title="Total Invertido" value={`$${totalInvertido.toLocaleString('es-CO')}`} icon={DollarSign} variant="accent" />
       </div>
@@ -353,23 +348,23 @@ export default function ComprasPage() {
         title="Detalle de la Orden de Compra"
         fields={detailModal.data ? [
           { label: 'ID Compra', value: `#${detailModal.data.id_compra}` },
-          { label: 'Proveedor', value: proveedoresNames[detailModal.data.id_proveedor] || `Proveedor #${detailModal.data.id_proveedor}` },
-          { label: 'Registrado por (Usuario)', value: usuariosNames[detailModal.data.id_usuario] || `Usuario #${detailModal.data.id_usuario}` },
-          { label: 'Fecha de Compra', value: detailModal.data.fecha_compra },
-          { label: 'Valor Total', value: <span className="font-semibold text-primary">{`$${Number(detailModal.data.totalNum || detailModal.data.valor_total || 0).toLocaleString('es-CO')}`}</span> },
-          { label: 'Medio de Pago', value: <span className="capitalize">{detailModal.data.medio_pago}</span> },
+          { label: 'Proveedor', value: detailModal.data.proveedor_nombre || proveedoresNames[detailModal.data.id_proveedor] || '—' },
+          { label: 'Registrado por (Usuario)', value: detailModal.data.usuario_nombre || usuariosNames[detailModal.data.id_usuario] || '—' },
+          { label: 'Fecha de Compra', value: formatDate(detailModal.data.fecha_compra) },
+          { label: 'Valor Total', value: <span className="font-semibold text-primary">{`$${Number(detailModal.data.valor_total || 0).toLocaleString('es-CO')}`}</span> },
+          { label: 'Medio de Pago', value: <span className="capitalize">{detailModal.data.medio_pago || '—'}</span> },
           {
             label: 'Insumos Comprados',
-            value: (
+            value: (detailModal.data.detalles || []).length > 0 ? (
               <div className="space-y-1 mt-1 text-left w-full">
                 {(detailModal.data.detalles || []).map((item, idx) => (
                   <div key={idx} className="flex items-center justify-between text-xs py-1 border-b border-border/40 last:border-0">
                     <span className="font-medium text-foreground">{item.insumo_nombre || `Insumo #${item.id_insumo}`}</span>
-                    <span className="text-muted-foreground">{item.cantidad} {item.unidad_medida || 'kg'} x ${Number(item.valor_unitario).toLocaleString('es-CO')} = <strong className="text-primary">${Number(item.subtotal).toLocaleString('es-CO')}</strong></span>
+                    <span className="text-muted-foreground">{item.cantidad} {item.unidad_medida || ''} x ${Number(item.valor_unitario).toLocaleString('es-CO')} = <strong className="text-primary">${Number(item.subtotal).toLocaleString('es-CO')}</strong></span>
                   </div>
                 ))}
               </div>
-            ),
+            ) : '—',
           },
           {
             label: 'Comprobante / Factura',
@@ -379,8 +374,8 @@ export default function ComprasPage() {
               'Sin comprobante adjunto'
             ),
           },
-          { label: 'Fecha de Registro', value: detailModal.data.fecha_registro || 'N/A' },
-          { label: 'Estado', value: detailModal.data.estado },
+          { label: 'Fecha de Registro', value: formatDate(detailModal.data.fecha_registro) },
+          { label: 'Estado', value: <EstadoBadge value={detailModal.data.estado} statusMap={COMPRA_STATUS_MAP} /> },
         ] : []}
       />
 
@@ -398,24 +393,11 @@ export default function ComprasPage() {
       <ConfirmDialog
         isOpen={deleteDialog.isOpen}
         title="Anular Compra"
-        message={`¿Estás seguro de que deseas anular la compra "${deleteDialog.nombre}"? Esta acción no se puede deshacer.`}
+        message={`¿Estás seguro de que deseas anular la compra ${deleteDialog.nombre}? Esta acción descontará los insumos sumados al inventario y no se puede deshacer.`}
         confirmText="Anular"
         onConfirm={handleAnular}
         onCancel={() => setDeleteDialog({ isOpen: false, id: null, nombre: '' })}
         isLoading={isDeleting}
-      />
-
-      {/* Modal de confirmación para Cambio de Estado */}
-      <ConfirmDialog
-        isOpen={statusDialog.isOpen}
-        title={`Cambiar Estado a ${statusDialog.nextEstado}`}
-        message={`¿Estás seguro de que deseas cambiar el estado de la compra #${statusDialog.compra?.id_compra} de ${statusDialog.compra?.estado || 'Registrada'} a ${statusDialog.nextEstado}?`}
-        confirmText={`Cambiar a ${statusDialog.nextEstado}`}
-        confirmVariant={statusDialog.nextEstado === 'Registrada' ? 'success' : 'warning'}
-        onConfirm={handleConfirmStatusChange}
-        onCancel={() => setStatusDialog({ isOpen: false, compra: null, nextEstado: 'Registrada' })}
-        isLoading={isUpdatingStatus}
-        loadingText="Cambiando estado…"
       />
     </div>
   );
