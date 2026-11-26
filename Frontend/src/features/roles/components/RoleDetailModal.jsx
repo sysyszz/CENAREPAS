@@ -1,7 +1,7 @@
 import { useMemo } from 'react';
 import { X, Check, Shield, Calendar, Hash, Info, Layers } from 'lucide-react';
 import { mockPermisos, usePermissions } from '../../../shared/contexts/PermissionContext';
-import { formatBogotaDateTimeText } from '../../../shared/utils/formatDate';
+import { formatBogotaDateTimeText } from '../../../shared/utils/formatDateTime';
 
 // Permisos por defecto para roles predefinidos si aún no se han personalizado
 const DEFAULT_ROLE_PERMISSIONS = {

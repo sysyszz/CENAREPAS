@@ -15,7 +15,7 @@ import { CustomSelect } from '../../../shared/components/CustomSelect';
 import ErrorBanner from '../../../shared/components/ErrorBanner';
 import { exportToPdf } from '../../../shared/utils/exportToPdf';
 import { exportToExcel } from '../../../shared/utils/exportToExcel';
-import { DateCell, formatBogotaDateTimeText } from '../../../shared/utils/formatDate';
+import { DateCell, formatBogotaDateTimeText } from '../../../shared/utils/formatDateTime';
 
 export default function UsuariosPage() {
   const { can } = usePermissions();
