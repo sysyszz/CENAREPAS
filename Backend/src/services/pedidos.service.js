@@ -9,6 +9,7 @@ import {
 import { CreditosService } from './creditos.service.js';
 import { eliminarSinAsociados } from '../utils/eliminacion.js';
 import { NotificacionesService } from './notificaciones.service.js';
+import { invalidarCacheDashboard } from '../utils/dashboardCache.js';
 
 /**
  * Pedido único (pedidos y ventas fusionados): Pendiente → En proceso →
@@ -218,6 +219,7 @@ export class PedidosService {
       await NotificacionesService.pedidoCreado(db, res.rows[0]);
       return res.rows[0].id_pedido;
     });
+    invalidarCacheDashboard();
     return this.getById(idPedido);
   }
 
@@ -284,6 +286,7 @@ export class PedidosService {
       await NotificacionesService.pedidoCreado(db, pedido, saldo);
       return pedido.id_pedido;
     });
+    invalidarCacheDashboard();
     return this.getById(idPedido);
   }
 
@@ -348,6 +351,7 @@ export class PedidosService {
       }
       return true;
     });
+    if (existe) invalidarCacheDashboard();
     return existe ? this.getById(id) : null;
   }
 
@@ -374,6 +378,7 @@ export class PedidosService {
       if (existe.rows.length === 0) throw notFound('Pedido no encontrado');
       await this.#aplicarEstado(db, usuario, id, nuevoEstado, motivo);
     });
+    invalidarCacheDashboard();
     return this.getById(id);
   }
 
@@ -481,8 +486,8 @@ export class PedidosService {
    * su historial de estados y sus notificaciones. Los demás se anulan con
    * motivo (409).
    */
-  static eliminarDefinitivo(id) {
-    return eliminarSinAsociados({
+  static async eliminarDefinitivo(id) {
+    const eliminado = await eliminarSinAsociados({
       tabla: 'pedido',
       llave: 'id_pedido',
       id,
@@ -504,12 +509,15 @@ export class PedidosService {
         'DELETE FROM notificacion WHERE id_pedido = $1',
       ],
     });
+    if (eliminado) invalidarCacheDashboard();
+    return eliminado;
   }
 
   static async anular(usuario, id, motivo) {
     const existe = await query('SELECT 1 FROM pedido WHERE id_pedido = $1', [id]);
     if (existe.rows.length === 0) return false;
     await enTransaccion((db) => this.#aplicarEstado(db, usuario, id, 'Anulado', motivo));
+    invalidarCacheDashboard();
     return true;
   }
 
@@ -536,6 +544,7 @@ export class PedidosService {
       }
       await this.#aplicarEstado(db, usuario, id, 'Anulado', `Anulado por el cliente: ${texto(motivo)}`);
     });
+    invalidarCacheDashboard();
     return this.getById(id, { idCliente: usuario.id_cliente });
   }
 }

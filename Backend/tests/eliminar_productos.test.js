@@ -40,8 +40,18 @@ test('sin asociados: el Vendedor recibe 403 y el Administrador lo borra', async 
 });
 
 test('en pedidos → 409 con el mensaje y el producto sigue', async () => {
-  const pedido = (await api(admin, 'GET', '/pedidos')).body.data[0];
-  const detalle = (await api(admin, 'GET', `/pedidos/${pedido.id_pedido}`)).body.data.detalles[0];
+  const pedidos = (await api(admin, 'GET', '/pedidos')).body.data;
+  // Evita pedidos Pendiente temporales que otras pruebas en paralelo crean y borran.
+  const candidatos = pedidos.filter((p) => p.estado !== 'Pendiente');
+  let detalle = null;
+  for (const p of candidatos.length ? candidatos : [...pedidos].reverse()) {
+    const res = await api(admin, 'GET', `/pedidos/${p.id_pedido}`);
+    if (res.status === 200 && res.body.data?.detalles?.length > 0) {
+      detalle = res.body.data.detalles[0];
+      break;
+    }
+  }
+  assert.ok(detalle, 'debe existir un pedido con detalles en Staging');
   const { status, body } = await api(admin, 'DELETE', `/productos/${detalle.id_producto}/definitivo`);
   assert.equal(status, 409);
   assert.equal(body.message, 'Este producto está en pedidos; puedes inactivarlo.');

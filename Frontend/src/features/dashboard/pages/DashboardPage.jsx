@@ -14,10 +14,10 @@ import '../styles/dashboard.css';
 const PERIODOS = ['Esta semana', 'Este mes', 'Últimos 30 días', 'Año actual'];
 
 export default function DashboardPage() {
-  const { data, loading } = useDashboard();
   const shouldReduceMotion = useReducedMotion();
   const [selectedPeriodo, setSelectedPeriodo] = useState('Esta semana');
   const [menuOpen, setMenuOpen] = useState(false);
+  const { data, loading } = useDashboard(selectedPeriodo);
 
   if (loading || !data) {
     return <DashboardSkeleton />;
@@ -91,7 +91,7 @@ export default function DashboardPage() {
       </div>
 
       {/* ─── 1. KPIs con Conteo Progresivo y Sparklines ─── */}
-      <DashboardKpis kpisData={data.kpis} />
+      <DashboardKpis kpisData={data.kpis} sparklines={data.kpis?.sparklines} />
 
       {/* ─── 2. Insumos de Rotación + Asistente CTA Banner ─── */}
       <InsumosRotacionSection 
@@ -99,8 +99,11 @@ export default function DashboardPage() {
         onOpenAsistente={handleScrollToAsistente}
       />
 
-      {/* ─── 3. Pedido Activo #4821 + Ciclo de Producción (Funnel) ─── */}
-      <PedidoActivoFunnelSection pedidoData={data.pedidoActivo} />
+      {/* ─── 3. Pedido Activo + Ciclo de Producción (Funnel) ─── */}
+      <PedidoActivoFunnelSection 
+        pedidoData={data.pedidoActivo} 
+        funnelData={data.funnelPedidos}
+      />
 
       {/* ─── 4. Producción por Línea + Distribución de Pedidos (Dots Matrix) ─── */}
       <ProduccionDistribucionSection 
@@ -110,13 +113,17 @@ export default function DashboardPage() {
 
       {/* ─── 5. Asistente de Reportes CENAREPAS (Panel Extendido) ─── */}
       <div id="asistente-reportes-panel">
-        <AsistenteReportesSection rotacionData={data.insumosRotacion} />
+        <AsistenteReportesSection 
+          rotacionData={data.insumosRotacion} 
+          hallazgoClave={data.hallazgoClave}
+        />
       </div>
 
       {/* ─── 6. Rentabilidad, Top Clientes y Alertas del Sistema ─── */}
       <RentabilidadClientesAlertasSection 
         topClientesData={data.topClientes}
         alertasData={data.alertas}
+        rentabilidadData={data.rentabilidad}
       />
 
     </div>

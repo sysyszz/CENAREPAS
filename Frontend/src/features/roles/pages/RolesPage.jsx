@@ -203,12 +203,6 @@ export default function RolesPage() {
       <PageHeader
         title="Roles y Permisos"
         subtitle="Gestión de roles y niveles de acceso en Masarepas"
-        addLabel="Nuevo Rol"
-        addDisabled={!can('roles', 'crear')}
-        onAdd={() => {
-          setSelectedRole(null);
-          setShowModal(true);
-        }}
         onExportPdf={handleExportPdf}
         onExportExcel={handleExportExcel}
       />

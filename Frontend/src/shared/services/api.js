@@ -50,12 +50,28 @@ export async function apiRequest(endpoint, options = {}, fallbackFn = null) {
     ...(options.headers || {}),
   };
 
+  const externalSignal = options.signal;
   const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
+  let timedOut = false;
+  const timeoutId = setTimeout(() => {
+    timedOut = true;
+    controller.abort();
+  }, REQUEST_TIMEOUT_MS);
+
+  const onExternalAbort = () => controller.abort();
+  if (externalSignal) {
+    if (externalSignal.aborted) {
+      clearTimeout(timeoutId);
+      const abortErr = new DOMException('Petición cancelada', 'AbortError');
+      throw abortErr;
+    }
+    externalSignal.addEventListener('abort', onExternalAbort, { once: true });
+  }
 
   try {
+    const { signal: _ignoredSignal, ...fetchOptions } = options;
     const response = await fetch(url, {
-      ...options,
+      ...fetchOptions,
       headers,
       signal: controller.signal,
       body: isFormData
@@ -77,7 +93,10 @@ export async function apiRequest(endpoint, options = {}, fallbackFn = null) {
 
     return data?.data !== undefined ? data.data : data;
   } catch (err) {
-    const isTimeout = err.name === 'AbortError';
+    if (err.name === 'AbortError' && !timedOut) {
+      throw err;
+    }
+    const isTimeout = err.name === 'AbortError' && timedOut;
     // Sin status = fetch no obtuvo respuesta (servidor caído, URL o CORS mal configurados).
     const sinRespuesta = isTimeout || !err.status;
     const finalErr = isTimeout
@@ -95,11 +114,14 @@ export async function apiRequest(endpoint, options = {}, fallbackFn = null) {
     throw finalErr;
   } finally {
     clearTimeout(timeoutId);
+    if (externalSignal) {
+      externalSignal.removeEventListener('abort', onExternalAbort);
+    }
   }
 }
 
 export const api = {
-  get: (endpoint, fallbackFn) => apiRequest(endpoint, { method: 'GET' }, fallbackFn),
+  get: (endpoint, fallbackFn, options = {}) => apiRequest(endpoint, { ...options, method: 'GET' }, fallbackFn),
   post: (endpoint, body, fallbackFn) => apiRequest(endpoint, { method: 'POST', body }, fallbackFn),
   put: (endpoint, body, fallbackFn) => apiRequest(endpoint, { method: 'PUT', body }, fallbackFn),
   patch: (endpoint, body, fallbackFn) => apiRequest(endpoint, { method: 'PATCH', body }, fallbackFn),

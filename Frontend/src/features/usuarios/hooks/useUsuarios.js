@@ -52,10 +52,12 @@ export function useUsuarios() {
   const [filterEstado, setFilterEstado] = useState('Todos los estados');
   const [showModal, setShowModal] = useState(false);
   const [detailModal, setDetailModal] = useState({ isOpen: false, data: null });
+  const [passwordModal, setPasswordModal] = useState({ isOpen: false, usuario: null });
   const [deleteDialog, setDeleteDialog] = useState({ isOpen: false, id: null, nombre: '' });
   const [statusDialog, setStatusDialog] = useState({ isOpen: false, usuario: null, nextEstado: 'Activo' });
   const [isDeleting, setIsDeleting] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  const [isChangingPassword, setIsChangingPassword] = useState(false);
   const [isUpdatingStatus, setIsUpdatingStatus] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [loadError, setLoadError] = useState(null);
@@ -121,7 +123,11 @@ export function useUsuarios() {
       setShowModal(false);
       fetchEstadisticas();
     } catch (error) {
-      toast.error(error?.data?.message || 'No se pudo guardar el usuario');
+      const fieldErrors = error?.data?.errors;
+      const firstFieldError = fieldErrors && typeof fieldErrors === 'object'
+        ? Object.values(fieldErrors).find((msg) => typeof msg === 'string' && msg.trim())
+        : null;
+      toast.error(firstFieldError || error?.data?.message || 'No se pudo guardar el usuario');
     } finally {
       setIsSaving(false);
     }
@@ -190,6 +196,24 @@ export function useUsuarios() {
     }
   };
 
+  const handleChangePassword = async (usuario, nuevaContrasena) => {
+    if (!usuario?.id_usuario) return;
+    setIsChangingPassword(true);
+    try {
+      await updateUsuario(usuario.id_usuario, { contrasena_hash: nuevaContrasena });
+      toast.success(`Contraseña actualizada para "${usuario.nombre}"`);
+      setPasswordModal({ isOpen: false, usuario: null });
+    } catch (error) {
+      const fieldErrors = error?.data?.errors;
+      const firstFieldError = fieldErrors && typeof fieldErrors === 'object'
+        ? Object.values(fieldErrors).find((msg) => typeof msg === 'string' && msg.trim())
+        : null;
+      toast.error(firstFieldError || error?.data?.message || 'No se pudo actualizar la contraseña');
+    } finally {
+      setIsChangingPassword(false);
+    }
+  };
+
   return {
     usuarios: filteredUsuarios,
     rawUsuarios: usuarios,
@@ -206,12 +230,15 @@ export function useUsuarios() {
     setShowModal,
     detailModal,
     setDetailModal,
+    passwordModal,
+    setPasswordModal,
     deleteDialog,
     setDeleteDialog,
     statusDialog,
     setStatusDialog,
     isDeleting,
     isSaving,
+    isChangingPassword,
     isUpdatingStatus,
     isLoading,
     loadError,
@@ -221,6 +248,7 @@ export function useUsuarios() {
     },
     refetchEstadisticas: fetchEstadisticas,
     handleSave,
+    handleChangePassword,
     handleDelete,
     handleRequestStatusChange,
     handleConfirmStatusChange,

@@ -1,6 +1,7 @@
 import { query } from '../config/db.js';
 import { badRequest, conflict, notFound } from './httpError.js';
 import { successResponse } from './response.js';
+import { invalidarCacheDashboard } from './dashboardCache.js';
 
 export const ESTADOS_REGISTRO = ['Activo', 'Inactivo'];
 
@@ -53,6 +54,7 @@ export const cambiarEstadoHandler = ({ tabla, pk, entidad, columnas = '*', regla
 
     const resultado = await query(`UPDATE ${tabla} SET estado = $1 WHERE ${pk} = $2 RETURNING ${columnas}`, [estado, id]);
     if (!resultado.rows[0]) throw notFound(`${entidad} no encontrado(a)`);
+    invalidarCacheDashboard();
     return successResponse(res, resultado.rows[0], `${entidad}: estado cambiado a ${estado}`);
   } catch (error) {
     return next(error);

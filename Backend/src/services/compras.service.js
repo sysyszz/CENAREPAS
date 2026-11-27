@@ -3,8 +3,8 @@ import { query } from '../config/db.js';
 import { enTransaccion } from '../utils/transaccion.js';
 import { badRequest, conflict, notFound } from '../utils/httpError.js';
 import { borrarArchivo, cloudinaryConfigurado, rutaLocal, urlTemporal } from '../utils/almacenamiento.js';
-
-const ESTADOS_COMPRA = ['Registrada', 'Anulada'];
+import { ESTADOS_COMPRA } from '../config/negocio.js';
+import { invalidarCacheDashboard } from '../utils/dashboardCache.js';
 
 const SELECT_COMPRA = `
   SELECT c.*, p.nombre AS proveedor_nombre, u.nombre AS usuario_nombre,
@@ -190,7 +190,11 @@ export class ComprasService {
         }
       }
 
-      return this.getById(idCompra, db);
+      const creada = await this.getById(idCompra, db);
+      return creada;
+    }).then((creada) => {
+      invalidarCacheDashboard();
+      return creada;
     });
   }
 
@@ -289,6 +293,7 @@ export class ComprasService {
     if (archivoAnterior?.publicId && archivoAnterior.publicId !== soporte?.publicId) {
       await borrarArchivo(archivoAnterior.publicId, archivoAnterior.recurso);
     }
+    invalidarCacheDashboard();
     return actualizada;
   }
 
@@ -344,6 +349,9 @@ export class ComprasService {
 
       await db.query(`UPDATE compra SET estado = 'Anulada' WHERE id_compra = $1`, [id]);
       return true;
+    }).then((anulada) => {
+      if (anulada) invalidarCacheDashboard();
+      return anulada;
     });
   }
 }

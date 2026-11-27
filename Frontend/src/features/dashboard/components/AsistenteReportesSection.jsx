@@ -8,18 +8,11 @@ const ESTADO_STYLES = {
   optimo: { bg: '#E1EECC', color: '#3D472B', label: 'Óptimo' },
 };
 
-export function AsistenteReportesSection({ rotacionData, onSendMessage }) {
+export function AsistenteReportesSection({ rotacionData, hallazgoClave, onSendMessage }) {
   const [inputValue, setInputValue] = useState('');
   const [messages, setMessages] = useState([]);
 
-  const defaultRotacion = [
-    { insumo: 'Harina de Maíz Amarillo', rotacionDias: 4.2, stock: '180 kg', estado: 'critico' },
-    { insumo: 'Harina de Maíz Blanco', rotacionDias: 7.8, stock: '340 kg', estado: 'atencion' },
-    { insumo: 'Sal Refinada', rotacionDias: 21.5, stock: '90 kg', estado: 'optimo' },
-    { insumo: 'Empaques x100', rotacionDias: 12.1, stock: '2.400 un.', estado: 'optimo' },
-  ];
-
-  const rotacion = rotacionData || defaultRotacion;
+  const rotacion = Array.isArray(rotacionData) ? rotacionData : [];
 
   const handleSend = (e) => {
     e.preventDefault();
@@ -88,7 +81,14 @@ export function AsistenteReportesSection({ rotacionData, onSendMessage }) {
         {/* Hallazgo Clave en Recuadro Cálido */}
         <div className="ml-0 sm:ml-12 mb-6 p-4 rounded-2xl bg-[#FFFBF0] dark:bg-[#0B0F14] border border-[#E8DCC0]/80 dark:border-[rgba(148,163,184,0.18)]">
           <p className="text-xs sm:text-[13.5px] leading-relaxed text-slate-800 dark:text-slate-200 m-0">
-            <strong className="font-bold text-[#C1502D] dark:text-[#E8B23D]">La harina de maíz amarillo tiene una rotación de 4.2 días</strong>, muy por debajo del promedio general de 9 días — es el insumo con mayor riesgo de desabasto esta semana.
+            {hallazgoClave ? (
+              <>
+                <strong className="font-bold text-[#C1502D] dark:text-[#E8B23D]">{hallazgoClave.destacado}</strong>
+                {hallazgoClave.detalle ? ` — ${hallazgoClave.detalle}` : ''}
+              </>
+            ) : (
+              'Sin datos suficientes para generar un hallazgo en este período.'
+            )}
           </p>
         </div>
 

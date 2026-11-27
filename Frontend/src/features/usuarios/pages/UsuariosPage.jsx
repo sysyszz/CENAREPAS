@@ -6,6 +6,7 @@ import { DataTable } from '../../../shared/components/DataTable';
 import { RowActions } from '../../../shared/components/RowActions';
 import { MetricCard } from '../../../shared/components/MetricCard';
 import { UsuarioFormModal } from '../components/UsuarioFormModal';
+import { UsuarioPasswordModal } from '../components/UsuarioPasswordModal';
 import ConfirmDialog from '../../../shared/components/ConfirmDialog';
 import UsuarioDetailModal from '../components/UsuarioDetailModal';
 import PageHeader from '../../../shared/components/PageHeader';
@@ -35,17 +36,21 @@ export default function UsuariosPage() {
     setShowModal,
     detailModal,
     setDetailModal,
+    passwordModal,
+    setPasswordModal,
     deleteDialog,
     setDeleteDialog,
     statusDialog,
     setStatusDialog,
     isDeleting,
     isSaving,
+    isChangingPassword,
     isUpdatingStatus,
     isLoading,
     loadError,
     refetch,
     handleSave,
+    handleChangePassword,
     handleDelete,
     handleRequestStatusChange,
     handleConfirmStatusChange,
@@ -149,12 +154,11 @@ export default function UsuariosPage() {
               extra={
                 <button
                   type="button"
-                  className="p-1.5 rounded-full text-muted-foreground hover:text-foreground hover:bg-black/5 dark:hover:bg-white/10 transition-all duration-150"
-                  title="Cambiar contraseña"
-                  onClick={() => {
-                    setSelectedUsuario(usuario);
-                    setShowModal(true);
-                  }}
+                  disabled={!can('usuarios', 'editar')}
+                  className="p-1.5 rounded-full text-muted-foreground hover:text-foreground hover:bg-black/5 dark:hover:bg-white/10 transition-all duration-150 disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer"
+                  title={can('usuarios', 'editar') ? 'Cambiar contraseña' : 'Sin permiso para cambiar contraseña'}
+                  aria-label={`Cambiar contraseña de ${usuario.nombre}`}
+                  onClick={() => setPasswordModal({ isOpen: true, usuario })}
                 >
                   <Lock className="w-4 h-4 shrink-0" />
                 </button>
@@ -164,7 +168,7 @@ export default function UsuariosPage() {
         },
       },
     ],
-    [can, roleNames, setDetailModal, setShowModal, setDeleteDialog, handleRequestStatusChange, isUsuarioAdmin, isSameUser, currentUser]
+    [can, roleNames, setDetailModal, setPasswordModal, setShowModal, setDeleteDialog, handleRequestStatusChange, isUsuarioAdmin, isSameUser, currentUser]
   );
 
   const handleExportPdf = () => {
@@ -205,12 +209,6 @@ export default function UsuariosPage() {
       <PageHeader
         title="Usuarios"
         subtitle="Gestión de usuarios y accesos del sistema Masarepas"
-        addLabel="Nuevo Usuario"
-        addDisabled={!can('usuarios', 'crear')}
-        onAdd={() => {
-          setSelectedUsuario(null);
-          setShowModal(true);
-        }}
         onExportPdf={handleExportPdf}
         onExportExcel={handleExportExcel}
       />
@@ -317,6 +315,14 @@ export default function UsuariosPage() {
           setShowModal(false);
           setSelectedUsuario(null);
         }}
+      />
+
+      <UsuarioPasswordModal
+        open={passwordModal.isOpen}
+        usuario={passwordModal.usuario}
+        onSave={handleChangePassword}
+        isSaving={isChangingPassword}
+        onClose={() => setPasswordModal({ isOpen: false, usuario: null })}
       />
 
       <ConfirmDialog

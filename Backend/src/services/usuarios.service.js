@@ -11,20 +11,41 @@ const SALT_ROUNDS = 10;
 const COLUMNAS_PUBLICAS = 'id_usuario, nombre, correo, id_rol, estado, fecha_creacion, tipo_documento, documento';
 
 /**
- * Tipo y número de documento del usuario (opcionales, pero los dos o ninguno).
- * undefined = no se envió (al editar se conservan); null = se borran.
+ * Tipo y número de documento del usuario: obligatorios al crear (y si se envían al editar),
+ * solo dígitos numéricos con mínimo 5 y máximo 10 dígitos.
+ * undefined al editar = no se envió ninguno y se conservan los actuales.
  */
-const documentoDe = (data) => {
+const documentoDe = (data, { obligatorio = false } = {}) => {
   const enviado = data.tipo_documento !== undefined || data.documento !== undefined;
-  if (!enviado) return undefined;
+  if (!enviado && !obligatorio) return undefined;
   const tipo = String(data.tipo_documento ?? '').trim().toUpperCase();
   const numero = String(data.documento ?? '').trim();
-  if (!tipo && !numero) return { tipo: null, numero: null };
   const errores = {};
   if (!TIPOS_DOCUMENTO.includes(tipo)) errores.tipo_documento = 'Selecciona un tipo de documento válido';
-  if (!/^[0-9A-Za-z.-]{5,20}$/.test(numero)) errores.documento = 'Ingresa un número de documento válido (5 a 20 caracteres)';
+  if (!numero) {
+    errores.documento = 'El número de documento es obligatorio';
+  } else if (!/^\d{5,10}$/.test(numero)) {
+    errores.documento = 'El número de documento debe contener entre 5 y 10 dígitos numéricos';
+  }
   if (Object.keys(errores).length > 0) throw badRequest('Revisa los datos del usuario', errores);
   return { tipo, numero };
+};
+
+const validarContrasena = (rawPassword) => {
+  if (rawPassword.length < CONTRASENA_MIN) {
+    throw badRequest(`La contraseña debe tener al menos ${CONTRASENA_MIN} caracteres`);
+  }
+  const faltantes = [];
+  if (!/[A-Z]/.test(rawPassword)) faltantes.push('una mayúscula');
+  if (!/\d/.test(rawPassword)) faltantes.push('un número');
+  if (!/[^A-Za-z0-9\s]/.test(rawPassword)) faltantes.push('un símbolo');
+  if (faltantes.length > 0) {
+    const detalle = faltantes.length === 1
+      ? faltantes[0]
+      : `${faltantes.slice(0, -1).join(', ')} y ${faltantes[faltantes.length - 1]}`;
+    const mensaje = `La contraseña debe incluir al menos ${detalle}`;
+    throw badRequest(mensaje, { contrasena: mensaje });
+  }
 };
 
 export class UsuariosService {
@@ -75,10 +96,8 @@ export class UsuariosService {
   static async create(data) {
     const { nombre, correo, id_rol, estado = 'Activo' } = data;
     const rawPassword = String(data.contrasena || data.password || data.contrasena_hash || '').trim();
-    if (rawPassword.length < CONTRASENA_MIN) {
-      throw badRequest(`La contraseña debe tener al menos ${CONTRASENA_MIN} caracteres`);
-    }
-    const documento = documentoDe(data);
+    validarContrasena(rawPassword);
+    const documento = documentoDe(data, { obligatorio: true });
     const contrasena_hash = await bcrypt.hash(rawPassword, SALT_ROUNDS);
 
     const res = await query(
@@ -94,8 +113,8 @@ export class UsuariosService {
     const { nombre, correo, id_rol, estado } = data;
     const rawPassword = data.contrasena || data.password || data.contrasena_hash;
     const hasNewPassword = typeof rawPassword === 'string' && rawPassword.trim().length > 0;
-    if (hasNewPassword && rawPassword.trim().length < CONTRASENA_MIN) {
-      throw badRequest(`La contraseña debe tener al menos ${CONTRASENA_MIN} caracteres`);
+    if (hasNewPassword) {
+      validarContrasena(rawPassword.trim());
     }
     const contrasena_hash = hasNewPassword ? await bcrypt.hash(rawPassword.trim(), SALT_ROUNDS) : null;
     const documento = documentoDe(data);

@@ -1,4 +1,5 @@
 import { pool } from '../config/db.js';
+import { invalidarCacheDashboard } from '../utils/dashboardCache.js';
 
 const loteWithInsumosQuery = `
   SELECT lp.*, f.nombre AS ficha_nombre, u.nombre AS responsable_nombre,
@@ -236,6 +237,7 @@ export class ProduccionService {
 
       const createdLote = await getLoteWithInsumos(client, lote.id_lote);
       await client.query('COMMIT');
+      invalidarCacheDashboard();
       return createdLote;
     } catch (error) {
       await client.query('ROLLBACK');
@@ -373,6 +375,7 @@ export class ProduccionService {
 
       const updatedLote = await getLoteWithInsumos(client, updatedResult.rows[0].id_lote);
       await client.query('COMMIT');
+      invalidarCacheDashboard();
       return updatedLote;
     } catch (error) {
       await client.query('ROLLBACK');
@@ -433,6 +436,7 @@ export class ProduccionService {
 
       const cancelledLote = await getLoteWithInsumos(client, id);
       await client.query('COMMIT');
+      invalidarCacheDashboard();
       return cancelledLote;
     } catch (error) {
       await client.query('ROLLBACK');

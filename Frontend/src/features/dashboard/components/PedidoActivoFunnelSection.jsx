@@ -3,27 +3,22 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { ClipboardList, CheckCircle2, Eye, Check } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
-export function PedidoActivoFunnelSection({ pedidoData }) {
+export function PedidoActivoFunnelSection({ pedidoData, funnelData }) {
   const navigate = useNavigate();
   const [completado, setCompletado] = useState(false);
   const [hoveredStage, setHoveredStage] = useState(null);
 
   const pedido = pedidoData || {
-    id: '#4821',
-    cliente: 'Panadería La Espiga',
-    sede: 'Bello Oriente',
-    estado: 'retrasado',
-    unidades: 3200,
+    id: '—',
+    cliente: 'Sin pedidos activos',
+    sede: '—',
+    estado: '',
+    unidades: 0,
   };
 
-  const funnelStages = [
-    { name: 'Insumos', unidades: 3200, current: false },
-    { name: 'Producción', unidades: 3200, current: true },
-    { name: 'Empaque', unidades: 2450, current: false },
-    { name: 'Despacho', unidades: 1800, current: false },
-  ];
-
-  const maxUnidades = funnelStages[0].unidades;
+  const funnelStages = Array.isArray(funnelData) ? funnelData : [];
+  const totalFunnel = funnelStages.reduce((acc, s) => acc + (Number(s.unidades) || 0), 0);
+  const maxUnidades = Math.max(...funnelStages.map((s) => Number(s.unidades) || 0), 1);
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-[1.25fr_1fr] gap-4.5 mb-7 items-stretch">
@@ -120,8 +115,9 @@ export function PedidoActivoFunnelSection({ pedidoData }) {
         {/* Funnel Bars Container */}
         <div className="flex items-end justify-between gap-3 h-40 pt-4 px-2">
           {funnelStages.map((stage, idx) => {
-            const heightPct = Math.round((stage.unidades / maxUnidades) * 100);
-            const advancePct = Math.round((stage.unidades / maxUnidades) * 100);
+            const unidadesStage = Number(stage.unidades) || 0;
+            const heightPct = Math.round((unidadesStage / maxUnidades) * 100);
+            const advancePct = totalFunnel > 0 ? Math.round((unidadesStage / totalFunnel) * 100) : 0;
             const isHovered = hoveredStage === idx;
             const isCurrent = stage.current;
 

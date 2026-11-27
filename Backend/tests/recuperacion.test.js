@@ -68,6 +68,8 @@ before(async () => {
     const creado = await http('POST', '/usuarios', {
       nombre: 'PRUEBA - Recuperación de contraseña',
       correo: CORREO,
+      tipo_documento: 'CC',
+      documento: '9876543210',
       contrasena: 'Inicial123*',
       id_rol: vendedor.id_rol,
       estado: 'Activo',

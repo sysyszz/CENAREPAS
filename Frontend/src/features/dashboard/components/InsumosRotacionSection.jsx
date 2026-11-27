@@ -3,11 +3,12 @@ import { motion } from 'framer-motion';
 import { Wheat, Package, TrendingUp, TrendingDown, Sparkles, ArrowRight } from 'lucide-react';
 
 function buildSparkPath(vals) {
+  const safeVals = Array.isArray(vals) && vals.length >= 2 ? vals : [0, 0];
   const w = 72, h = 44, pad = 3;
-  const max = Math.max(...vals), min = Math.min(...vals);
+  const max = Math.max(...safeVals), min = Math.min(...safeVals);
   const range = max - min || 1;
-  const pts = vals.map((v, i) => {
-    const x = (i / (vals.length - 1)) * w;
+  const pts = safeVals.map((v, i) => {
+    const x = (i / (safeVals.length - 1)) * w;
     const y = h - pad - ((v - min) / range) * (h - pad * 2);
     return [x, y];
   });
@@ -15,45 +16,16 @@ function buildSparkPath(vals) {
 }
 
 export function InsumosRotacionSection({ insumosData, onOpenAsistente }) {
-  const defaultInsumos = [
-    {
-      id: 'harina-amarilla',
-      nombre: 'Harina Maíz Amarillo',
-      icon: Wheat,
-      rotacionDias: 4.2,
-      deltaPct: -14.3,
-      deltaAbs: '-0.7d',
-      tendencia: [5.6, 5.4, 5.1, 4.9, 4.6, 4.4, 4.2],
-    },
-    {
-      id: 'harina-blanca',
-      nombre: 'Harina Maíz Blanco',
-      icon: Wheat,
-      rotacionDias: 7.8,
-      deltaPct: 6.8,
-      deltaAbs: '+0.5d',
-      tendencia: [7.1, 7.2, 7.0, 7.4, 7.5, 7.6, 7.8],
-    },
-    {
-      id: 'sal-refinada',
-      nombre: 'Sal Refinada',
-      icon: Package,
-      rotacionDias: 21.5,
-      deltaPct: 2.1,
-      deltaAbs: '+0.4d',
-      tendencia: [20.8, 21.0, 20.9, 21.1, 21.2, 21.3, 21.5],
-    },
-  ];
-
-  const list = insumosData || defaultInsumos;
+  const list = Array.isArray(insumosData) ? insumosData : [];
 
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5 sm:gap-4.5 mb-7 items-stretch">
       {/* 3 Insumos Cards */}
       {list.map((ins, idx) => {
-        const isPositive = ins.deltaPct >= 0;
-        const IconComp = ins.icon || (ins.id.includes('harina') ? Wheat : Package);
-        const sparkLine = buildSparkPath(ins.tendencia || [5, 6, 5, 7, 6, 8]);
+        const deltaPct = Number(ins.deltaPct) || 0;
+        const isPositive = deltaPct >= 0;
+        const IconComp = ins.icon || (String(ins.nombre || ins.id || '').toLowerCase().includes('harina') ? Wheat : Package);
+        const sparkLine = buildSparkPath(ins.tendencia);
         const lineColor = isPositive ? '#728157' : '#C1502D';
 
         return (
@@ -87,7 +59,7 @@ export function InsumosRotacionSection({ insumosData, onOpenAsistente }) {
                 }`}
               >
                 {isPositive ? <TrendingUp className="size-3" /> : <TrendingDown className="size-3" />}
-                {isPositive ? `+${ins.deltaPct.toFixed(1)}%` : `${ins.deltaPct.toFixed(1)}%`}
+                {isPositive ? `+${deltaPct.toFixed(1)}%` : `${deltaPct.toFixed(1)}%`}
               </span>
             </div>
 

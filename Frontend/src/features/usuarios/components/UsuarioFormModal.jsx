@@ -1,12 +1,16 @@
 import { useState, useEffect, useMemo, useCallback } from 'react';
-import { Shield, Mail, Lock, User, CheckCircle2, IdCard } from 'lucide-react';
+import { Shield, Mail, Lock, User, CheckCircle2, IdCard, Eye, EyeOff, Check } from 'lucide-react';
 import { Combobox } from '../../../shared/ui/Combobox';
 import { StepperModal } from '../../../shared/components/StepperModal';
 import { getOpcionesComo, conValorActual } from '../../../shared/services/opciones';
-import { OPCIONES_TIPO_DOCUMENTO, DOCUMENTO_VALIDO } from '../../../shared/config/negocio';
+import { OPCIONES_TIPO_DOCUMENTO } from '../../../shared/config/negocio';
+import {
+  CONTRASENA_MIN,
+  REGLAS_CONTRASENA,
+  validarContrasenaUsuario,
+} from '../utils/passwordRules';
 
-// Igual que CONTRASENA_MIN del backend (Backend/src/config/negocio.js).
-const CONTRASENA_MIN = 8;
+const USUARIO_DOCUMENTO_REGEX = /^\d{5,10}$/;
 
 export function UsuarioFormModal({ open, onClose, usuario = null, onSave, isLoading = false }) {
   const [nombre, setNombre] = useState('');
@@ -15,6 +19,7 @@ export function UsuarioFormModal({ open, onClose, usuario = null, onSave, isLoad
   const [documento, setDocumento] = useState('');
   const [idRol, setIdRol] = useState('1');
   const [contrasena, setContrasena] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [estado, setEstado] = useState('Activo');
   const [roles, setRoles] = useState([]);
   const [currentStep, setCurrentStep] = useState(0);
@@ -30,6 +35,7 @@ export function UsuarioFormModal({ open, onClose, usuario = null, onSave, isLoad
   useEffect(() => {
     if (open) {
       setCurrentStep(0);
+      setShowPassword(false);
       if (usuario) {
         setNombre(usuario.nombre || '');
         setCorreo(usuario.correo || '');
@@ -49,19 +55,26 @@ export function UsuarioFormModal({ open, onClose, usuario = null, onSave, isLoad
       }
     } else {
       setCurrentStep(0);
+      setShowPassword(false);
     }
   }, [usuario, open, roles]);
 
   const isDirty = useMemo(() => {
     if (!open) return false;
     if (!usuario) {
-      return nombre.trim() !== '' || correo.trim() !== '' || documento.trim() !== '' || contrasena.trim() !== '';
+      return (
+        nombre.trim() !== '' ||
+        correo.trim() !== '' ||
+        tipoDocumento !== 'CC' ||
+        documento.trim() !== '' ||
+        contrasena.trim() !== ''
+      );
     }
     return (
       nombre !== (usuario.nombre || '') ||
       correo !== (usuario.correo || '') ||
       documento !== (usuario.documento || '') ||
-      (documento !== '' && tipoDocumento !== (usuario.tipo_documento || 'CC')) ||
+      tipoDocumento !== (usuario.tipo_documento || 'CC') ||
       idRol !== String(usuario.id_rol || '1') ||
       estado !== (usuario.estado || 'Activo') ||
       contrasena.trim() !== ''
@@ -82,19 +95,27 @@ export function UsuarioFormModal({ open, onClose, usuario = null, onSave, isLoad
     if (!emailRegex.test(correo.trim())) {
       return 'Por favor ingresa un correo electrónico válido.';
     }
-    // El documento es opcional; si se escribe, debe ser válido.
-    if (documento.trim() && !DOCUMENTO_VALIDO.test(documento.trim())) {
-      return 'El número de documento debe tener de 5 a 20 letras, números, puntos o guiones.';
+    if (!tipoDocumento) {
+      return 'El tipo de documento es obligatorio.';
+    }
+    const docLimpio = documento.trim();
+    if (!docLimpio) {
+      return 'El número de documento es obligatorio.';
+    }
+    if (!USUARIO_DOCUMENTO_REGEX.test(docLimpio)) {
+      return 'El número de documento debe contener entre 5 y 10 dígitos numéricos.';
     }
     return true;
-  }, [nombre, correo, documento]);
+  }, [nombre, correo, tipoDocumento, documento]);
 
   const validateStep2 = useCallback(() => {
-    if (!usuario && !contrasena.trim()) {
+    const clave = contrasena.trim();
+    if (!usuario && !clave) {
       return 'La contraseña es obligatoria para nuevos usuarios.';
     }
-    if (contrasena.trim() && contrasena.trim().length < CONTRASENA_MIN) {
-      return `La contraseña debe tener al menos ${CONTRASENA_MIN} caracteres.`;
+    if (clave) {
+      const errorClave = validarContrasenaUsuario(clave);
+      if (errorClave) return errorClave;
     }
     return true;
   }, [usuario, contrasena]);
@@ -111,10 +132,10 @@ export function UsuarioFormModal({ open, onClose, usuario = null, onSave, isLoad
       return;
     }
 
-    // Sin número, el documento queda vacío (tipo y número van juntos).
-    const documentoPayload = documento.trim()
-      ? { tipo_documento: tipoDocumento, documento: documento.trim() }
-      : { tipo_documento: null, documento: null };
+    const documentoPayload = {
+      tipo_documento: tipoDocumento,
+      documento: documento.trim(),
+    };
 
     const payload = usuario
       ? {
@@ -132,7 +153,7 @@ export function UsuarioFormModal({ open, onClose, usuario = null, onSave, isLoad
           ...documentoPayload,
           id_rol: Number(idRol) || 1,
           estado: estado || 'Activo',
-          contrasena_hash: contrasena.trim() || 'defaultHash',
+          contrasena_hash: contrasena.trim(),
         };
 
     if (onSave) {
@@ -177,7 +198,7 @@ export function UsuarioFormModal({ open, onClose, usuario = null, onSave, isLoad
           {/* Tipo de documento (fila propia, sobre el número) */}
           <div className="sm:col-span-2">
             <label htmlFor="usuario_tipo_documento" className="block text-xs sm:text-sm font-semibold text-foreground mb-1.5">
-              Tipo de documento
+              Tipo de documento <span className="text-destructive font-bold ml-0.5">*</span>
             </label>
             <Combobox
               id="usuario_tipo_documento"
@@ -191,7 +212,7 @@ export function UsuarioFormModal({ open, onClose, usuario = null, onSave, isLoad
           {/* Número de documento */}
           <div className="sm:col-span-2">
             <label htmlFor="usuario_documento" className="block text-xs sm:text-sm font-semibold text-foreground mb-1.5">
-              Número de documento <span className="text-muted-foreground font-normal text-xs">(Opcional)</span>
+              Número de documento <span className="text-destructive font-bold ml-0.5">*</span>
             </label>
             <div className="relative">
               <IdCard className="absolute left-3.5 top-1/2 -translate-y-1/2 size-4 text-muted-foreground pointer-events-none" />
@@ -199,13 +220,18 @@ export function UsuarioFormModal({ open, onClose, usuario = null, onSave, isLoad
                 id="usuario_documento"
                 name="documento"
                 type="text"
-                maxLength={20}
+                inputMode="numeric"
+                required
+                maxLength={10}
                 placeholder="Ej. 1020304050"
                 value={documento}
-                onChange={(e) => setDocumento(e.target.value)}
+                onChange={(e) => setDocumento(e.target.value.replace(/\D/g, '').slice(0, 10))}
                 className="w-full h-10 pl-10 pr-4 border border-input bg-input-background rounded-lg text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring transition-all"
               />
             </div>
+            <p className="text-[11px] text-muted-foreground mt-1">
+              Solo dígitos numéricos (entre 5 y 10 dígitos).
+            </p>
           </div>
 
           {/* Correo */}
@@ -276,17 +302,55 @@ export function UsuarioFormModal({ open, onClose, usuario = null, onSave, isLoad
               <input
                 id="usuario_contrasena"
                 name="contrasena_hash"
-                type="password"
+                type={showPassword ? 'text' : 'password'}
                 maxLength={255}
-                placeholder={usuario ? '••••••••' : `Mínimo ${CONTRASENA_MIN} caracteres`}
+                placeholder={usuario ? '••••••••' : `Ej. Clave123*`}
                 value={contrasena}
                 onChange={(e) => setContrasena(e.target.value)}
-                className="w-full h-10 pl-10 pr-4 border border-input bg-input-background rounded-lg text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring transition-all"
+                className="w-full h-10 pl-10 pr-10 border border-input bg-input-background rounded-lg text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring transition-all"
               />
+              <button
+                type="button"
+                onClick={() => setShowPassword((prev) => !prev)}
+                className="absolute right-2.5 top-1/2 -translate-y-1/2 p-1 rounded-md text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
+                aria-label={showPassword ? 'Ocultar contraseña' : 'Mostrar contraseña'}
+              >
+                {showPassword ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
+              </button>
             </div>
             <p className="text-[11px] text-muted-foreground mt-1">
-              {usuario ? 'Ingresa una nueva contraseña únicamente si deseas restablecerla.' : `Utiliza una combinación segura de al menos ${CONTRASENA_MIN} caracteres.`}
+              {usuario
+                ? 'Ingresa una nueva contraseña únicamente si deseas restablecerla.'
+                : `Debe tener al menos ${CONTRASENA_MIN} caracteres, una mayúscula, un número y un símbolo.`}
             </p>
+            {(!usuario || contrasena.length > 0) && (
+              <ul className="mt-2 grid grid-cols-2 gap-x-3 gap-y-1" aria-label="Requisitos de contraseña">
+                {REGLAS_CONTRASENA.map((regla) => {
+                  const cumple = regla.test(contrasena.trim());
+                  return (
+                    <li
+                      key={regla.id}
+                      className={`flex items-center gap-1.5 text-[11px] transition-colors ${
+                        cumple
+                          ? 'text-emerald-600 dark:text-emerald-400 font-medium'
+                          : 'text-muted-foreground'
+                      }`}
+                    >
+                      <span
+                        className={`size-3.5 rounded-full flex items-center justify-center shrink-0 border ${
+                          cumple
+                            ? 'bg-emerald-500/15 border-emerald-500/40 text-emerald-600 dark:text-emerald-400'
+                            : 'border-border'
+                        }`}
+                      >
+                        {cumple && <Check className="size-2.5 stroke-[3]" />}
+                      </span>
+                      <span>{regla.label}</span>
+                    </li>
+                  );
+                })}
+              </ul>
+            )}
           </div>
 
           {/* Ayuda contextual de seguridad */}
@@ -317,7 +381,7 @@ export function UsuarioFormModal({ open, onClose, usuario = null, onSave, isLoad
         </div>
       ),
     },
-  ], [nombre, correo, tipoDocumento, documento, idRol, estado, contrasena, roles, usuario, validateStep1, validateStep2]);
+  ], [nombre, correo, tipoDocumento, documento, idRol, estado, contrasena, showPassword, roles, usuario, validateStep1, validateStep2]);
 
   return (
     <StepperModal

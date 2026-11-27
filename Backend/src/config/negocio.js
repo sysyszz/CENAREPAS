@@ -19,6 +19,15 @@ export const MUNICIPIOS_ENTREGA = [
 
 export const ESTADOS_PEDIDO = ['Pendiente', 'En proceso', 'Entregado', 'Anulado'];
 
+/** Estados válidos de una orden de compra (HU-034, HU-039). */
+export const ESTADOS_COMPRA = ['Registrada', 'Anulada'];
+
+/** Zona horaria operativa del negocio para cortes diarios, semanales y mensuales. */
+export const ZONA_HORARIA_NEGOCIO = 'America/Bogota';
+
+/** Días de anticipación para alertar insumos próximos a vencer en el dashboard (HU-147). */
+export const DIAS_ALERTA_VENCIMIENTO = 30;
+
 /** Transiciones permitidas del pedido (el personal). Entregado → Anulado repone stock. */
 export const TRANSICIONES_PEDIDO = {
   Pendiente: ['En proceso', 'Anulado'],

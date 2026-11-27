@@ -7,11 +7,12 @@ const clamp01 = (v) => Math.max(0, Math.min(1, v));
 const easeOutCubic = (t) => 1 - Math.pow(1 - t, 3);
 
 function buildSparkPaths(vals) {
+  const safeVals = Array.isArray(vals) && vals.length >= 2 ? vals : [0, 0];
   const w = 72, h = 26, pad = 2;
-  const max = Math.max(...vals), min = Math.min(...vals);
+  const max = Math.max(...safeVals), min = Math.min(...safeVals);
   const range = max - min || 1;
-  const pts = vals.map((v, i) => {
-    const x = (i / (vals.length - 1)) * w;
+  const pts = safeVals.map((v, i) => {
+    const x = (i / (safeVals.length - 1)) * w;
     const y = h - pad - ((v - min) / range) * (h - pad * 2);
     return [x, y];
   });
@@ -20,14 +21,7 @@ function buildSparkPaths(vals) {
   return { line, fill };
 }
 
-const KPI_SPARKS = {
-  ventas: [14, 16, 15, 18, 17, 20, 22, 24],
-  pedidos: [10, 12, 11, 15, 14, 17, 19, 21],
-  insumos: [22, 20, 21, 18, 19, 16, 15, 14],
-  produccion: [12, 13, 15, 14, 17, 19, 20, 23],
-};
-
-export function DashboardKpis({ kpisData }) {
+export function DashboardKpis({ kpisData, sparklines }) {
   const [progress, setProgress] = useState(0);
 
   useEffect(() => {
@@ -53,16 +47,18 @@ export function DashboardKpis({ kpisData }) {
     };
   }, [kpisData]);
 
-  const rawKpis = kpisData || {
-    ventasHoy: 2450000,
-    ventasHoyCambio: 12.5,
-    pedidosProcesados: 84,
-    pedidosCambio: 8.0,
-    insumosActivos: 37,
-    insumosCambio: -3.0,
-    produccionDia: 1240,
-    produccionCambio: 5.0,
+  const rawKpis = {
+    ventasHoy: Number(kpisData?.ventasHoy) || 0,
+    ventasHoyCambio: Number(kpisData?.ventasHoyCambio) || 0,
+    pedidosProcesados: Number(kpisData?.pedidosProcesados) || 0,
+    pedidosCambio: Number(kpisData?.pedidosCambio) || 0,
+    insumosActivos: Number(kpisData?.insumosActivos) || 0,
+    insumosCambio: Number(kpisData?.insumosCambio) || 0,
+    produccionDia: Number(kpisData?.produccionDia) || 0,
+    produccionCambio: Number(kpisData?.produccionCambio) || 0,
   };
+
+  const realSparks = sparklines || kpisData?.sparklines || {};
 
   const cards = [
     {
@@ -74,7 +70,7 @@ export function DashboardKpis({ kpisData }) {
       chipBg: '#FDE8B8',
       chipColor: '#78350F',
       fmt: (v) => `$${fmtCO(v)}`,
-      sparks: KPI_SPARKS.ventas,
+      sparks: realSparks.ventas,
     },
     {
       id: 'pedidos',
@@ -85,7 +81,7 @@ export function DashboardKpis({ kpisData }) {
       chipBg: '#FFE1D0',
       chipColor: '#8C491A',
       fmt: (v) => fmtCO(v),
-      sparks: KPI_SPARKS.pedidos,
+      sparks: realSparks.pedidos,
     },
     {
       id: 'insumos',
@@ -96,7 +92,7 @@ export function DashboardKpis({ kpisData }) {
       chipBg: '#FFC6A5',
       chipColor: '#643312',
       fmt: (v) => fmtCO(v),
-      sparks: KPI_SPARKS.insumos,
+      sparks: realSparks.insumos,
     },
     {
       id: 'produccion',
@@ -107,7 +103,7 @@ export function DashboardKpis({ kpisData }) {
       chipBg: '#E1EECC',
       chipColor: '#3D472B',
       fmt: (v) => `${fmtCO(v)} un.`,
-      sparks: KPI_SPARKS.produccion,
+      sparks: realSparks.produccion,
     },
   ];
 

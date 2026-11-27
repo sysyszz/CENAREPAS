@@ -13,9 +13,6 @@ import {
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
-const RENTA_WEEKS = ['S1', 'S2', 'S3', 'S4', 'S5', 'S6', 'S7', 'S8'];
-const RENTA_VALS = [28.1, 29.4, 28.9, 30.2, 31.0, 30.5, 31.8, 32.4];
-
 const ALERT_STYLES = {
   terracota: {
     lightBg: 'bg-[#FFF5F0] border-[#FCD9C6]',
@@ -90,37 +87,32 @@ function getAlertMeta(a, index) {
   return { tone, IconComp, path };
 }
 
-export function RentabilidadClientesAlertasSection({ topClientesData, alertasData }) {
+export function RentabilidadClientesAlertasSection({ topClientesData, alertasData, rentabilidadData }) {
   const navigate = useNavigate();
   const [hoverSpark, setHoverSpark] = useState(null);
 
-  const defaultClientes = [
-    { id: 1, iniciales: 'PE', nombre: 'Panadería La Espiga', pedidos: 132, bg: '#C1502D', fg: '#FFFFFF' },
-    { id: 2, iniciales: 'ET', nombre: 'Supermercado El Trigal', pedidos: 118, bg: '#E8B23D', fg: '#78350F' },
-    { id: 3, iniciales: 'SA', nombre: 'Restaurante Sabor Antioqueño', pedidos: 96, bg: '#5A7A3A', fg: '#FFFFFF' },
-    { id: 4, iniciales: 'DR', nombre: 'Tienda Doña Rosa', pedidos: 84, bg: '#E2895F', fg: '#402310' },
-    { id: 5, iniciales: 'CC', nombre: 'Cafetería Central', pedidos: 71, bg: '#F5ECD8', fg: '#2E2B25' },
-  ];
+  const topClientes = Array.isArray(topClientesData) ? topClientesData : [];
+  const alertas = Array.isArray(alertasData) ? alertasData : [];
 
-  const defaultAlertas = [
-    { id: 1, icono: 'package', titulo: 'Stock bajo de harina de maíz', detalle: 'Por debajo del mínimo en Bello Oriente', accion: 'Ver Insumos', path: '/admin/insumos', tono: 'terracota' },
-    { id: 2, icono: 'clock', titulo: 'Pedido #4821 retrasado', detalle: 'Producción sin iniciar, vence hoy', accion: 'Ver Pedido', path: '/admin/pedidos', tono: 'maiz' },
-    { id: 3, icono: 'trending-down', titulo: 'Caída en ventas — Aranjuez', detalle: '-9% frente a la semana anterior', accion: 'Ver Ventas', path: '/admin/ventas', tono: 'beige' },
-    { id: 4, icono: 'user-x', titulo: 'Usuario sin rol asignado', detalle: 'jvargas@cenarepas.com', accion: 'Asignar Rol', path: '/admin/usuarios', tono: 'verde' },
-  ];
+  const rentaSemanas = Array.isArray(rentabilidadData?.semanas) ? rentabilidadData.semanas : [];
+  const margenActual = Number(rentabilidadData?.margenPct) || 0;
+  const variacionPp = Number(rentabilidadData?.variacionPp) || 0;
+  const rentaVals = rentaSemanas.length >= 2
+    ? rentaSemanas.map((s) => Number(s.margenPct) || 0)
+    : [0, 0];
+  const rentaWeeks = rentaSemanas.length >= 2
+    ? rentaSemanas.map((s, i) => s.etiqueta || `S${i + 1}`)
+    : ['S1', 'S2'];
 
-  const topClientes = topClientesData || defaultClientes;
-  const alertas = alertasData || defaultAlertas;
-
-  // Curva de Rentabilidad
-  const rentaMax = Math.max(...RENTA_VALS) + 0.6;
-  const rentaMin = Math.min(...RENTA_VALS) - 0.6;
-  const rentaRange = rentaMax - rentaMin;
-  const rentaPts = RENTA_VALS.map((v, i) => ({
-    x: (i / (RENTA_VALS.length - 1)) * 100,
+  // Curva de Rentabilidad (ventas entregadas - compras registradas)
+  const rentaMax = Math.max(...rentaVals) + 0.6;
+  const rentaMin = Math.min(...rentaVals) - 0.6;
+  const rentaRange = rentaMax - rentaMin || 1;
+  const rentaPts = rentaVals.map((v, i) => ({
+    x: (i / (rentaVals.length - 1)) * 100,
     y: 100 - ((v - rentaMin) / rentaRange) * 82 - 8,
     v,
-    w: RENTA_WEEKS[i],
+    w: rentaWeeks[i],
   }));
 
   const rentaLine = rentaPts.map((pt, i) => `${i === 0 ? 'M' : 'L'}${pt.x.toFixed(1)},${pt.y.toFixed(1)}`).join(' ');
@@ -149,12 +141,12 @@ export function RentabilidadClientesAlertasSection({ topClientesData, alertasDat
               </div>
               <span className="inline-flex items-center gap-1 text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-[#E1EECC] dark:bg-[#5A7A3A]/25 text-[#3D472B] dark:text-[#AEC094]">
                 <TrendingUp className="size-3" />
-                +2.3pp
+                {variacionPp >= 0 ? `+${variacionPp.toFixed(1)}pp` : `${variacionPp.toFixed(1)}pp`}
               </span>
             </div>
 
             <div className="font-mono text-3xl sm:text-[34px] font-bold text-slate-900 dark:text-foreground tracking-tight my-2 tabular-nums">
-              32.4%
+              {margenActual.toFixed(1)}%
             </div>
           </div>
 
@@ -185,7 +177,7 @@ export function RentabilidadClientesAlertasSection({ topClientesData, alertasDat
 
             {/* Hover trigger invisible columns */}
             <div className="absolute inset-0 flex">
-              {RENTA_WEEKS.map((w, i) => (
+              {rentaWeeks.map((w, i) => (
                 <div
                   key={w}
                   className="flex-1 h-full cursor-pointer"

@@ -24,15 +24,8 @@ function genDots(seed, weights) {
 export function ProduccionDistribucionSection({ lineasData, pedidosFlow }) {
   const [hoveredBar, setHoveredBar] = useState(null);
 
-  const defaultLineas = [
-    { linea: 'Blanca', unidades: 620, destacada: false },
-    { linea: 'Amarilla', unidades: 980, destacada: true },
-    { linea: 'Integral', unidades: 410, destacada: false },
-    { linea: 'Queso', unidades: 710, destacada: false },
-  ];
-
-  const lineas = lineasData || defaultLineas;
-  const maxLineUnidades = Math.max(...lineas.map((l) => l.unidades)) + 150;
+  const lineas = Array.isArray(lineasData) ? lineasData : [];
+  const maxLineUnidades = Math.max(0, ...lineas.map((l) => Number(l.unidades) || 0)) + 150;
 
   const dotsA = genDots(11, [
     { p: 0.42, color: '#D67F48' },
@@ -48,7 +41,7 @@ export function ProduccionDistribucionSection({ lineasData, pedidosFlow }) {
     { p: 0.14, color: '#DCD3C4' }
   ]);
 
-  const flow = pedidosFlow || { belloOriente: 48, aranjuez: 36 };
+  const flow = pedidosFlow || { belloOriente: 0, aranjuez: 0 };
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-[1.1fr_1fr] gap-4.5 mb-7 items-stretch">

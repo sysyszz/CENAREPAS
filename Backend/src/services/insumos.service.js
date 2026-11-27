@@ -1,5 +1,6 @@
 import { query } from '../config/db.js';
 import { notFound } from '../utils/httpError.js';
+import { invalidarCacheDashboard } from '../utils/dashboardCache.js';
 
 export class InsumosService {
   static async getAll() {
@@ -25,6 +26,7 @@ export class InsumosService {
        RETURNING *`,
       [nombre, unidad_medida, stock_actual, stock_minimo, fecha_vencimiento, id_proveedor, estado]
     );
+    invalidarCacheDashboard();
     return res.rows[0];
   }
 
@@ -44,6 +46,7 @@ export class InsumosService {
       [nombre, unidad_medida, stock_actual, stock_minimo, fecha_vencimiento, id_proveedor, estado, id]
     );
     if (!res.rows[0]) throw notFound('Insumo no encontrado');
+    invalidarCacheDashboard();
     return res.rows[0];
   }
 
@@ -53,6 +56,7 @@ export class InsumosService {
       `UPDATE insumo SET estado = 'Inactivo' WHERE id_insumo = $1 RETURNING id_insumo`,
       [id]
     );
+    if (res.rows.length > 0) invalidarCacheDashboard();
     return res.rows.length > 0;
   }
 }
